@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.dropbox"
+       name="Dropbox"
+       version="0.1.0b"
+       provider-name="Joost Kop">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.common.plugin.cache" version="0.9.1"/>
+    <import addon="script.web.viewer" version="0.9.10"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"
+             provides="image"
+             library="browse_folder.py">
+    <provides>image</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <language>en</language>
+    <summary lang="en">View files from your Dropbox account</summary>
+    <summary lang="nl">Bekijk bestanden van je Dropbox account</summary>
+    <description lang="en">View files from your Dropbox account. For feature requests and bug reports: joost.kop@@gmail.com</description>
+    <description lang="nl">Bekijk bestanden van je Dropbox account. Voor functie verzoeken en het rapporteren van bugs: joost.kop@@gmail.com</description>
+    <platform>all</platform>
+    <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
+    <forum></forum>
+    <website></website>
+    <email></email>
+    <source></source>
+  </extension>
+</addon>

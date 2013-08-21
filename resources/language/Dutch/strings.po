@@ -1,0 +1,53 @@
+# XBMC Media Center language file
+# Addon Name: Last.fm
+# Addon id: plugin.audio.lastfm
+# Addon Provider: Team-XBMC
+msgid ""
+msgstr ""
+"Project-Id-Version: XBMC Addons\n"
+"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: XBMC Translation Team\n"
+"Language-Team: Dutch (http://www.transifex.com/projects/p/xbmc-addons/language/nl/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: nl\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgctxt "#30000"
+msgid "General"
+msgstr "Algemeen"
+
+msgctxt "#30001"
+msgid "Dropbox username"
+msgstr "Dropbox gebruikersnaam"
+
+msgctxt "#30002"
+msgid "Dropbox password"
+msgstr "Dropbox wachtwoord"
+
+msgctxt "#30003"
+msgid "Login into Dropbox"
+msgstr "Inloggen bij Dropbox"
+
+msgctxt "#30004"
+msgid "Browse folders"
+msgstr "Bladeren in mappen"
+
+msgctxt "#30005"
+msgid "Browse albums"
+msgstr "Bladeren in albums"
+
+msgctxt "#30006"
+msgid "Dropbox authorization code"
+msgstr "Dropbox toegangs code"
+
+msgctxt "#30007"
+msgid "Location for cached files"
+msgstr "Locatie voor cache bestanden"
+
+msgctxt "#30008"
+msgid "View relevant files only"
+msgstr "Toon alleen relevante bestanden"
