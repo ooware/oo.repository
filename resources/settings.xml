@@ -3,7 +3,7 @@
     <category label="30000">
         <setting label="30008" type="bool" id="filefilter" default="false"/>
         <setting type="sep"/>
-        <setting label="30003" type="action" action="RunScript($CWD/resources/lib/login.py)"/>
+        <setting label="30003" type="action" action="RunScript(plugin.dropbox, action=clear_token)"/>
         <setting label="30006" type="text" id="access_token" default=""/>
     </category>
 </settings>

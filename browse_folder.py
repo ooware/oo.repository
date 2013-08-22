@@ -83,17 +83,29 @@ class FolderBrowser(XBMCDropBoxClient):
 
 
 if ( __name__ == "__main__" ):
-    if xbmcaddon.Addon().getSetting('access_token').decode("utf-8") == '':
-        import resources.lib.login as login
-        login.doNormalTokenDialog()
-        #xbmcaddon.Addon().openSettings()
+    runAsScript, params = parse_argv()
+    if not runAsScript:
+        if xbmcaddon.Addon().getSetting('access_token').decode("utf-8") == '':
+            import resources.lib.login as login
+            dialog = xbmcgui.Dialog()
+            dialog.ok(ADDON, 'Dropbox authorization code required!', 'Starting the process to get this code', 'Please login and authorize (allow) this addon.')
+            xbmcplugin.endOfDirectory(int(sys.argv[1]),succeeded=False)
+            login.doTokenDialog()
+            #xbmcaddon.Addon().openSettings()
+        elif xbmcaddon.Addon().getSetting('access_token').decode("utf-8") != '':
+        #    try:
+            browser = FolderBrowser()
+            #done
+        #    except TypeError, e:
+        #        dialog = xbmcgui.Dialog()
+        #        dialog.ok(ADDON, 'There was an error:', '%s' % (str(e)))
+        else:
+            xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+    else: # run as script
+        action = params.get('action', '')
+        if action == 'login':
+            import resources.lib.login as login
+            login.doTokenDialog()
+        elif action == 'clear_token':
+            xbmcaddon.Addon().setSetting('access_token', '')
         
-    if xbmcaddon.Addon().getSetting('access_token').decode("utf-8") != '':
-    #    try:
-        browser = FolderBrowser()
-        #done
-    #    except TypeError, e:
-    #        dialog = xbmcgui.Dialog()
-    #        dialog.ok(ADDON, 'There was an error:', '%s' % (str(e)))
-    else:
-        xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)

@@ -21,23 +21,23 @@ msgid "General"
 msgstr ""
 
 msgctxt "#30001"
-msgid "Dropbox username"
+msgid "reuse"
 msgstr ""
 
 msgctxt "#30002"
-msgid "Dropbox password"
+msgid "reuse"
 msgstr ""
 
 msgctxt "#30003"
-msgid "Login into Dropbox"
-msgstr ""
+msgid "Clear Dropbox authorization code"
+msgstr "Dropbox toegangs code verwijderen"
 
 msgctxt "#30004"
 msgid "Browse folders"
 msgstr ""
 
 msgctxt "#30005"
-msgid "Browse albums"
+msgid "reuse"
 msgstr ""
 
 msgctxt "#30006"

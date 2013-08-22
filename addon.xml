@@ -17,12 +17,12 @@
     <language>en</language>
     <summary lang="en">View files from your Dropbox account</summary>
     <summary lang="nl">Bekijk bestanden van je Dropbox account</summary>
-    <description lang="en">View files from your Dropbox account. For feature requests and bug reports: joost.kop@@gmail.com</description>
-    <description lang="nl">Bekijk bestanden van je Dropbox account. Voor functie verzoeken en het rapporteren van bugs: joost.kop@@gmail.com</description>
+    <description lang="en">View files from your Dropbox account. This addon will require access to all files and folders in your Dropbox.</description>
+    <description lang="nl">Bekijk bestanden van je Dropbox account. Deze addon zal toegang hebben tot alle bestanden en mappen in jouw Dropbox.</description>
     <platform>all</platform>
     <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
     <forum></forum>
-    <website></website>
+    <website>https://sourceforge.net/projects/xbmc-dropbox/</website>
     <email></email>
     <source></source>
   </extension>

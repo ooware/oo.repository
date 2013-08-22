@@ -21,38 +21,74 @@
 
 import xbmcplugin
 import xbmcgui
+import re
 
 from utils import *
 
 from dropbox import client, rest
+
 APP_KEY = 'ehe9o5q5abevvq5'
 APP_SECRET = '6mbp7ww9hwzzczd'
+# auth-code examples:
+# KmrKcr8l6AIAAAAAAAAAAdKV9E6_DGeylAj6N61lfrI
+# nF5ycr2qK1YAAAAAAAAAAcgHQWbOap7GnSbj1zhDQqw
+# k0c7obmA-mYAAAAAAAAAAfPg6WbRBBLICalu7FU0aUg
+# nZ3O9v_AAwQAAAAAAAAAAemaJUPi4ON8D3HFN2voubU
+# 
 
 def doTokenDialog():
     try:
         from webviewer import webviewer #@UnresolvedImport @UnusedImport
-        doNormalTokenDialog()
+        #start the flow process (getting the auth-code
+        flow = client.DropboxOAuth2FlowNoRedirect(APP_KEY, APP_SECRET)
+        authorize_url = flow.start()
+        html_resp = doNormalTokenDialog(authorize_url)
+        code = None
+        if html_resp:
+            #get the "auth-code"
+            code = re.search('(?s)(?<=class="auth-code">)[^<]+', html_resp)
+        if code:
+            code = code.group(0)
+            try:
+                log('Received auth-code: %s'%code)
+                access_token, user_id = flow.finish(code)
+                log('Received token: %s'%access_token)
+                #save the token in settings
+                xbmcaddon.Addon().setSetting('access_token', access_token)
+            except rest.ErrorResponse, e:
+                dialog = xbmcgui.Dialog()
+                dialog.ok(ADDON, 'Problem getting the access token', '%s'%str(e))
+        else:
+            dialog = xbmcgui.Dialog()
+            dialog.ok(ADDON, 'Authorization failed, no code received', 'Did you authorize (allow)?')
     except:
         dialog = xbmcgui.Dialog()
         dialog.ok(ADDON, 'Please install XMBC addon : Webviewer', 'This is required for authorizing the Dropbox addon.')
     
-def doNormalTokenDialog():
-    flow = client.DropboxOAuth2FlowNoRedirect(APP_KEY, APP_SECRET)
-    authorize_url = flow.start()
-    xbmcplugin.endOfDirectory(int(sys.argv[1]),succeeded=False)
+def doNormalTokenDialog(authorize_url):
     from webviewer import webviewer #@UnresolvedImport
-    autoforms = [
-                     {'action':'/login',
-                      'autofill': 'login_email=joost.kop@gmail.com,login_password=dropAlfagt1972',
-                      'autosubmit': 'true'},
-                     {'name':'login-form',
-                      'action':'/1/oauth2/authorize' } 
-                 ]
+    html = None
+    #get user name
+    message = 'Enter dropbox login name (email)'
+    keyboard = xbmc.Keyboard('',message)
+    keyboard.doModal()
+    if not keyboard.isConfirmed(): return html
+    user = keyboard.getText()
+    #start webViewer
+    autoforms = [{  'url':'https://www.dropbox.com.',
+                    'action':'/login',
+                    'autofill': 'login_email=%s'%(user),
+                    'autosubmit': 'false'}, #if autosubmit=true autoforms variable will be deleted!
+                 {  'url':'https://www.dropbox.com/1/oauth2/authorize.',
+                    #'name':'login-form',
+                    'action':'1/oauth2/authorize'
+                  }]
+    autoClose = {   'url':'https://www.dropbox.com/1/oauth2/authorize$',
+                    'html':'(?s).+class="auth-code".+',
+                    'heading':'Authorization finished',
+                    'message':'Please close the WebViewer'}
+    url,html = webviewer.getWebResult(authorize_url,autoForms=autoforms,autoClose=autoClose) #@UnusedVariable
+    return html
 
-    autoClose = {    #'url':'.+authorize',
-                    'html':'.(Enter this code into).',
-                    'heading':'geen idee',
-                    'message':'doen we later'}
-    url,html = webviewer.getWebResult(authorize_url,dialog=True,autoForms=autoforms,autoClose=autoClose) #@UnusedVariable
-    print 'AUTH RESPONSE URL: ' + url
-
+if ( __name__ == "__main__" ):
+    doTokenDialog()
