@@ -1,2 +1,4 @@
 [B]0.1.0b:[/B]
 Initial version
+- Browse you dropbox files and folders
+- View pictures (with slideshow of XBMC)
