@@ -21,24 +21,24 @@ msgid "General"
 msgstr "Algemeen"
 
 msgctxt "#30001"
-msgid "Dropbox username"
-msgstr "Dropbox gebruikersnaam"
+msgid "Please enter your dropbox login name (email)"
+msgstr "Vul uw dropbox gebruikersnaam (email) in, aub"
 
 msgctxt "#30002"
-msgid "Dropbox password"
-msgstr "Dropbox wachtwoord"
+msgid "Dropbox authorization required."
+msgstr "Dropbox autorisatie vereist."
 
 msgctxt "#30003"
-msgid "Clear Dropbox authorization code"
-msgstr "Dropbox toegangs code verwijderen"
+msgid "Please login and authorize (allow) this addon."
+msgstr "Login en sta deze addon toe (allow), aub."
 
 msgctxt "#30004"
-msgid "Browse folders"
-msgstr "Bladeren in mappen"
+msgid "Authorization finished"
+msgstr "Autorisatie beeindigd"
 
 msgctxt "#30005"
-msgid "Browse albums"
-msgstr "Bladeren in albums"
+msgid "Clear Dropbox authorization code"
+msgstr "Dropbox toegangs code verwijderen"
 
 msgctxt "#30006"
 msgid "Dropbox authorization code"
@@ -51,3 +51,32 @@ msgstr "Locatie voor cache bestanden"
 msgctxt "#30008"
 msgid "View relevant files only"
 msgstr "Toon alleen relevante bestanden"
+
+msgctxt "#30009"
+msgid "Please close the Web Viewer."
+msgstr "Sluit de Web Viewer, aub."
+
+#error messages
+msgctxt "#31000"
+msgid "Problem getting the access code!"
+msgstr "Probleem met het verkrijgen van de toegangs code!"
+
+msgctxt "#31001"
+msgid "Authorization failed, no code received!"
+msgstr "Autorisatie gefaalt, geen code ontvangen!"
+
+msgctxt "#31002"
+msgid "Did you authorize (allow)?"
+msgstr "Heeft u toestemming gegeven?"
+
+msgctxt "#31003"
+msgid "Please install XMBC addon: Webviewer."
+msgstr "Installeer XBMC addon: WebViewer, aub."
+
+msgctxt "#31004"
+msgid "This is required for authorizing this addon."
+msgstr "Dit is vereist voor autorisatie van deze addon."
+
+msgctxt "#31005"
+msgid "Dropbox authorization code failure!"
+msgstr "Dropbox toegangs code fout!"

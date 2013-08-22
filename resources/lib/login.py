@@ -19,7 +19,7 @@
 # *
 # */
 
-import xbmcplugin
+import xbmcaddon
 import xbmcgui
 import re
 
@@ -35,6 +35,7 @@ APP_SECRET = '6mbp7ww9hwzzczd'
 # k0c7obmA-mYAAAAAAAAAAfPg6WbRBBLICalu7FU0aUg
 # nZ3O9v_AAwQAAAAAAAAAAemaJUPi4ON8D3HFN2voubU
 # 
+
 
 def doTokenDialog():
     try:
@@ -54,22 +55,22 @@ def doTokenDialog():
                 access_token, user_id = flow.finish(code)
                 log('Received token: %s'%access_token)
                 #save the token in settings
-                xbmcaddon.Addon().setSetting('access_token', access_token)
+                ADDON.setSetting('access_token', access_token)
             except rest.ErrorResponse, e:
                 dialog = xbmcgui.Dialog()
-                dialog.ok(ADDON, 'Problem getting the access token', '%s'%str(e))
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31000), '%s'%str(e))
         else:
             dialog = xbmcgui.Dialog()
-            dialog.ok(ADDON, 'Authorization failed, no code received', 'Did you authorize (allow)?')
+            dialog.ok(ADDON_NAME, LANGUAGE_STRING(31001), LANGUAGE_STRING(31002))
     except:
         dialog = xbmcgui.Dialog()
-        dialog.ok(ADDON, 'Please install XMBC addon : Webviewer', 'This is required for authorizing the Dropbox addon.')
+        dialog.ok(ADDON_NAME, LANGUAGE_STRING(31003), LANGUAGE_STRING(31004))
     
 def doNormalTokenDialog(authorize_url):
     from webviewer import webviewer #@UnresolvedImport
     html = None
     #get user name
-    message = 'Enter dropbox login name (email)'
+    message = LANGUAGE_STRING(30001)
     keyboard = xbmc.Keyboard('',message)
     keyboard.doModal()
     if not keyboard.isConfirmed(): return html
@@ -85,8 +86,8 @@ def doNormalTokenDialog(authorize_url):
                   }]
     autoClose = {   'url':'https://www.dropbox.com/1/oauth2/authorize$',
                     'html':'(?s).+class="auth-code".+',
-                    'heading':'Authorization finished',
-                    'message':'Please close the WebViewer'}
+                    'heading':LANGUAGE_STRING(30004),
+                    'message':LANGUAGE_STRING(30009)}
     url,html = webviewer.getWebResult(authorize_url,autoForms=autoforms,autoClose=autoClose) #@UnusedVariable
     return html
 

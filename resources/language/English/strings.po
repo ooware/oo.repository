@@ -21,23 +21,23 @@ msgid "General"
 msgstr ""
 
 msgctxt "#30001"
-msgid "reuse"
+msgid "Please enter your dropbox login name (email)"
 msgstr ""
 
 msgctxt "#30002"
-msgid "reuse"
+msgid "Dropbox authorization required."
 msgstr ""
 
 msgctxt "#30003"
-msgid "Clear Dropbox authorization code"
-msgstr "Dropbox toegangs code verwijderen"
+msgid "Please login and authorize (allow) this addon."
+msgstr ""
 
 msgctxt "#30004"
-msgid "Browse folders"
+msgid "Authorization finished"
 msgstr ""
 
 msgctxt "#30005"
-msgid "reuse"
+msgid "Clear Dropbox authorization code"
 msgstr ""
 
 msgctxt "#30006"
@@ -50,4 +50,34 @@ msgstr ""
 
 msgctxt "#30008"
 msgid "View relevant files only"
+msgstr ""
+
+msgctxt "#30009"
+msgid "Please close the Web Viewer."
+msgstr ""
+
+
+#error messages
+msgctxt "#31000"
+msgid "Problem getting the access code!"
+msgstr ""
+
+msgctxt "#31001"
+msgid "Authorization failed, no code received!"
+msgstr ""
+
+msgctxt "#31002"
+msgid "Did you authorize (allow)?"
+msgstr ""
+
+msgctxt "#31003"
+msgid "Please install XMBC addon: Webviewer."
+msgstr ""
+
+msgctxt "#31004"
+msgid "This is required for authorizing this addon."
+msgstr ""
+
+msgctxt "#31005"
+msgid "Dropbox authorization code failure!"
 msgstr ""

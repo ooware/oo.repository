@@ -37,6 +37,24 @@ try:
 except:
     import storageserverdummy as StorageServer
 
+def command():
+    """a decorator for handling authentication and exceptions"""
+    def decorate(f):
+        def wrapper(self, *args):
+            try:
+                return f(self, *args)
+            except TypeError, e:
+                log_error('TypeError: %s' %str(e))
+            except rest.ErrorResponse, e:
+                self.DropboxAPI = None
+                msg = e.user_error_msg or str(e)
+                log_error("%s failed: %s"%(f.__name__, msg) )
+                dialog = xbmcgui.Dialog()
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
+
+        wrapper.__doc__ = f.__doc__
+        return wrapper
+    return decorate
 
 class XBMCDropBoxClient(object):
     DropboxAPI = None
@@ -52,9 +70,9 @@ class XBMCDropBoxClient(object):
 
     def __init__( self ):
         #get Settings
-        token = xbmcaddon.Addon().getSetting('access_token').decode("utf-8")
+        token = ADDON.getSetting('access_token').decode("utf-8")
         #get storage server
-        self._cache = StorageServer.StorageServer(ADDON, 168) # (Your plugin name, Cache time in hours)
+        self._cache = StorageServer.StorageServer(ADDON_NAME, 168) # (Your plugin name, Cache time in hours)
         #get Dropbox API (handle)
         if self.DropboxAPI == None:
             log("Getting dropbox client with token: %s"%token)
@@ -63,7 +81,7 @@ class XBMCDropBoxClient(object):
             except rest.ErrorResponse, e:
                 msg = e.user_error_msg or str(e)
                 dialog = xbmcgui.Dialog()
-                dialog.ok(ADDON, 'Error login into Dropbox:', '%s' % (msg))
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
 
     def getFolderContents(self, path):
         contents = []
@@ -104,6 +122,10 @@ class XBMCDropBoxClient(object):
                         resp = stored
                     else:
                         log_error("Failed retrieving Metadata: %s"%msg)
+                        self.DropboxAPI = None
+                        msg = e.user_error_msg or str(e)
+                        dialog = xbmcgui.Dialog()
+                        dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
                 else:
                     #When no execption: store new retrieved data
                     log("new/updated Metadata is stored")
@@ -119,6 +141,7 @@ class XBMCDropBoxClient(object):
                         break;
         return resp
 
+    @command()
     def getMediaUrl(self, path):
         '''
         Cache this URL because it takes a lot of time requesting it...

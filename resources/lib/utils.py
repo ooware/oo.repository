@@ -1,22 +1,21 @@
-import os, sys, time, socket, urllib, urllib2, urlparse, httplib, hashlib
-import xbmc, xbmcgui, xbmcplugin, xbmcaddon, xbmcvfs
+import sys, urllib
+import xbmc, xbmcaddon
 
-ADDON           = xbmcaddon.Addon().getAddonInfo('id')
+ADDON           = xbmcaddon.Addon(id='plugin.dropbox')
+LANGUAGE_STRING = ADDON.getLocalizedString
+ADDON_NAME      = xbmcaddon.Addon().getAddonInfo('id')
 DATAPATH        = xbmc.translatePath( xbmcaddon.Addon().getAddonInfo('profile') )
-
-APIKEY       = 'ehe9o5q5abevvq5'
-APISECRET    = '6mbp7ww9hwzzczd'
 
 def log(txt):
     if isinstance (txt,str):
         txt = txt.decode("utf-8")
-    message = u'%s: %s' % (ADDON, txt)
+    message = u'%s: %s' % (ADDON_NAME, txt)
     xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGNOTICE)
     
 def log_error(txt):
     if isinstance (txt,str):
         txt = txt.decode("utf-8")
-    message = u'%s: %s' % (ADDON, txt)
+    message = u'%s: %s' % (ADDON_NAME, txt)
     xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGERROR)
 
 def parse_argv():

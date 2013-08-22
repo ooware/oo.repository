@@ -20,6 +20,7 @@
 # */
 
 import xbmcplugin
+import xbmcaddon
 import xbmcgui
 
 import os, sys
@@ -27,6 +28,7 @@ import os, sys
 from resources.lib.utils import *
 from resources.lib.dropboxclient import XBMCDropBoxClient 
  
+
 class FolderBrowser(XBMCDropBoxClient):
     _current_url = ''
     _nrOfItems = 0
@@ -41,7 +43,7 @@ class FolderBrowser(XBMCDropBoxClient):
             #nothing todo
         elif not runAsScript:
             #get Settings
-            self._filterFiles = ("TRUE" == xbmcaddon.Addon().getSetting('filefilter').upper()) 
+            self._filterFiles = ("TRUE" == ADDON.getSetting('filefilter').upper()) 
             #form default url
             self._current_url = sys.argv[0] + sys.argv[2]
             log('Argument List: %s' % str(sys.argv))
@@ -85,14 +87,14 @@ class FolderBrowser(XBMCDropBoxClient):
 if ( __name__ == "__main__" ):
     runAsScript, params = parse_argv()
     if not runAsScript:
-        if xbmcaddon.Addon().getSetting('access_token').decode("utf-8") == '':
+        if ADDON.getSetting('access_token').decode("utf-8") == '':
             import resources.lib.login as login
             dialog = xbmcgui.Dialog()
-            dialog.ok(ADDON, 'Dropbox authorization code required!', 'Starting the process to get this code', 'Please login and authorize (allow) this addon.')
+            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30002), LANGUAGE_STRING(30003) )
             xbmcplugin.endOfDirectory(int(sys.argv[1]),succeeded=False)
             login.doTokenDialog()
-            #xbmcaddon.Addon().openSettings()
-        elif xbmcaddon.Addon().getSetting('access_token').decode("utf-8") != '':
+            #ADDON.openSettings()
+        elif ADDON.getSetting('access_token').decode("utf-8") != '':
         #    try:
             browser = FolderBrowser()
             #done
@@ -107,5 +109,5 @@ if ( __name__ == "__main__" ):
             import resources.lib.login as login
             login.doTokenDialog()
         elif action == 'clear_token':
-            xbmcaddon.Addon().setSetting('access_token', '')
+            ADDON.setSetting('access_token', '')
         
