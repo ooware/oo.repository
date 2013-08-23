@@ -2,3 +2,9 @@
 Initial version
 - Browse you dropbox files and folders
 - View pictures (with slideshow of XBMC)
+
+[B]0.1.1b:[/B]
+Bug fixes:
+- remove pkg_resources dependency, not available on Raspbmc
+- Fix using special characters (like &) in folder/file names
+- Fix not be able to go deeper than 2 directories
