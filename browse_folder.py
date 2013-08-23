@@ -32,45 +32,45 @@ from resources.lib.dropboxclient import XBMCDropBoxClient
 
 class FolderBrowser(XBMCDropBoxClient):
     _current_url = ''
+    _current_path = ''
     _nrOfItems = 0
     _filterFiles = False
         
     def __init__( self ):
         super(FolderBrowser, self).__init__()
         runAsScript, params = parse_argv()
-        if int(sys.argv[1]) < 0:
-            #handle a single file
-            path = params.get('path', '')
-            #nothing todo
-        elif not runAsScript:
-            #get Settings
-            self._filterFiles = ("TRUE" == ADDON.getSetting('filefilter').upper()) 
-            #form default url
-            self._current_url = sys.argv[0]
-            log('Argument List: %s' % str(sys.argv))
-            path = urllib.unquote( params.get('path', '') )
-            resp = self.getMetaData(path, directory=True)
-            if resp != None and 'contents' in resp:
-                contents = resp['contents']
-            else:
-                contents = []
-            self._nrOfItems = len(contents)
-            for f in contents:
-                fpath = f['path']
-                name = os.path.basename(fpath)
-                if f['is_dir']:
-                    log("new folder: %s"%fpath.decode("utf-8"))
-                    self.addFolder(name, fpath)
-                else:
-                    self.addFile(name, fpath, f['thumb_exists'])
-            xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
-            xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)
-            xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_FILE)
-            xbmcplugin.endOfDirectory(int(sys.argv[1]))
+        #get Settings
+        self._filterFiles = ("TRUE" == ADDON.getSetting('filefilter').upper()) 
+        #form default url
+        self._current_url = sys.argv[0]
+        log('Argument List: %s' % str(sys.argv))
+        self._current_path = urllib.unquote( params.get('path', '') )
+        #Add sorting options
+        xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
+        xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)
+        xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_FILE)
 
+    def buildList(self):
+        resp = self.getMetaData(self._current_path, directory=True)
+        if resp != None and 'contents' in resp:
+            contents = resp['contents']
+        else:
+            contents = []
+        self._nrOfItems = len(contents)
+        for f in contents:
+            fpath = f['path']
+            name = os.path.basename(fpath)
+            if f['is_dir']:
+                self.addFolder(name, fpath)
+            else:
+                self.addFile(name, fpath, f['thumb_exists'])
+        
+    def show(self):
+        xbmcplugin.endOfDirectory(int(sys.argv[1]))
  
     def addFile(self, name, path, thumb=False):
         url=''
+        meta = None
         if thumb:
             url=self.getMediaUrl(path)
             meta = self.getMetaData(path)
@@ -79,12 +79,28 @@ class FolderBrowser(XBMCDropBoxClient):
             url=self._current_url+'?path='+urllib.quote(path)
         if url != '':
             listItem = xbmcgui.ListItem(name)
+            if meta:
+                self.metadata2ItemInfo(listItem, meta, 'pictures')
             xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._nrOfItems)
     
     def addFolder(self, name, path):
         url=self._current_url+'?path='+urllib.quote(path)
         listItem = xbmcgui.ListItem(name)
+        #no useful metadata of folder
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._nrOfItems)
+
+    def metadata2ItemInfo(self, item, metadata, mediatype):
+        # metadata item : ListItem.property
+        convertTable = {'path':'path',
+                        'modified':'date',
+                        'client_mtime':'date', #prefered date
+                        'bytes':'size'}
+        #added value for picture is only the size. the other data is retrieved from the photo itself...
+        info = {}
+        for key in convertTable:
+            if key in metadata:
+                info[convertTable[key]] = str(metadata[key])
+        if len(info) > 0: item.setInfo(mediatype, info)
 
 
 if ( __name__ == "__main__" ):
@@ -98,12 +114,14 @@ if ( __name__ == "__main__" ):
             login.doTokenDialog()
             #ADDON.openSettings()
         elif ADDON.getSetting('access_token').decode("utf-8") != '':
-        #    try:
-            browser = FolderBrowser()
-            #done
-        #    except TypeError, e:
-        #        dialog = xbmcgui.Dialog()
-        #        dialog.ok(ADDON, 'There was an error:', '%s' % (str(e)))
+            if int(sys.argv[1]) < 0:
+                #handle a single file
+                path = params.get('path', '')
+                #nothing todo
+            else:
+                browser = FolderBrowser()
+                browser.buildList()
+                browser.show()
         else:
             xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
     else: # run as script
