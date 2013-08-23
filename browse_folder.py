@@ -23,6 +23,7 @@ import xbmcplugin
 import xbmcaddon
 import xbmcgui
 
+import urllib
 import os, sys
 
 from resources.lib.utils import *
@@ -45,9 +46,9 @@ class FolderBrowser(XBMCDropBoxClient):
             #get Settings
             self._filterFiles = ("TRUE" == ADDON.getSetting('filefilter').upper()) 
             #form default url
-            self._current_url = sys.argv[0] + sys.argv[2]
+            self._current_url = sys.argv[0]
             log('Argument List: %s' % str(sys.argv))
-            path = params.get('path', '')
+            path = urllib.unquote( params.get('path', '') )
             resp = self.getMetaData(path, directory=True)
             if resp != None and 'contents' in resp:
                 contents = resp['contents']
@@ -55,11 +56,13 @@ class FolderBrowser(XBMCDropBoxClient):
                 contents = []
             self._nrOfItems = len(contents)
             for f in contents:
-                name = os.path.basename(f['path'])
+                fpath = f['path']
+                name = os.path.basename(fpath)
                 if f['is_dir']:
-                    self.addFolder(name, f['path'])
+                    log("new folder: %s"%fpath.decode("utf-8"))
+                    self.addFolder(name, fpath)
                 else:
-                    self.addFile(name, f['path'], f['thumb_exists'])
+                    self.addFile(name, fpath, f['thumb_exists'])
             xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
             xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)
             xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_FILE)
@@ -73,13 +76,13 @@ class FolderBrowser(XBMCDropBoxClient):
             meta = self.getMetaData(path)
             #print "meta: ", meta
         elif not self._filterFiles:
-            url=self._current_url+'?path='+path
+            url=self._current_url+'?path='+urllib.quote(path)
         if url != '':
             listItem = xbmcgui.ListItem(name)
             xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._nrOfItems)
     
     def addFolder(self, name, path):
-        url=self._current_url+'?path='+path
+        url=self._current_url+'?path='+urllib.quote(path)
         listItem = xbmcgui.ListItem(name)
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._nrOfItems)
 
