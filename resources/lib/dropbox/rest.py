@@ -4,7 +4,8 @@ dropbox.client and dropbox.session modules. You shouldn't need to use this.
 """
 
 import httplib
-import pkg_resources
+#import pkg_resources
+import os
 import re
 import socket
 import ssl
@@ -20,7 +21,9 @@ except ImportError:
 
 SDK_VERSION = "1.6"
 
-TRUSTED_CERT_FILE = pkg_resources.resource_filename(__name__, 'trusted-certs.crt')
+import util
+#TRUSTED_CERT_FILE = pkg_resources.resource_filename(__name__, 'trusted-certs.crt')
+TRUSTED_CERT_FILE = os.path.join(os.path.dirname(util.__file__), 'trusted-certs.crt')
 
 class ProperHTTPSConnection(httplib.HTTPConnection):
     """
