@@ -56,6 +56,11 @@ msgctxt "#30009"
 msgid "Please close the Web Viewer."
 msgstr "Sluit de Web Viewer, aub."
 
+msgctxt "#30010"
+msgid "Show me more..."
+msgstr "Toon me meer..."
+
+
 #error messages
 msgctxt "#31000"
 msgid "Problem getting the access code!"

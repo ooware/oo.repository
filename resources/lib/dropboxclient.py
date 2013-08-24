@@ -118,7 +118,7 @@ class XBMCDropBoxClient(object):
                     msg = e.user_error_msg or str(e)
                     if '304' in msg:
                         #cached data is still the same
-                        log("Metadata using stored data")
+                        log_debug("Metadata using stored data")
                         resp = stored
                     else:
                         log_error("Failed retrieving Metadata: %s"%msg)
@@ -128,7 +128,7 @@ class XBMCDropBoxClient(object):
                         dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
                 else:
                     #When no execption: store new retrieved data
-                    log("new/updated Metadata is stored")
+                    log_debug("new/updated Metadata is stored")
                     self._cache.set(dirname, repr(resp))
             else:
                 #get the file metadata using the stored data
@@ -142,7 +142,7 @@ class XBMCDropBoxClient(object):
         return resp
 
     @command()
-    def getMediaUrl(self, path):
+    def getMediaUrl(self, path, cachedonly=False):
         '''
         Cache this URL because it takes a lot of time requesting it...
         If the mediaUrl is still valid, within the margin, then don't
@@ -163,11 +163,16 @@ class XBMCDropBoxClient(object):
                 if(until > (currentTime + margin) ):
                     #use stored link
                     resp = stored
-                    log("MediaUrl using stored url")
-        if resp == None and self.DropboxAPI != None:
+                    log_debug("MediaUrl using stored url.")
+                else:
+                    log_debug("MediaUrl expired. End time was: %s"%stored['expires'])
+        if not cachedonly and resp == None and self.DropboxAPI != None:
             resp = self.DropboxAPI.media(path)
             #store the link
-            log("MediaUrl storing url")
+            log_debug("MediaUrl storing url.")
             self._cache.set("mediaUrl:"+path, repr(resp))
-        return resp['url']
+        if resp:
+            return resp['url']
+        else:
+            return '' 
     

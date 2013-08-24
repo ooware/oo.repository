@@ -56,6 +56,10 @@ msgctxt "#30009"
 msgid "Please close the Web Viewer."
 msgstr ""
 
+msgctxt "#30010"
+msgid "Show me more..."
+msgstr ""
+
 
 #error messages
 msgctxt "#31000"

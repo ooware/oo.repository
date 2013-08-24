@@ -27,13 +27,16 @@ import urllib
 import os, sys
 
 from resources.lib.utils import *
-from resources.lib.dropboxclient import XBMCDropBoxClient 
- 
+from resources.lib.dropboxclient import XBMCDropBoxClient
+
+MAX_MEDIA_ITEMS_TO_LOAD_ONCE = 15
 
 class FolderBrowser(XBMCDropBoxClient):
     _current_url = ''
     _current_path = ''
-    _nrOfItems = 0
+    _nrOfMediaItems = 0
+    _loadedMediaItems = 0
+    _totalItems = 0
     _filterFiles = False
         
     def __init__( self ):
@@ -45,6 +48,7 @@ class FolderBrowser(XBMCDropBoxClient):
         self._current_url = sys.argv[0]
         log('Argument List: %s' % str(sys.argv))
         self._current_path = urllib.unquote( params.get('path', '') )
+        self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
         #Add sorting options
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)
@@ -56,44 +60,66 @@ class FolderBrowser(XBMCDropBoxClient):
             contents = resp['contents']
         else:
             contents = []
-        self._nrOfItems = len(contents)
+        self._totalItems = len(contents)
+        #first add all the folders
         for f in contents:
-            fpath = f['path']
-            name = os.path.basename(fpath)
             if f['is_dir']:
+                fpath = f['path']
+                name = os.path.basename(fpath)
                 self.addFolder(name, fpath)
-            else:
-                self.addFile(name, fpath, f['thumb_exists'])
+        #Now add the maximum number of defined files
+        for f in contents:
+            if not f['is_dir']:
+                fpath = f['path']
+                name = os.path.basename(fpath)
+                self.addFile(name, fpath)
+            if self._loadedMediaItems >= self._nrOfMediaItems:
+                #don't load more for now
+                break;
+        #Add a "show more" item, for loading more if required
+        if self._loadedMediaItems >= self._nrOfMediaItems:
+            media_items = self._loadedMediaItems+MAX_MEDIA_ITEMS_TO_LOAD_ONCE
+            url=self._current_url+'?path=%s&media_items=%s'%( urllib.quote(self._current_path), (media_items) )
+            listItem = xbmcgui.ListItem( LANGUAGE_STRING(30010) )
+            xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
         
     def show(self):
         xbmcplugin.endOfDirectory(int(sys.argv[1]))
  
-    def addFile(self, name, path, thumb=False):
-        url=''
-        meta = None
-        if thumb:
-            url=self.getMediaUrl(path)
-            meta = self.getMetaData(path)
-            #print "meta: ", meta
-        elif not self._filterFiles:
-            url=self._current_url+'?path='+urllib.quote(path)
-        if url != '':
+    def addFile(self, name, path):
+        url = None
+        listItem = None
+        meta = self.getMetaData(path)
+        #print "meta: ", meta
+        type = 'other'
+        if 'image' in meta['mime_type']:
+            type = 'pictures'
+        elif 'video' in meta['mime_type']:
+            type = 'video'
+        elif 'audio' in meta['mime_type']:
+            type = 'music'
+        if type in ['pictures','video','music']:
             listItem = xbmcgui.ListItem(name)
-            if meta:
-                self.metadata2ItemInfo(listItem, meta, 'pictures')
-            xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._nrOfItems)
+            self._loadedMediaItems += 1
+            url = self.getMediaUrl(path)
+            self.metadata2ItemInfo(listItem, meta, type)
+        elif not self._filterFiles:
+            listItem = xbmcgui.ListItem(name)
+            url='No action'#self._current_url+'?path='+urllib.quote(path)
+        if listItem:
+            xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
     def addFolder(self, name, path):
         url=self._current_url+'?path='+urllib.quote(path)
         listItem = xbmcgui.ListItem(name)
         #no useful metadata of folder
-        xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._nrOfItems)
+        xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._totalItems)
 
     def metadata2ItemInfo(self, item, metadata, mediatype):
         # metadata item : ListItem.property
-        convertTable = {'path':'path',
-                        'modified':'date',
-                        'client_mtime':'date', #prefered date
+        convertTable = {#'path':'path',
+                        #'modified':'date',
+                        #'client_mtime':'date', #prefered date
                         'bytes':'size'}
         #added value for picture is only the size. the other data is retrieved from the photo itself...
         info = {}
@@ -101,7 +127,8 @@ class FolderBrowser(XBMCDropBoxClient):
             if key in metadata:
                 info[convertTable[key]] = str(metadata[key])
         if len(info) > 0: item.setInfo(mediatype, info)
-
+    
+    
 
 if ( __name__ == "__main__" ):
     runAsScript, params = parse_argv()
@@ -115,9 +142,13 @@ if ( __name__ == "__main__" ):
             #ADDON.openSettings()
         elif ADDON.getSetting('access_token').decode("utf-8") != '':
             if int(sys.argv[1]) < 0:
-                #handle a single file
-                path = params.get('path', '')
-                #nothing todo
+                #handle action of a file (or a "Show me more..." item)
+                #path = urllib.unquote( params.get('path', '') )
+                media_items = params.get('media_items', '')
+                if media_items != '':
+                    #Loading more media items requested...
+                    path = sys.argv[0] + sys.argv[2]
+                    xbmc.executebuiltin('container.update(%s, replace)'%path)
             else:
                 browser = FolderBrowser()
                 browser.buildList()

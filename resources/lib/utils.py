@@ -18,6 +18,12 @@ def log_error(txt):
     message = u'%s: %s' % (ADDON_NAME, txt)
     xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGERROR)
 
+def log_debug(txt):
+    if isinstance (txt,str):
+        txt = txt.decode("utf-8")
+    message = u'%s: %s' % (ADDON_NAME, txt)
+    xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGDEBUG)
+
 def parse_argv():
     # parse argv
     try:
