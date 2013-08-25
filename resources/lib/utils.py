@@ -1,4 +1,4 @@
-import sys, urllib
+import os, sys, urllib
 import xbmc, xbmcaddon
 
 ADDON           = xbmcaddon.Addon(id='plugin.dropbox')
@@ -41,3 +41,12 @@ def parse_argv():
         # started as script
         params = dict( arg.split( "=" ) for arg in sys.argv[ 1 ].split( "&" ) )
         return True, params
+
+def replaceFileExtension(path, extension):
+    extension = '.' + extension
+    if extension in path[-len(extension):]:
+        #file extension is ok, nothing to do
+        return path
+    else:
+        newPath = path.rsplit('.',1)[0]
+        return newPath + extension

@@ -20,14 +20,13 @@
 # */
 
 import xbmcplugin
-import xbmcaddon
 import xbmcgui
 
 import urllib
-import os, sys
+import os
 
 from resources.lib.utils import *
-from resources.lib.dropboxclient import XBMCDropBoxClient
+from resources.lib.dropboxclient import XBMCDropBoxClient, FileLoader
 
 MAX_MEDIA_ITEMS_TO_LOAD_ONCE = 15
 
@@ -39,9 +38,8 @@ class FolderBrowser(XBMCDropBoxClient):
     _totalItems = 0
     _filterFiles = False
         
-    def __init__( self ):
+    def __init__( self, params ):
         super(FolderBrowser, self).__init__()
-        runAsScript, params = parse_argv()
         #get Settings
         self._filterFiles = ("TRUE" == ADDON.getSetting('filefilter').upper()) 
         #form default url
@@ -84,25 +82,31 @@ class FolderBrowser(XBMCDropBoxClient):
             xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
         
     def show(self):
-        xbmcplugin.endOfDirectory(int(sys.argv[1]))
+        xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc=False)
  
     def addFile(self, name, path):
         url = None
         listItem = None
         meta = self.getMetaData(path)
         #print "meta: ", meta
-        type = 'other'
+        mediatype = 'other'
         if 'image' in meta['mime_type']:
-            type = 'pictures'
+            mediatype = 'pictures'
         elif 'video' in meta['mime_type']:
-            type = 'video'
+            mediatype = 'video'
         elif 'audio' in meta['mime_type']:
-            type = 'music'
-        if type in ['pictures','video','music']:
+            mediatype = 'music'
+        if mediatype in ['pictures','video','music']:
             listItem = xbmcgui.ListItem(name)
             self._loadedMediaItems += 1
-            url = self.getMediaUrl(path)
-            self.metadata2ItemInfo(listItem, meta, type)
+            mediaFile = FileLoader(self.DropboxAPI, path, meta)
+            tumb = mediaFile.getThumbnail()
+            if not tumb:
+                tumb = '' 
+            listItem.setThumbnailImage(tumb)
+            url = mediaFile.getFile()
+            #url = self.getMediaUrl(path)
+            self.metadata2ItemInfo(listItem, meta, mediatype)
         elif not self._filterFiles:
             listItem = xbmcgui.ListItem(name)
             url='No action'#self._current_url+'?path='+urllib.quote(path)
@@ -150,7 +154,7 @@ if ( __name__ == "__main__" ):
                     path = sys.argv[0] + sys.argv[2]
                     xbmc.executebuiltin('container.update(%s, replace)'%path)
             else:
-                browser = FolderBrowser()
+                browser = FolderBrowser(params)
                 browser.buildList()
                 browser.show()
         else:

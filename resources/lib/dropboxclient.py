@@ -20,13 +20,12 @@
 # */
 
 import xbmc
-import xbmcplugin
 import xbmcgui
-import xbmcaddon
 import xbmcvfs
 
-import os, sys
+import os
 import time
+import threading
 
 from utils import *
 
@@ -130,6 +129,7 @@ class XBMCDropBoxClient(object):
                     #When no execption: store new retrieved data
                     log_debug("new/updated Metadata is stored")
                     self._cache.set(dirname, repr(resp))
+                    #todo, also remove any cached files/dirs if needed!
             else:
                 #get the file metadata using the stored data
                 resp = stored
@@ -176,3 +176,114 @@ class XBMCDropBoxClient(object):
         else:
             return '' 
     
+
+class FileLoader(threading.Thread):
+    DropboxAPI = None
+    _started = False
+    _metadata = None
+    
+    def __init__( self, DropboxAPI, path, metadata):
+        threading.Thread.__init__(self)
+        #Use user defined location?
+        datapath = ADDON.getSetting('cachepath').decode("utf-8")
+        if datapath == '' or os.path.normpath(datapath) == '':
+            #get the default path 
+            datapath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
+        self._shadowPath = datapath + '/shadow/'
+        self._thumbPath = datapath + '/thumb/'
+        self.DropboxAPI = DropboxAPI
+        self._dropboxPath = path
+        self._metadata = metadata
+
+    def run(self):
+        #get thumbnail
+        if not xbmc.abortRequested and self._metadata['thumb_exists']:
+            location = self._getThumbLocation(self._dropboxPath)
+            #Check if thumb already exists
+            #todo, use database checking for this!
+            if not xbmcvfs.exists(location):
+                #Doesn't exist so download it.
+                self._getThumbnail(self._dropboxPath)
+            else:
+                log_debug("Thumbnail already downloaded: %s"%location)
+        #Get original file
+        if not xbmc.abortRequested:
+            location = self._getShadowLocation(self._dropboxPath)
+            #Check if thumb already exists
+            #todo, use database checking for this!
+            if not xbmcvfs.exists(location):
+                #Doesn't exist so download it.
+                self._getFile(self._dropboxPath)
+            else:
+                log_debug("Original file already downloaded: %s"%location)
+        
+    def getThumbnail(self):
+        if self._metadata['thumb_exists']:
+            if not self._started:
+                self._started = True
+                self.start()
+            return self._getThumbLocation(self._dropboxPath)
+        else:
+            return None
+
+    def getFile(self):
+        if not self._started:
+            self._started = True
+            self.start()
+        return self._getShadowLocation(self._dropboxPath)
+    
+    def _getThumbLocation(self, path):
+        #jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital art.
+        location = replaceFileExtension(path, 'jpg')
+        location = self._thumbPath + location
+        location = os.path.normpath(location)
+        return location
+
+    def _getThumbnail(self, path):
+        location = self._getThumbLocation(path)
+        dirName = os.path.dirname(location)
+        # create the data dir if needed
+        if not xbmcvfs.exists( dirName ):
+            xbmcvfs.mkdirs( dirName )
+        try:
+            cacheFile =open(location, 'w')
+            #download the file
+            #jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital art.
+            tumbFile = self.DropboxAPI.thumbnail(path, size='large', format='JPEG')
+            cacheFile.write( tumbFile.read() )
+            cacheFile.close()
+            log_debug("Downloaded file to: %s"%location)
+        except IOError, e:
+            msg = str(e)
+            log_error('Failed saving file %s. Error: %s' %(location,msg) )
+        except rest.ErrorResponse, e:
+            msg = e.user_error_msg or str(e)
+            log_error('Failed downloading file %s. Error: %s' %(location,msg))
+        return location
+
+    def _getShadowLocation(self, path):
+        location = self._shadowPath + path
+        location = os.path.normpath(location)
+        return location
+    
+    def _getFile(self, path):
+        location = self._getShadowLocation(path)
+        dirName = os.path.dirname(location)
+        # create the data dir if needed
+        if not xbmcvfs.exists( dirName ):
+            xbmcvfs.mkdirs( dirName )
+        try:
+            #log("Download file to: %s"%location)
+            cacheFile =open(location, 'w')
+            #download the file
+            orgFile = self.DropboxAPI.get_file(path)
+            cacheFile.write( orgFile.read())
+            cacheFile.close()
+            log_debug("Downloaded file to: %s"%location)
+        except IOError, e:
+            msg = str(e)
+            log_error('Failed saving file %s. Error: %s' %(location,msg) )
+        except rest.ErrorResponse, e:
+            msg = e.user_error_msg or str(e)
+            log_error('Failed downloading file %s. Error: %s' %(location,msg))
+        return location

@@ -5,5 +5,7 @@
         <setting type="sep"/>
         <setting label="30005" type="action" action="RunScript(plugin.dropbox, action=clear_token)"/>
         <setting label="30006" type="text" id="access_token" default=""/>
+        <setting type="sep"/>
+        <setting label="30007" type="folder" id="cachepath" source="auto" option="writeable" default=""/>
     </category>
 </settings>
