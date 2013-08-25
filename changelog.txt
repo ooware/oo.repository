@@ -8,3 +8,13 @@ Bug fixes:
 - remove pkg_resources dependency, not available on Raspbmc
 - Fix using special characters (like &) in folder/file names
 - Fix not be able to go deeper than 2 directories
+
+[B]0.2.0b:[/B]
+- Added the addon to the video and music(audio) menu's
+- For media files:
+   Using thumbnails from dropbox and cache them to disk.
+   Also cache the original files to disk.
+   This is all done in the background, keeping the addon responsive!
+- Added a limit to loading media items (getting the media_urls take
+  long...) and showing a "Show me more..." item to show/load more items in
+  the current folder
