@@ -74,7 +74,7 @@ class XBMCDropBoxClient(object):
         self._cache = StorageServer.StorageServer(ADDON_NAME, 168) # (Your plugin name, Cache time in hours)
         #get Dropbox API (handle)
         if self.DropboxAPI == None:
-            log("Getting dropbox client with token: %s"%token)
+            log_debug("Getting dropbox client with token: %s"%token)
             try:
                 self.DropboxAPI = client.DropboxClient(token)
             except rest.ErrorResponse, e:
@@ -110,7 +110,7 @@ class XBMCDropBoxClient(object):
                 #log("Metadata using stored hash: %s"%hashstr)
         resp = None
         if self.DropboxAPI != None:
-            if stored == '':
+            if directory or stored == '':
                 try:
                     resp = self.DropboxAPI.metadata(path=dirname, hash=hashstr)
                 except rest.ErrorResponse, e:
@@ -127,7 +127,7 @@ class XBMCDropBoxClient(object):
                         dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
                 else:
                     #When no execption: store new retrieved data
-                    log_debug("new/updated Metadata is stored")
+                    log_debug("New/updated Metadata is stored")
                     self._cache.set(dirname, repr(resp))
                     #todo, also remove any cached files/dirs if needed!
             else:

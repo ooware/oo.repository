@@ -8,10 +8,8 @@
     <import addon="script.common.plugin.cache" version="0.9.1"/>
     <import addon="script.web.viewer" version="0.9.10"/>
   </requires>
-  <extension point="xbmc.python.pluginsource"
-             provides="image"
-             library="browse_folder.py">
-    <provides>image</provides>
+  <extension point="xbmc.python.pluginsource" library="browse_folder.py">
+    <provides>audio image video</provides>
   </extension>
   <extension point="xbmc.addon.metadata">
     <language>en</language>

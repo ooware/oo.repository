@@ -31,22 +31,22 @@ from resources.lib.dropboxclient import XBMCDropBoxClient, FileLoader
 MAX_MEDIA_ITEMS_TO_LOAD_ONCE = 15
 
 class FolderBrowser(XBMCDropBoxClient):
-    _current_url = ''
     _current_path = ''
     _nrOfMediaItems = 0
     _loadedMediaItems = 0
     _totalItems = 0
     _filterFiles = False
+    _contentType = ''
         
     def __init__( self, params ):
         super(FolderBrowser, self).__init__()
         #get Settings
         self._filterFiles = ("TRUE" == ADDON.getSetting('filefilter').upper()) 
         #form default url
-        self._current_url = sys.argv[0]
-        log('Argument List: %s' % str(sys.argv))
+        log_debug('Argument List: %s' % str(sys.argv))
         self._current_path = urllib.unquote( params.get('path', '') )
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
+        self._contentType = params.get('content_type', '')
         #Add sorting options
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)
@@ -77,7 +77,7 @@ class FolderBrowser(XBMCDropBoxClient):
         #Add a "show more" item, for loading more if required
         if self._loadedMediaItems >= self._nrOfMediaItems:
             media_items = self._loadedMediaItems+MAX_MEDIA_ITEMS_TO_LOAD_ONCE
-            url=self._current_url+'?path=%s&media_items=%s'%( urllib.quote(self._current_path), (media_items) )
+            url = self.getUrl(self._current_path, media_items=media_items)
             listItem = xbmcgui.ListItem( LANGUAGE_STRING(30010) )
             xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
         
@@ -90,46 +90,82 @@ class FolderBrowser(XBMCDropBoxClient):
         meta = self.getMetaData(path)
         #print "meta: ", meta
         mediatype = 'other'
+        iconImage = 'DefaultFile.png'
+        showItem = False
+        if not self._filterFiles:
+            showItem = True
         if 'image' in meta['mime_type']:
             mediatype = 'pictures'
+            iconImage = 'DefaultImage.png'
+            if not showItem and (self._contentType == 'image'):
+                showItem = True
         elif 'video' in meta['mime_type']:
             mediatype = 'video'
+            iconImage = 'DefaultVideo.png'
+            if not showItem and (self._contentType == 'video' or self._contentType == 'image'):
+                showItem = True
         elif 'audio' in meta['mime_type']:
             mediatype = 'music'
-        if mediatype in ['pictures','video','music']:
-            listItem = xbmcgui.ListItem(name)
-            self._loadedMediaItems += 1
-            mediaFile = FileLoader(self.DropboxAPI, path, meta)
-            tumb = mediaFile.getThumbnail()
-            if not tumb:
-                tumb = '' 
-            listItem.setThumbnailImage(tumb)
-            url = mediaFile.getFile()
-            #url = self.getMediaUrl(path)
-            self.metadata2ItemInfo(listItem, meta, mediatype)
-        elif not self._filterFiles:
-            listItem = xbmcgui.ListItem(name)
-            url='No action'#self._current_url+'?path='+urllib.quote(path)
-        if listItem:
-            xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
+            iconImage = 'DefaultAudio.png'
+            if not showItem and (self._contentType == 'audio'):
+                showItem = True
+        if showItem:
+            listItem = xbmcgui.ListItem(name, iconImage=iconImage)
+            if mediatype in ['pictures','video','music']:
+                self._loadedMediaItems += 1
+                mediaFile = FileLoader(self.DropboxAPI, path, meta)
+                tumb = mediaFile.getThumbnail()
+                if not tumb:
+                    tumb = '' 
+                listItem.setThumbnailImage(tumb)
+                #listItem.setInfo( type=mediatype, infoLabels={ 'Title': name } ) don't for media items, it screws up the 'default' (file)content scanner
+                url = mediaFile.getFile()
+                #url = self.getMediaUrl(path)
+                self.metadata2ItemInfo(listItem, meta, mediatype)
+            else:
+                listItem.setInfo( type='pictures', infoLabels={ 'Title': name } )
+                self.metadata2ItemInfo(listItem, meta, 'pictures')
+                url='No action'
+            if listItem:
+                xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
     def addFolder(self, name, path):
-        url=self._current_url+'?path='+urllib.quote(path)
-        listItem = xbmcgui.ListItem(name)
+        url=self.getUrl(path)
+        listItem = xbmcgui.ListItem(name,iconImage='DefaultFolder.png', thumbnailImage='DefaultFolder.png')
+        listItem.setInfo( type='pictures', infoLabels={'Title': name} )
         #no useful metadata of folder
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._totalItems)
 
+    def getUrl(self, path, media_items=0):
+        url = sys.argv[0]
+        url += '?path=' + urllib.quote(path)
+        url += '&content_type=' + self._contentType
+        if media_items != 0:
+            url += '&media_items=' + str(media_items)
+        return url
+        
     def metadata2ItemInfo(self, item, metadata, mediatype):
-        # metadata item : ListItem.property
-        convertTable = {#'path':'path',
-                        #'modified':'date',
-                        #'client_mtime':'date', #prefered date
-                        'bytes':'size'}
-        #added value for picture is only the size. the other data is retrieved from the photo itself...
+        # example metadata from Dropbox 
+        #'rev': 'a7d0389464b',
+        #'thumb_exists': False,
+        #'path': '/Music/Backspacer/11 - The End.mp3',
+        #'is_dir': False,
+        #'client_mtime': 'Sat, 27 Feb 2010 11:55:43 +0000'
+        #'icon': 'page_white_sound',
+        #'bytes': 4260601,
+        #'modified': 'Thu, 28 Jun 2012 17:55:59 +0000',
+        #'size': '4.1 MB',
+        #'root': 'dropbox',
+        #'mime_type': 'audio/mpeg',
+        #'revision': 2685
         info = {}
-        for key in convertTable:
-            if key in metadata:
-                info[convertTable[key]] = str(metadata[key])
+        #added value for picture is only the size. the other data is retrieved from the photo itself...
+        if mediatype == 'pictures':
+            info['size'] = str(metadata['bytes'])
+        # For video and music, nothing interesting...
+        # elif mediatype == 'video':
+        # elif mediatype == 'music':
+
         if len(info) > 0: item.setInfo(mediatype, info)
     
     
