@@ -18,3 +18,7 @@ Bug fixes:
 - Added a limit to loading media items (getting the media_urls take
   long...) and showing a "Show me more..." item to show/load more items in
   the current folder
+
+[B]0.2.1b:[/B]
+Added the Official xbmc-dropbox.sourceforge.net Add-on Repository to the
+addon.xml
