@@ -23,7 +23,7 @@ import xbmcplugin
 import xbmcgui
 
 import urllib
-import os
+import os, uuid
 
 from resources.lib.utils import *
 from resources.lib.dropboxclient import XBMCDropBoxClient, FileLoader
@@ -36,7 +36,8 @@ class FolderBrowser(XBMCDropBoxClient):
     _loadedMediaItems = 0
     _totalItems = 0
     _filterFiles = False
-    _contentType = ''
+    _loader = None
+    _session = ''
         
     def __init__( self, params ):
         super(FolderBrowser, self).__init__()
@@ -46,16 +47,24 @@ class FolderBrowser(XBMCDropBoxClient):
         log_debug('Argument List: %s' % str(sys.argv))
         self._current_path = urllib.unquote( params.get('path', '') )
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
-        self._contentType = params.get('content_type', '')
+        self._contentType = params.get('content_type', 'other')
         #Add sorting options
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_FILE)
+        #Set/change 'SessionId' to let the other FolderBrowser know that it has to quit... 
+        self._session = str( uuid.uuid4() ) #generate unique session id
+        self.win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
+        self.win.setProperty('SessionId', self._session)
+        xbmc.sleep(100)
 
     def buildList(self):
         resp = self.getMetaData(self._current_path, directory=True)
         if resp != None and 'contents' in resp:
             contents = resp['contents']
+            #create and start the thread that will download the files
+            self._loader = FileLoader(self.DropboxAPI, self._current_path, contents)
+            self._loader.start()
         else:
             contents = []
         self._totalItems = len(contents)
@@ -65,7 +74,7 @@ class FolderBrowser(XBMCDropBoxClient):
                 fpath = f['path']
                 name = os.path.basename(fpath)
                 self.addFolder(name, fpath)
-        #Now add the maximum number of defined files
+        #Now add the maximum(define) number of files
         for f in contents:
             if not f['is_dir']:
                 fpath = f['path']
@@ -83,7 +92,33 @@ class FolderBrowser(XBMCDropBoxClient):
         
     def show(self):
         xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc=False)
+        #now wait for the FileLoader
+        #We cannot run the FileLoader standalone (without) this plugin(script)
+        # for that we would need to use the xbmc.abortRequested, which becomes
+        # True as soon as we exit this plugin(script)
+        self._loader.stopWhenFinished = True
+        while self._loader.isAlive():
+            if self.mustStop():
+                #force the thread to stop
+                self._loader.stop()
+                #Wait for the thread
+                self._loader.join()
+                break
+            xbmc.sleep(100)
  
+    def mustStop(self):
+        '''When xbmc quits or the plugin(visible menu) is changed, stop this thread'''
+        #win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
+        session = self.win.getProperty('SessionId')
+        if xbmc.abortRequested:
+            log_debug("xbmc.abortRequested")
+            return True
+        elif session != self._session:
+            log_debug("SessionId changed")
+            return True
+        else:
+            return False
+
     def addFile(self, name, path):
         url = None
         listItem = None
@@ -113,13 +148,12 @@ class FolderBrowser(XBMCDropBoxClient):
             listItem = xbmcgui.ListItem(name, iconImage=iconImage)
             if mediatype in ['pictures','video','music']:
                 self._loadedMediaItems += 1
-                mediaFile = FileLoader(self.DropboxAPI, path, meta)
-                tumb = mediaFile.getThumbnail()
+                tumb = self._loader.getThumbnail(path)
                 if not tumb:
                     tumb = '' 
                 listItem.setThumbnailImage(tumb)
                 #listItem.setInfo( type=mediatype, infoLabels={ 'Title': name } ) don't for media items, it screws up the 'default' (file)content scanner
-                url = mediaFile.getFile()
+                url = self._loader.getFile(path)
                 #url = self.getMediaUrl(path)
                 self.metadata2ItemInfo(listItem, meta, mediatype)
             else:
@@ -138,8 +172,8 @@ class FolderBrowser(XBMCDropBoxClient):
 
     def getUrl(self, path, media_items=0):
         url = sys.argv[0]
-        url += '?path=' + urllib.quote(path)
-        url += '&content_type=' + self._contentType
+        url += '?content_type=' + self._contentType
+        url += '&path=' + urllib.quote(path)
         if media_items != 0:
             url += '&media_items=' + str(media_items)
         return url

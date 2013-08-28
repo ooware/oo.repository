@@ -25,7 +25,7 @@ import xbmcvfs
 
 import os
 import time
-import threading
+import threading, Queue
 
 from utils import *
 
@@ -179,8 +179,11 @@ class XBMCDropBoxClient(object):
 
 class FileLoader(threading.Thread):
     DropboxAPI = None
-    _started = False
     _metadata = None
+    _stop = False
+    stopWhenFinished = False
+    _itemsHandled = 0
+    _itemsTotal = 0
     
     def __init__( self, DropboxAPI, path, metadata):
         threading.Thread.__init__(self)
@@ -194,43 +197,79 @@ class FileLoader(threading.Thread):
         self.DropboxAPI = DropboxAPI
         self._dropboxPath = path
         self._metadata = metadata
+        self._thumbList = Queue.Queue() #thread safe
+        self._fileList = Queue.Queue() #thread safe
+#         self._progress = xbmcgui.DialogProgress()
+#         self._progress.create('Dropbox: downloading files...', 'Dropbox: downloading files...')
 
     def run(self):
-        #get thumbnail
-        if not xbmc.abortRequested and self._metadata['thumb_exists']:
-            location = self._getThumbLocation(self._dropboxPath)
-            #Check if thumb already exists
-            #todo, use database checking for this!
-            if not xbmcvfs.exists(location):
-                #Doesn't exist so download it.
-                self._getThumbnail(self._dropboxPath)
-            else:
-                log_debug("Thumbnail already downloaded: %s"%location)
-        #Get original file
-        if not xbmc.abortRequested:
-            location = self._getShadowLocation(self._dropboxPath)
-            #Check if thumb already exists
-            #todo, use database checking for this!
-            if not xbmcvfs.exists(location):
-                #Doesn't exist so download it.
-                self._getFile(self._dropboxPath)
-            else:
-                log_debug("Original file already downloaded: %s"%location)
+        #check if need to quit
+        log_debug("FileLoader started for: %s"%self._dropboxPath)
+        while not self._stop and not self.ready():
+            #First get all the thumbnails(priority), then all the original files
+            thumb2Retrieve = None
+            file2Retrieve = None
+            if not self._thumbList.empty():
+                thumb2Retrieve = self._thumbList.get()
+            elif not self._fileList.empty():
+                file2Retrieve = self._fileList.get()
+            if thumb2Retrieve:
+                location = self._getThumbLocation(thumb2Retrieve)
+                #Check if thumb already exists
+                #todo, use database checking for this!
+                if not xbmcvfs.exists(location):
+                    #Doesn't exist so download it.
+                    self._getThumbnail(thumb2Retrieve)
+                else:
+                    log_debug("Thumbnail already downloaded: %s"%location)
+                self._itemsHandled += 1
+#                 precent = (self._itemsHandled / self._itemsTotal) * 100
+#                 self._progress.update(precent)
+            elif file2Retrieve:
+                location = self._getShadowLocation(file2Retrieve)
+                #Check if thumb already exists
+                #todo, use database checking for this!
+                if not xbmcvfs.exists(location):
+                    #Doesn't exist so download it.
+                    self._getFile(file2Retrieve)
+                else:
+                    log_debug("Original file already downloaded: %s"%location)
+                self._itemsHandled += 1
+#                 precent = (self._itemsHandled / self._itemsTotal) * 100
+#                 self._progress.update(precent)
+            time.sleep(0.100)
+        if self._stop:
+            log_debug("FileLoader stopped (as requested) for: %s"%self._dropboxPath)
+        else:
+            log_debug("FileLoader finished for: %s"%self._dropboxPath)
+#         self._progress.close()
         
-    def getThumbnail(self):
-        if self._metadata['thumb_exists']:
-            if not self._started:
-                self._started = True
-                self.start()
-            return self._getThumbLocation(self._dropboxPath)
+    def stop(self):
+        self._stop = True
+        
+    def ready(self):
+        if self.stopWhenFinished and ( self._thumbList.empty() and self._fileList.empty() ):
+            return True
+        else:
+            return False
+        
+    def getThumbnail(self, path):
+        #get the file metadata
+        for item in self._metadata:
+            if item['path'] == path:
+                metadata = item
+                break;
+        if metadata['thumb_exists']:
+            self._thumbList.put(path)
+            self._itemsTotal += 1
+            return self._getThumbLocation(path)
         else:
             return None
 
-    def getFile(self):
-        if not self._started:
-            self._started = True
-            self.start()
-        return self._getShadowLocation(self._dropboxPath)
+    def getFile(self, path):
+        self._fileList.put(path)
+        self._itemsTotal += 1
+        return self._getShadowLocation(path)
     
     def _getThumbLocation(self, path):
         #jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital art.
