@@ -63,7 +63,7 @@ class FolderBrowser(XBMCDropBoxClient):
         if resp != None and 'contents' in resp:
             contents = resp['contents']
             #create and start the thread that will download the files
-            self._loader = FileLoader(self.DropboxAPI, self._current_path, contents)
+            self._loader = FileLoader(self.DropboxAPI, self._current_path, contents, self._shadowPath, self._thumbPath)
             self._loader.start()
         else:
             contents = []

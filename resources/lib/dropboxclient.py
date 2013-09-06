@@ -22,6 +22,7 @@
 import xbmc
 import xbmcgui
 import xbmcvfs
+import shutil
 
 import os
 import time
@@ -59,7 +60,7 @@ class XBMCDropBoxClient(object):
     DropboxAPI = None
     _cache = None
     
-#todo, fix singleton --> it doesn't work!
+#TODO: fix singleton --> it doesn't work!
     _instance = None
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -70,6 +71,13 @@ class XBMCDropBoxClient(object):
     def __init__( self ):
         #get Settings
         token = ADDON.getSetting('access_token').decode("utf-8")
+        #Use user defined location?
+        datapath = ADDON.getSetting('cachepath').decode("utf-8")
+        if datapath == '' or os.path.normpath(datapath) == '':
+            #get the default path 
+            datapath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
+        self._shadowPath = datapath + '/shadow/'
+        self._thumbPath = datapath + '/thumb/'
         #get storage server
         self._cache = StorageServer.StorageServer(ADDON_NAME, 168) # (Your plugin name, Cache time in hours)
         #get Dropbox API (handle)
@@ -126,10 +134,10 @@ class XBMCDropBoxClient(object):
                         dialog = xbmcgui.Dialog()
                         dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
                 else:
-                    #When no execption: store new retrieved data
+                    #When no exception: store new retrieved data
                     log_debug("New/updated Metadata is stored")
                     self._cache.set(dirname, repr(resp))
-                    #todo, also remove any cached files/dirs if needed!
+                    self._removeCachedFileFolder(resp)
             else:
                 #get the file metadata using the stored data
                 resp = stored
@@ -141,6 +149,53 @@ class XBMCDropBoxClient(object):
                         break;
         return resp
 
+    def _removeCachedFileFolder(self, metadata):
+        cachedLocation = self._shadowPath + metadata['path']
+        cachedLocation = os.path.normpath(cachedLocation)
+        tumbLocation = self._thumbPath + metadata['path']
+        tumbLocation = os.path.normpath(tumbLocation)
+        folderItems = []
+        fileItems = []
+        if xbmcvfs.exists(cachedLocation) or xbmcvfs.exists(tumbLocation):
+            #folderItems = (os.path.basename(item['path']) for item in metadata['contents'] if item['is_dir']) if folder not in folderitems of generator expression does not work...
+            for item in metadata['contents']:
+                if item['is_dir']:
+                    folderItems.append(os.path.basename(item['path']))
+                else:
+                    fileItems.append(os.path.basename(item['path']))
+        #remove shadow files/folders
+        if xbmcvfs.exists(cachedLocation):
+            cachedFolders, cachedFiles = xbmcvfs.listdir(cachedLocation)
+            #check if folders/files needs to be removed
+            for folder in cachedFolders:
+                if folder not in folderItems:
+                    folderName = os.path.join(cachedLocation, folder)
+                    log_debug('Removing cached folder: %s' % (folderName))
+                    shutil.rmtree(folderName)
+            for f in cachedFiles:
+                if f not in fileItems:
+                    fileName = os.path.join(cachedLocation, f)
+                    log_debug('Removing cached file: %s' % (fileName))
+                    os.remove(fileName)
+        #remove tumb files/folders
+        if xbmcvfs.exists(tumbLocation):
+            tumbFolders, tumbFiles = xbmcvfs.listdir(tumbLocation)
+            #check if folders/files needs to be removed
+            for folder in tumbFolders:
+                if folder not in folderItems:
+                    folderName = os.path.join(tumbLocation, folder)
+                    log_debug('Removing tumb folder: %s' % (folderName))
+                    shutil.rmtree(folderName)
+            #first replace the tumb file extention
+            for i, f in enumerate(fileItems):
+                fileItems[i] = replaceFileExtension(f, 'jpg')
+            for f in tumbFiles:
+                if f not in fileItems:
+                    fileName = os.path.join(tumbLocation, f)
+                    log_debug('Removing tumb file: %s' % (fileName))
+                    os.remove(fileName)
+            
+        
     @command()
     def getMediaUrl(self, path, cachedonly=False):
         '''
@@ -185,15 +240,10 @@ class FileLoader(threading.Thread):
     _itemsHandled = 0
     _itemsTotal = 0
     
-    def __init__( self, DropboxAPI, path, metadata):
+    def __init__( self, DropboxAPI, path, metadata, shadowPath, thumbPath):
         threading.Thread.__init__(self)
-        #Use user defined location?
-        datapath = ADDON.getSetting('cachepath').decode("utf-8")
-        if datapath == '' or os.path.normpath(datapath) == '':
-            #get the default path 
-            datapath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-        self._shadowPath = datapath + '/shadow/'
-        self._thumbPath = datapath + '/thumb/'
+        self._shadowPath = shadowPath
+        self._thumbPath = thumbPath
         self.DropboxAPI = DropboxAPI
         self._dropboxPath = path
         self._metadata = metadata
@@ -216,7 +266,7 @@ class FileLoader(threading.Thread):
             if thumb2Retrieve:
                 location = self._getThumbLocation(thumb2Retrieve)
                 #Check if thumb already exists
-                #todo, use database checking for this!
+                # TODO: use database checking for this!
                 if not xbmcvfs.exists(location):
                     #Doesn't exist so download it.
                     self._getThumbnail(thumb2Retrieve)
@@ -228,7 +278,7 @@ class FileLoader(threading.Thread):
             elif file2Retrieve:
                 location = self._getShadowLocation(file2Retrieve)
                 #Check if thumb already exists
-                #todo, use database checking for this!
+                #TODO: use database checking for this!
                 if not xbmcvfs.exists(location):
                     #Doesn't exist so download it.
                     self._getFile(file2Retrieve)
