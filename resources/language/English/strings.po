@@ -77,10 +77,14 @@ msgid "Wrong Passcode!"
 msgstr ""
 
 msgctxt "#30015"
-msgid "Browse Dropbox"
+msgid "Passcode timeout (minutes)"
 msgstr ""
 
 msgctxt "#30016"
+msgid "Browse Dropbox"
+msgstr ""
+
+msgctxt "#30017"
 msgid "Search Dropbox"
 msgstr ""
 

@@ -22,6 +22,8 @@
 import xbmcplugin
 import xbmcgui
 
+import time
+
 from resources.lib.utils import *
 
 def addDir(name, module, contentType, iconImage=''):
@@ -60,22 +62,31 @@ if ( __name__ == "__main__" ):
                     xbmc.executebuiltin('container.update(%s, replace)'%path)
             else:
                 unlocked = True
+                win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
                 if ('true' == ADDON.getSetting('passcodelock').lower()):
-                    print "xbmcgui.getCurrentWindowId(): %s"%xbmcgui.getCurrentWindowId()
-                    win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
-                    unlocked = (win.getProperty('Unlocked').lower() == 'true')
+                    unlockTimeout = float( ADDON.getSetting('passcodetimeout') ) * 60 # to minutes
+                    try:
+                        unlockedTime = float( win.getProperty('Unlocked') )
+                    except ValueError:
+                        log_error('unlockedTime error!')
+                        unlockedTime = 0.0
+                    #unlocked = True when timeout not expired
+                    unlocked = (time.time() < (unlockedTime + unlockTimeout) )
                     if not unlocked:
+                        log('Unlock with passcode required...')
                         message = LANGUAGE_STRING(30013)
-                        keyboard = xbmc.Keyboard('', message, hidden=True)
+                        keyboard = xbmc.Keyboard('', message)
+                        keyboard.setHiddenInput(True)
                         keyboard.doModal()
                         if keyboard.isConfirmed() and keyboard.getText() == ADDON.getSetting('passcode'):
-                            win.setProperty('Unlocked', 'true')
                             unlocked = True
                         else:
                             #Wrong passcode
                             dialog = xbmcgui.Dialog()
                             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30014) )
                 if unlocked:
+                    #update the unlock time
+                    win.setProperty('Unlocked', '%s'%time.time() )
                     if 'module' in params: # Module chosen, load and execute module
                         module = params['module']
                         __import__(module)
@@ -83,12 +94,12 @@ if ( __name__ == "__main__" ):
                         current_module.run(params)
                     else: # No module chosen, list modules
                         contentType = params.get('content_type', 'other')
-                        addDir(LANGUAGE_STRING(30015), 'browse_folder', contentType)
-                        addDir(LANGUAGE_STRING(30016), 'search_dropbox', contentType, iconImage='DefaultAddonProgram.png')
+                        addDir(LANGUAGE_STRING(30016), 'browse_folder', contentType)
+                        addDir(LANGUAGE_STRING(30017), 'search_dropbox', contentType, iconImage='DefaultAddonProgram.png')
                         # Add extra modules here, using addDir(name, module)
                         xbmcplugin.endOfDirectory(int(sys.argv[1]))
                 else:
-                    xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+                    xbmcplugin.endOfDirectory(int(sys.argv[1]), updateListing=True, succeeded=False)
         else:
             xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
     else: # run as script

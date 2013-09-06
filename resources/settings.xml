@@ -10,5 +10,6 @@
         <setting type="sep"/>
         <setting label="30011" type="bool" id="passcodelock" default="false"/>
         <setting label="30012" type="text" id="passcode" option="hidden" enable="eq(-1,true)" default=""/>
+        <setting label="30015" type="slider" id="passcodetimeout" enable="eq(-2,true)" range="1,120" option="int" default="30"/>
     </category>
 </settings>
