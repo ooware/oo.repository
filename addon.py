@@ -1,0 +1,101 @@
+#/*
+# *      Copyright (C) 2013 Joost Kop
+# *
+# *
+# *  This Program is free software; you can redistribute it and/or modify
+# *  it under the terms of the GNU General Public License as published by
+# *  the Free Software Foundation; either version 2, or (at your option)
+# *  any later version.
+# *
+# *  This Program is distributed in the hope that it will be useful,
+# *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+# *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# *  GNU General Public License for more details.
+# *
+# *  You should have received a copy of the GNU General Public License
+# *  along with this program; see the file COPYING.  If not, write to
+# *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+# *  http://www.gnu.org/copyleft/gpl.html
+# *
+# */
+
+import xbmcplugin
+import xbmcgui
+
+from resources.lib.utils import *
+
+def addDir(name, module, contentType, iconImage=''):
+    url = sys.argv[0]
+    url += '?content_type=' + contentType
+    url += "&module=" + module
+    if iconImage == '':
+        if contentType == 'audio':
+            iconImage = 'DefaultAddonMusic.png'
+        elif contentType == 'video':
+            iconImage = 'DefaultAddonVideo.png'
+        elif contentType == 'image':
+            iconImage = 'DefaultAddonPicture.png'
+    listItem = xbmcgui.ListItem(name, iconImage=iconImage)
+    xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True)
+
+ 
+if ( __name__ == "__main__" ):
+    runAsScript, params = parse_argv()
+    if not runAsScript:
+        if ADDON.getSetting('access_token').decode("utf-8") == '':
+            import resources.lib.login as login
+            dialog = xbmcgui.Dialog()
+            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30002), LANGUAGE_STRING(30003) )
+            xbmcplugin.endOfDirectory(int(sys.argv[1]),succeeded=False)
+            login.doTokenDialog()
+            #ADDON.openSettings()
+        elif ADDON.getSetting('access_token').decode("utf-8") != '':
+            if int(sys.argv[1]) < 0:
+                #handle action of a file (or a "Show me more..." item)
+                #path = urllib.unquote( params.get('path', '') )
+                media_items = params.get('media_items', '')
+                if media_items != '':
+                    #Loading more media items requested...
+                    path = sys.argv[0] + sys.argv[2]
+                    xbmc.executebuiltin('container.update(%s, replace)'%path)
+            else:
+                unlocked = True
+                if ('true' == ADDON.getSetting('passcodelock').lower()):
+                    print "xbmcgui.getCurrentWindowId(): %s"%xbmcgui.getCurrentWindowId()
+                    win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
+                    unlocked = (win.getProperty('Unlocked').lower() == 'true')
+                    if not unlocked:
+                        message = LANGUAGE_STRING(30013)
+                        keyboard = xbmc.Keyboard('', message, hidden=True)
+                        keyboard.doModal()
+                        if keyboard.isConfirmed() and keyboard.getText() == ADDON.getSetting('passcode'):
+                            win.setProperty('Unlocked', 'true')
+                            unlocked = True
+                        else:
+                            #Wrong passcode
+                            dialog = xbmcgui.Dialog()
+                            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30014) )
+                if unlocked:
+                    if 'module' in params: # Module chosen, load and execute module
+                        module = params['module']
+                        __import__(module)
+                        current_module = sys.modules[module]
+                        current_module.run(params)
+                    else: # No module chosen, list modules
+                        contentType = params.get('content_type', 'other')
+                        addDir(LANGUAGE_STRING(30015), 'browse_folder', contentType)
+                        addDir(LANGUAGE_STRING(30016), 'search_dropbox', contentType, iconImage='DefaultAddonProgram.png')
+                        # Add extra modules here, using addDir(name, module)
+                        xbmcplugin.endOfDirectory(int(sys.argv[1]))
+                else:
+                    xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+        else:
+            xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+    else: # run as script
+        action = params.get('action', '')
+        if action == 'login':
+            import resources.lib.login as login
+            login.doTokenDialog()
+        elif action == 'clear_token':
+            ADDON.setSetting('access_token', '')
+        

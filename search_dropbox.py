@@ -22,8 +22,8 @@
 import xbmcplugin
 import xbmcgui
 
-from utils import *
+from resources.lib.utils import *
 
 def run(params): # This is the entrypoint
     dialog = xbmcgui.Dialog()
-    dialog.ok(ADDON, 'Sorry, not implemented yet...')
+    dialog.ok(ADDON_NAME, 'Sorry, not implemented yet...')

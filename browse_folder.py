@@ -42,7 +42,7 @@ class FolderBrowser(XBMCDropBoxClient):
     def __init__( self, params ):
         super(FolderBrowser, self).__init__()
         #get Settings
-        self._filterFiles = ("TRUE" == ADDON.getSetting('filefilter').upper()) 
+        self._filterFiles = ('true' == ADDON.getSetting('filefilter').lower()) 
         #form default url
         log_debug('Argument List: %s' % str(sys.argv))
         self._current_path = urllib.unquote( params.get('path', '') )
@@ -173,6 +173,7 @@ class FolderBrowser(XBMCDropBoxClient):
     def getUrl(self, path, media_items=0):
         url = sys.argv[0]
         url += '?content_type=' + self._contentType
+        url += '&module=browse_folder'
         url += '&path=' + urllib.quote(path)
         if media_items != 0:
             url += '&media_items=' + str(media_items)
@@ -203,37 +204,7 @@ class FolderBrowser(XBMCDropBoxClient):
         if len(info) > 0: item.setInfo(mediatype, info)
     
     
-
-if ( __name__ == "__main__" ):
-    runAsScript, params = parse_argv()
-    if not runAsScript:
-        if ADDON.getSetting('access_token').decode("utf-8") == '':
-            import resources.lib.login as login
-            dialog = xbmcgui.Dialog()
-            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30002), LANGUAGE_STRING(30003) )
-            xbmcplugin.endOfDirectory(int(sys.argv[1]),succeeded=False)
-            login.doTokenDialog()
-            #ADDON.openSettings()
-        elif ADDON.getSetting('access_token').decode("utf-8") != '':
-            if int(sys.argv[1]) < 0:
-                #handle action of a file (or a "Show me more..." item)
-                #path = urllib.unquote( params.get('path', '') )
-                media_items = params.get('media_items', '')
-                if media_items != '':
-                    #Loading more media items requested...
-                    path = sys.argv[0] + sys.argv[2]
-                    xbmc.executebuiltin('container.update(%s, replace)'%path)
-            else:
-                browser = FolderBrowser(params)
-                browser.buildList()
-                browser.show()
-        else:
-            xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
-    else: # run as script
-        action = params.get('action', '')
-        if action == 'login':
-            import resources.lib.login as login
-            login.doTokenDialog()
-        elif action == 'clear_token':
-            ADDON.setSetting('access_token', '')
-        
+def run(params): # This is the entrypoint
+    browser = FolderBrowser(params)
+    browser.buildList()
+    browser.show()

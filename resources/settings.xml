@@ -7,5 +7,8 @@
         <setting label="30006" type="text" id="access_token" default=""/>
         <setting type="sep"/>
         <setting label="30007" type="folder" id="cachepath" source="auto" option="writeable" default=""/>
+        <setting type="sep"/>
+        <setting label="30011" type="bool" id="passcodelock" default="false"/>
+        <setting label="30012" type="text" id="passcode" option="hidden" enable="eq(-1,true)" default=""/>
     </category>
 </settings>

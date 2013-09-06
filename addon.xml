@@ -6,7 +6,7 @@
 		<import addon="script.common.plugin.cache" version="0.9.1" />
 		<import addon="script.web.viewer" version="0.9.10" />
 	</requires>
-	<extension point="xbmc.python.pluginsource" library="browse_folder.py">
+	<extension point="xbmc.python.pluginsource" library="addon.py">
 		<provides>audio image video</provides>
 	</extension>
 	<extension point="xbmc.addon.metadata">

@@ -60,6 +60,30 @@ msgctxt "#30010"
 msgid "Show me more..."
 msgstr "Toon me meer..."
 
+msgctxt "#30011"
+msgid "Enable passcode lock"
+msgstr "Gebruik passcode lock"
+
+msgctxt "#30012"
+msgid "Passcode"
+msgstr "Passcode"
+
+msgctxt "#30013"
+msgid "Enter your Passcode"
+msgstr "Voer uw Passcode in"
+
+msgctxt "#30014"
+msgid "Wrong Passcode!"
+msgstr "Foute Passcode!"
+
+msgctxt "#30015"
+msgid "Browse Dropbox"
+msgstr "Blader in Dropbox"
+
+msgctxt "#30016"
+msgid "Search Dropbox"
+msgstr "Zoek in Dropbox"
+
 
 #error messages
 msgctxt "#31000"
