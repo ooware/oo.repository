@@ -141,9 +141,9 @@ class XBMCDropBoxClient(object):
             else:
                 #get the file metadata using the stored data
                 resp = stored
-            if not directory:
+            if resp and not directory:
                 #get the file metadata
-                for item in stored['contents']:
+                for item in resp['contents']:
                     if item['path'] == path:
                         resp = item
                         break;
@@ -231,6 +231,10 @@ class XBMCDropBoxClient(object):
         else:
             return '' 
     
+    @command()
+    def search(self, searchText):
+        searchResult = self.DropboxAPI.search('', searchText)
+        return searchResult
 
 class FileLoader(threading.Thread):
     DropboxAPI = None

@@ -88,6 +88,22 @@ msgctxt "#30017"
 msgid "Search Dropbox"
 msgstr "Zoek in Dropbox"
 
+msgctxt "#30018"
+msgid "Enter the search text"
+msgstr "Voer de zoek tekst in"
+
+msgctxt "#30019"
+msgid "Search text has to be atleast 3 characters"
+msgstr "Zoek tekst moet minimaal 3 karakters zijn!"
+
+msgctxt "#30020"
+msgid "Searching Dropbox..."
+msgstr "Zoeken in Dropbox..."
+
+msgctxt "#30021"
+msgid "Nothing found!"
+msgstr "Niets gevonden!"
+
 
 #error messages
 msgctxt "#31000"

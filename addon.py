@@ -37,7 +37,7 @@ def addDir(name, module, contentType, iconImage=''):
             iconImage = 'DefaultAddonVideo.png'
         elif contentType == 'image':
             iconImage = 'DefaultAddonPicture.png'
-    listItem = xbmcgui.ListItem(name, iconImage=iconImage)
+    listItem = xbmcgui.ListItem(name, iconImage=iconImage, thumbnailImage=iconImage)
     xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True)
 
  
@@ -68,14 +68,12 @@ if ( __name__ == "__main__" ):
                     try:
                         unlockedTime = float( win.getProperty('Unlocked') )
                     except ValueError:
-                        log_error('unlockedTime error!')
                         unlockedTime = 0.0
                     #unlocked = True when timeout not expired
                     unlocked = (time.time() < (unlockedTime + unlockTimeout) )
                     if not unlocked:
                         log('Unlock with passcode required...')
-                        message = LANGUAGE_STRING(30013)
-                        keyboard = xbmc.Keyboard('', message)
+                        keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30013))
                         keyboard.setHiddenInput(True)
                         keyboard.doModal()
                         if keyboard.isConfirmed() and keyboard.getText() == ADDON.getSetting('passcode'):
@@ -99,7 +97,7 @@ if ( __name__ == "__main__" ):
                         # Add extra modules here, using addDir(name, module)
                         xbmcplugin.endOfDirectory(int(sys.argv[1]))
                 else:
-                    xbmcplugin.endOfDirectory(int(sys.argv[1]), updateListing=True, succeeded=False)
+                    xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
         else:
             xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
     else: # run as script

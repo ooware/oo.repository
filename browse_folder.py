@@ -64,7 +64,6 @@ class FolderBrowser(XBMCDropBoxClient):
             contents = resp['contents']
             #create and start the thread that will download the files
             self._loader = FileLoader(self.DropboxAPI, self._current_path, contents, self._shadowPath, self._thumbPath)
-            self._loader.start()
         else:
             contents = []
         self._totalItems = len(contents)
@@ -92,19 +91,21 @@ class FolderBrowser(XBMCDropBoxClient):
         
     def show(self):
         xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc=False)
-        #now wait for the FileLoader
-        #We cannot run the FileLoader standalone (without) this plugin(script)
-        # for that we would need to use the xbmc.abortRequested, which becomes
-        # True as soon as we exit this plugin(script)
-        self._loader.stopWhenFinished = True
-        while self._loader.isAlive():
-            if self.mustStop():
-                #force the thread to stop
-                self._loader.stop()
-                #Wait for the thread
-                self._loader.join()
-                break
-            xbmc.sleep(100)
+        if self._loader:
+            self._loader.start()
+            #now wait for the FileLoader
+            #We cannot run the FileLoader standalone (without) this plugin(script)
+            # for that we would need to use the xbmc.abortRequested, which becomes
+            # True as soon as we exit this plugin(script)
+            self._loader.stopWhenFinished = True
+            while self._loader.isAlive():
+                if self.mustStop():
+                    #force the thread to stop
+                    self._loader.stop()
+                    #Wait for the thread
+                    self._loader.join()
+                    break
+                xbmc.sleep(100)
  
     def mustStop(self):
         '''When xbmc quits or the plugin(visible menu) is changed, stop this thread'''
