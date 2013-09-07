@@ -22,3 +22,9 @@ Bug fixes:
 [B]0.2.1b:[/B]
 Added the Official xbmc-dropbox.sourceforge.net Add-on Repository to the
 addon.xml
+
+[B]0.3.0b:[/B]
+- Added fanart image
+- Remove cached files/folders/thumbnails when items are no longer 
+  present in dropbox folders
+- Added passcode lock functionality
