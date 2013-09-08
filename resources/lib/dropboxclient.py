@@ -238,18 +238,17 @@ class XBMCDropBoxClient(object):
 
 class FileLoader(threading.Thread):
     DropboxAPI = None
-    _metadata = None
     _stop = False
     stopWhenFinished = False
     _itemsHandled = 0
     _itemsTotal = 0
     
-    def __init__( self, DropboxAPI, path, metadata, shadowPath, thumbPath):
+    def __init__( self, DropboxAPI, module, metadata, shadowPath, thumbPath):
         threading.Thread.__init__(self)
         self._shadowPath = shadowPath
         self._thumbPath = thumbPath
         self.DropboxAPI = DropboxAPI
-        self._dropboxPath = path
+        self._module = module
         self._metadata = metadata
         self._thumbList = Queue.Queue() #thread safe
         self._fileList = Queue.Queue() #thread safe
@@ -258,7 +257,7 @@ class FileLoader(threading.Thread):
 
     def run(self):
         #check if need to quit
-        log_debug("FileLoader started for: %s"%self._dropboxPath)
+        log_debug("FileLoader started for: %s"%self._module)
         while not self._stop and not self.ready():
             #First get all the thumbnails(priority), then all the original files
             thumb2Retrieve = None
@@ -293,9 +292,9 @@ class FileLoader(threading.Thread):
 #                 self._progress.update(precent)
             time.sleep(0.100)
         if self._stop:
-            log_debug("FileLoader stopped (as requested) for: %s"%self._dropboxPath)
+            log_debug("FileLoader stopped (as requested) for: %s"%self._module)
         else:
-            log_debug("FileLoader finished for: %s"%self._dropboxPath)
+            log_debug("FileLoader finished for: %s"%self._module)
 #         self._progress.close()
         
     def stop(self):

@@ -42,6 +42,7 @@ def addDir(name, module, contentType, iconImage=''):
 
  
 if ( __name__ == "__main__" ):
+    log_debug('Argument List: %s' % str(sys.argv))
     runAsScript, params = parse_argv()
     if not runAsScript:
         if ADDON.getSetting('access_token').decode("utf-8") == '':
@@ -59,7 +60,8 @@ if ( __name__ == "__main__" ):
                 if media_items != '':
                     #Loading more media items requested...
                     path = sys.argv[0] + sys.argv[2]
-                    xbmc.executebuiltin('container.update(%s, replace)'%path)
+                    #xbmc.executebuiltin('container.update(%s, replace)'%path) # with 'replace' the content_type is removed!!!
+                    xbmc.executebuiltin('container.update(%s)'%path)
             else:
                 unlocked = True
                 win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
@@ -91,7 +93,7 @@ if ( __name__ == "__main__" ):
                         current_module = sys.modules[module]
                         current_module.run(params)
                     else: # No module chosen, list modules
-                        contentType = params.get('content_type', 'other')
+                        contentType = params.get('content_type', 'all')
                         addDir(LANGUAGE_STRING(30016), 'browse_folder', contentType)
                         addDir(LANGUAGE_STRING(30017), 'search_dropbox', contentType, iconImage='DefaultAddonProgram.png')
                         # Add extra modules here, using addDir(name, module)
