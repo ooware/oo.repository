@@ -55,9 +55,10 @@ if ( __name__ == "__main__" ):
         elif ADDON.getSetting('access_token').decode("utf-8") != '':
             if int(sys.argv[1]) < 0:
                 #handle action of a file (or a "Show me more..." item)
-                #path = urllib.unquote( params.get('path', '') )
-                media_items = params.get('media_items', '')
-                if media_items != '':
+                if 'module' in params: # plugin (module) to run
+                    path = sys.argv[0] + sys.argv[2]
+                    xbmc.executebuiltin('container.update(%s)'%path)
+                elif 'media_items' in params:
                     #Loading more media items requested...
                     path = sys.argv[0] + sys.argv[2]
                     #xbmc.executebuiltin('container.update(%s, replace)'%path) # with 'replace' the content_type is removed!!!
@@ -109,4 +110,3 @@ if ( __name__ == "__main__" ):
             login.doTokenDialog()
         elif action == 'clear_token':
             ADDON.setSetting('access_token', '')
-        

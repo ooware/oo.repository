@@ -232,8 +232,8 @@ class XBMCDropBoxClient(object):
             return '' 
     
     @command()
-    def search(self, searchText):
-        searchResult = self.DropboxAPI.search('', searchText)
+    def search(self, searchText, path):
+        searchResult = self.DropboxAPI.search(path, searchText)
         return searchResult
 
 class FileLoader(threading.Thread):

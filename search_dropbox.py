@@ -37,7 +37,7 @@ class DropboxSearch(DropboxViewer):
 
     def buildList(self):
         #get the list
-        searchResult = self.search(self._searchText)
+        searchResult = self.search(self._searchText, self._current_path)
         #Build the list
         super(DropboxSearch, self).buildList(searchResult)
         
@@ -65,7 +65,7 @@ def run(params): # This is the entrypoint
         if keyboard.isConfirmed():
             searchText = keyboard.getText()
             params['search_text'] = searchText
-            params['path'] = ''
+            params['path'] = params.get('path', '')
     if len(searchText) < 3:
         #Search text has to be atleast 3 chars
         dialog = xbmcgui.Dialog()
@@ -74,7 +74,7 @@ def run(params): # This is the entrypoint
     else:
         search = DropboxSearch(params)
         dialog = xbmcgui.DialogProgress()
-        dialog.create(ADDON_NAME, LANGUAGE_STRING(30020))
+        dialog.create(ADDON_NAME, LANGUAGE_STRING(30020), searchText)
         search.buildList()
         dialog.close()
         search.show()

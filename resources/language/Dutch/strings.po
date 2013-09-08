@@ -97,8 +97,8 @@ msgid "Search text has to be atleast 3 characters"
 msgstr "Zoek tekst moet minimaal 3 karakters zijn!"
 
 msgctxt "#30020"
-msgid "Searching Dropbox..."
-msgstr "Zoeken in Dropbox..."
+msgid "Searching in Dropbox for:"
+msgstr "Zoeken in Dropbox naar:"
 
 msgctxt "#30021"
 msgid "Nothing found!"

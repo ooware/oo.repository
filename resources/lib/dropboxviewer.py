@@ -157,12 +157,20 @@ class DropboxViewer(XBMCDropBoxClient):
                 self.metadata2ItemInfo(listItem, meta, 'pictures')
                 url='No action'
             if listItem:
+                contextMenuItems = []
+                searchUrl = self.getUrl(self._current_path, module='search_dropbox')
+                contextMenuItems.append( (LANGUAGE_STRING(30017), 'XBMC.RunPlugin(%s)'%searchUrl))
+                listItem.addContextMenuItems(contextMenuItems)
                 xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
     def addFolder(self, name, path):
         url=self.getUrl(path, module='browse_folder')
         listItem = xbmcgui.ListItem(name,iconImage='DefaultFolder.png', thumbnailImage='DefaultFolder.png')
         listItem.setInfo( type='pictures', infoLabels={'Title': name} )
+        contextMenuItems = []
+        searchUrl = self.getUrl(path, module='search_dropbox')
+        contextMenuItems.append( (LANGUAGE_STRING(30017), 'XBMC.RunPlugin(%s)'%searchUrl))
+        listItem.addContextMenuItems(contextMenuItems)
         #no useful metadata of folder
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._totalItems)
 

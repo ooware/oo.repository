@@ -97,7 +97,7 @@ msgid "Search text has to be atleast 3 characters"
 msgstr ""
 
 msgctxt "#30020"
-msgid "Searching Dropbox..."
+msgid "Searching in Dropbox for:"
 msgstr ""
 
 msgctxt "#30021"
