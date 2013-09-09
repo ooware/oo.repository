@@ -25,6 +25,7 @@ import xbmcgui
 import time
 
 from resources.lib.utils import *
+from resources.lib.dropboxclient import XBMCDropBoxClient
 
 def addDir(name, module, contentType, iconImage=''):
     url = sys.argv[0]
@@ -110,3 +111,15 @@ if ( __name__ == "__main__" ):
             login.doTokenDialog()
         elif action == 'clear_token':
             ADDON.setSetting('access_token', '')
+        elif action == 'delete':
+            if 'path' in params:
+                path = params['path']
+                dialog = xbmcgui.Dialog()
+                if dialog.yesno(ADDON_NAME, LANGUAGE_STRING(30023), path ) == True:
+                    client = XBMCDropBoxClient()
+                    success = client.delete(path)
+                    if success:
+                        log('File removed: %s' % path)
+                    else:
+                        log_error('File removed Failed: %s' % path)
+                    xbmc.executebuiltin('container.update()')

@@ -160,6 +160,7 @@ class DropboxViewer(XBMCDropBoxClient):
                 contextMenuItems = []
                 searchUrl = self.getUrl(self._current_path, module='search_dropbox')
                 contextMenuItems.append( (LANGUAGE_STRING(30017), 'XBMC.RunPlugin(%s)'%searchUrl))
+                contextMenuItems.append( (LANGUAGE_STRING(30022), 'XBMC.RunScript(plugin.dropbox, action=delete&path=%s)'%path))
                 listItem.addContextMenuItems(contextMenuItems)
                 xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
@@ -170,6 +171,7 @@ class DropboxViewer(XBMCDropBoxClient):
         contextMenuItems = []
         searchUrl = self.getUrl(path, module='search_dropbox')
         contextMenuItems.append( (LANGUAGE_STRING(30017), 'XBMC.RunPlugin(%s)'%searchUrl))
+        contextMenuItems.append( (LANGUAGE_STRING(30022), 'XBMC.RunScript(plugin.dropbox, action=delete&path=%s)'%path))
         listItem.addContextMenuItems(contextMenuItems)
         #no useful metadata of folder
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._totalItems)

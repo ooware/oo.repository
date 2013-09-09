@@ -27,8 +27,6 @@ import urllib
 from resources.lib.utils import *
 from resources.lib.dropboxviewer import *
 
-MAX_MEDIA_ITEMS_TO_LOAD_ONCE = 15
-
 class DropboxSearch(DropboxViewer):
         
     def __init__( self, params):

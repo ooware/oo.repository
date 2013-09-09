@@ -235,6 +235,15 @@ class XBMCDropBoxClient(object):
     def search(self, searchText, path):
         searchResult = self.DropboxAPI.search(path, searchText)
         return searchResult
+    
+    @command()
+    def delete(self, path):
+        succes = False
+        resp = self.DropboxAPI.file_delete(path)
+        if resp and 'is_deleted' in resp:
+            succes = resp['is_deleted']
+        return succes
+        
 
 class FileLoader(threading.Thread):
     DropboxAPI = None
