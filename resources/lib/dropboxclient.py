@@ -108,7 +108,7 @@ class XBMCDropBoxClient(object):
         dirname = path
         if not directory:
             #strip the filename
-            dirname = path.rpartition('/')[0]
+            dirname = os.path.dirname(path)
         #check if a hash is available
         stored = self._cache.get(dirname)
         if stored != '':
@@ -125,7 +125,7 @@ class XBMCDropBoxClient(object):
                     msg = e.user_error_msg or str(e)
                     if '304' in msg:
                         #cached data is still the same
-                        log_debug("Metadata using stored data")
+                        log_debug("Metadata using stored data for %s"%dirname)
                         resp = stored
                     else:
                         log_error("Failed retrieving Metadata: %s"%msg)
@@ -135,7 +135,7 @@ class XBMCDropBoxClient(object):
                         dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
                 else:
                     #When no exception: store new retrieved data
-                    log_debug("New/updated Metadata is stored")
+                    log_debug("New/updated Metadata is stored for %s"%dirname)
                     self._cache.set(dirname, repr(resp))
                     self._removeCachedFileFolder(resp)
             else:
@@ -143,7 +143,9 @@ class XBMCDropBoxClient(object):
                 resp = stored
             if resp and not directory:
                 #get the file metadata
-                for item in resp['contents']:
+                items = resp['contents']
+                resp = None
+                for item in items:
                     if item['path'] == path:
                         resp = item
                         break;
@@ -242,6 +244,14 @@ class XBMCDropBoxClient(object):
         resp = self.DropboxAPI.file_delete(path)
         if resp and 'is_deleted' in resp:
             succes = resp['is_deleted']
+        return succes
+
+    @command()
+    def copy(self, path, toPath):
+        succes = False
+        resp = self.DropboxAPI.file_copy(path, toPath)
+        if resp and 'path' in resp:
+            succes = ( resp['path'] == toPath)
         return succes
         
 

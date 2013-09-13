@@ -26,6 +26,7 @@ import time
 
 from resources.lib.utils import *
 from resources.lib.dropboxclient import XBMCDropBoxClient
+from resources.lib.dropboxfilebrowser import DropboxFileBrowser
 
 def addDir(name, module, contentType, iconImage=''):
     url = sys.argv[0]
@@ -122,4 +123,20 @@ if ( __name__ == "__main__" ):
                         log('File removed: %s' % path)
                     else:
                         log_error('File removed Failed: %s' % path)
-                    xbmc.executebuiltin('container.update()')
+                    xbmc.executebuiltin('container.Refresh()')
+        elif action == 'copy':
+            if 'path' in params:
+                path = params['path']
+                #ui = XMLRatingDialog("DialogVideoInfo.xml", os.getcwd(), "Default")
+                dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
+                dialog.doModal()
+                toPath = os.path.join(dialog.selectedFolder, os.path.basename(path))
+                client = XBMCDropBoxClient()
+                success = client.copy(path, toPath)
+                if success:
+                    log('File copied: %s to %s' % (path, toPath) ) 
+                else:
+                    log_error('File copy Failed: %s to %s' % (path, toPath) )
+                del dialog
+                
+

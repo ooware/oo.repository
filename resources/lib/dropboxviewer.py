@@ -46,7 +46,7 @@ class DropboxViewer(XBMCDropBoxClient):
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
         self._module = params.get('module', '')
         self._contentType = params.get('content_type', 'other')
-        self._current_path = urllib.unquote( params.get('path', '') )
+        self._current_path = urllib.unquote( params.get('path', '/') )
         #Add sorting options
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)
@@ -119,6 +119,7 @@ class DropboxViewer(XBMCDropBoxClient):
         url = None
         listItem = None
         meta = self.getMetaData(path)
+        #print "path: ", path
         #print "meta: ", meta
         mediatype = 'other'
         iconImage = 'DefaultFile.png'
@@ -161,6 +162,7 @@ class DropboxViewer(XBMCDropBoxClient):
                 searchUrl = self.getUrl(self._current_path, module='search_dropbox')
                 contextMenuItems.append( (LANGUAGE_STRING(30017), 'XBMC.RunPlugin(%s)'%searchUrl))
                 contextMenuItems.append( (LANGUAGE_STRING(30022), 'XBMC.RunScript(plugin.dropbox, action=delete&path=%s)'%path))
+                contextMenuItems.append( (LANGUAGE_STRING(30024), 'XBMC.RunScript(plugin.dropbox, action=copy&path=%s)'%path))
                 listItem.addContextMenuItems(contextMenuItems)
                 xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
@@ -172,6 +174,7 @@ class DropboxViewer(XBMCDropBoxClient):
         searchUrl = self.getUrl(path, module='search_dropbox')
         contextMenuItems.append( (LANGUAGE_STRING(30017), 'XBMC.RunPlugin(%s)'%searchUrl))
         contextMenuItems.append( (LANGUAGE_STRING(30022), 'XBMC.RunScript(plugin.dropbox, action=delete&path=%s)'%path))
+        contextMenuItems.append( (LANGUAGE_STRING(30024), 'XBMC.RunScript(plugin.dropbox, action=copy&path=%s)'%path))
         listItem.addContextMenuItems(contextMenuItems)
         #no useful metadata of folder
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._totalItems)
