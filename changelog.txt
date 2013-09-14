@@ -28,3 +28,8 @@ addon.xml
 - Remove cached files/folders/thumbnails when items are no longer 
   present in dropbox folders
 - Added passcode lock functionality
+
+[B]0.3.1b:[/B]
+- Add searching from dropbox files/folders
+- Add deleting files/folders from Dropbox
+- Add copying files/folders in Dropbox
