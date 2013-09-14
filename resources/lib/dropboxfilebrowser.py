@@ -33,7 +33,9 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
     """
     #FileBrowser IDs
     DIRECTORY_LIST = 450
+    THUMB_LIST = 451
     HEADING_LABEL = 411
+    PATH_LABEL = 412
     OK_BUTTON = 413
     CANCEL_BUTTON = 414
     CREATE_FOLDER = 415
@@ -49,27 +51,33 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
         self.client = XBMCDropBoxClient()
 
     def onInit(self):
-        super(DropboxFileBrowser, self).onInit()
-        self.getControl(self.FLIP_IMAGE_HOR).setVisible(False)
+        #super(DropboxFileBrowser, self).onInit()
+        self.getControl(self.FLIP_IMAGE_HOR).setEnabled(False)
+        self.getControl(self.THUMB_LIST).setVisible(False) #bugy! check/change FileBrowser.xml file!?
         self.getControl(self.HEADING_LABEL).setLabel(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30026))
         self.showFolders('/')
 
     def showFolders(self, path):
         log_debug('Selecting path: %s'%path)
+        self.getControl(self.PATH_LABEL).setLabel(path)
         listView = self.getControl(self.DIRECTORY_LIST)
+        thumbView = self.getControl(self.THUMB_LIST)
         listView.reset()
+        thumbView.reset()
         self._currentPath = path
         items = self.client.getFolderContents(path)
         listItems = []
         if path != '/':
             backPath = os.path.dirname(path)
-            listItem = xbmcgui.ListItem(label='..', label2=backPath, iconImage="DefaultFolderBack.png", thumbnailImage="DefaultFolderBack.png")
+            listItem = xbmcgui.ListItem(label='..', label2=backPath, iconImage="DefaultFolderBack.png", thumbnailImage='DefaultFolderBack.png')
             listItems.append(listItem)
         for item in items:
             if item['is_dir'] == True:
-                listItem = xbmcgui.ListItem(label=os.path.basename(item['path']), label2=item['path'], iconImage="DefaultFolder.png", thumbnailImage="DefaultFolder.png")
+                listItem = xbmcgui.ListItem(label=os.path.basename(item['path']), label2=item['path'], iconImage="DefaultFolder.png", thumbnailImage='DefaultFolder.png')
                 listItems.append(listItem)
         listView.addItems(listItems)
+        thumbView.addItems(listItems) #bugy! check/change FileBrowser.xml file!?
+        self.setFocusId(self.DIRECTORY_LIST)
         
     def onClick(self, controlId):
         if controlId == self.DIRECTORY_LIST:

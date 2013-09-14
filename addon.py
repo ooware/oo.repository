@@ -130,13 +130,14 @@ if ( __name__ == "__main__" ):
                 #ui = XMLRatingDialog("DialogVideoInfo.xml", os.getcwd(), "Default")
                 dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
                 dialog.doModal()
-                toPath = os.path.join(dialog.selectedFolder, os.path.basename(path))
-                client = XBMCDropBoxClient()
-                success = client.copy(path, toPath)
-                if success:
-                    log('File copied: %s to %s' % (path, toPath) ) 
-                else:
-                    log_error('File copy Failed: %s to %s' % (path, toPath) )
+                if dialog.selectedFolder:
+                    toPath = os.path.join(dialog.selectedFolder, os.path.basename(path))
+                    client = XBMCDropBoxClient()
+                    success = client.copy(path, toPath)
+                    if success:
+                        log('File copied: %s to %s' % (path, toPath) ) 
+                    else:
+                        log_error('File copy Failed: %s to %s' % (path, toPath) )
                 del dialog
                 
 
