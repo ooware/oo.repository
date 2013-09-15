@@ -50,7 +50,7 @@ def command():
                 msg = e.user_error_msg or str(e)
                 log_error("%s failed: %s"%(f.__name__, msg) )
                 dialog = xbmcgui.Dialog()
-                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31006), '%s' % (msg))
 
         wrapper.__doc__ = f.__doc__
         return wrapper
@@ -61,12 +61,12 @@ class XBMCDropBoxClient(object):
     _cache = None
     
 #TODO: fix singleton --> it doesn't work!
-    _instance = None
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(XBMCDropBoxClient, cls).__new__(
-                                cls, *args, **kwargs)
-        return cls._instance
+#     _instance = None
+#     def __new__(cls, *args, **kwargs):
+#         if not cls._instance:
+#             cls._instance = super(XBMCDropBoxClient, cls).__new__(
+#                                 cls, *args, **kwargs)
+#         return cls._instance
 
     def __init__( self ):
         #get Settings
@@ -132,7 +132,7 @@ class XBMCDropBoxClient(object):
                         self.DropboxAPI = None
                         msg = e.user_error_msg or str(e)
                         dialog = xbmcgui.Dialog()
-                        dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
+                        dialog.ok(ADDON_NAME, LANGUAGE_STRING(31006), '%s' % (msg))
                 else:
                     #When no exception: store new retrieved data
                     log_debug("New/updated Metadata is stored for %s"%dirname)
@@ -357,11 +357,11 @@ class FileLoader(threading.Thread):
         if not xbmcvfs.exists( dirName ):
             xbmcvfs.mkdirs( dirName )
         try:
-            cacheFile =open(location, 'w')
+            cacheFile = open(location, 'wb') # 'b' option required for windows!
             #download the file
             #jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital art.
             tumbFile = self.DropboxAPI.thumbnail(path, size='large', format='JPEG')
-            cacheFile.write( tumbFile.read() )
+            shutil.copyfileobj(tumbFile, cacheFile)
             cacheFile.close()
             log_debug("Downloaded file to: %s"%location)
         except IOError, e:
@@ -384,11 +384,10 @@ class FileLoader(threading.Thread):
         if not xbmcvfs.exists( dirName ):
             xbmcvfs.mkdirs( dirName )
         try:
-            #log("Download file to: %s"%location)
-            cacheFile =open(location, 'w')
+            cacheFile = open(location, 'wb') # 'b' option required for windows!
             #download the file
             orgFile = self.DropboxAPI.get_file(path)
-            cacheFile.write( orgFile.read())
+            shutil.copyfileobj(orgFile, cacheFile)
             cacheFile.close()
             log_debug("Downloaded file to: %s"%location)
         except IOError, e:

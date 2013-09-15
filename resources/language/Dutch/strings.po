@@ -149,3 +149,7 @@ msgstr "Dit is vereist voor autorisatie van deze addon."
 msgctxt "#31005"
 msgid "Dropbox authorization code failure!"
 msgstr "Dropbox toegangs code fout!"
+
+msgctxt "#31006"
+msgid "Dropbox error occured!"
+msgstr "Dropbox error!"

@@ -114,7 +114,7 @@ if ( __name__ == "__main__" ):
             ADDON.setSetting('access_token', '')
         elif action == 'delete':
             if 'path' in params:
-                path = params['path']
+                path = urllib.unquote( params['path'] )
                 dialog = xbmcgui.Dialog()
                 if dialog.yesno(ADDON_NAME, LANGUAGE_STRING(30023), path ) == True:
                     client = XBMCDropBoxClient()
@@ -126,12 +126,15 @@ if ( __name__ == "__main__" ):
                     xbmc.executebuiltin('container.Refresh()')
         elif action == 'copy':
             if 'path' in params:
-                path = params['path']
+                path = urllib.unquote( params['path'] )
                 #ui = XMLRatingDialog("DialogVideoInfo.xml", os.getcwd(), "Default")
                 dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
                 dialog.doModal()
                 if dialog.selectedFolder:
-                    toPath = os.path.join(dialog.selectedFolder, os.path.basename(path))
+                    #dropbox path -> don't use os.path.join()!
+                    toPath = dialog.selectedFolder
+                    if dialog.selectedFolder[-1:] != '/': toPath += '/'
+                    toPath += os.path.basename(path)
                     client = XBMCDropBoxClient()
                     success = client.copy(path, toPath)
                     if success:

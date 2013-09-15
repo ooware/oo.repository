@@ -149,3 +149,7 @@ msgstr ""
 msgctxt "#31005"
 msgid "Dropbox authorization code failure!"
 msgstr ""
+
+msgctxt "#31006"
+msgid "Dropbox error occured!"
+msgstr ""
