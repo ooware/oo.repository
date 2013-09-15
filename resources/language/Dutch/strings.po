@@ -124,6 +124,14 @@ msgctxt "#30026"
 msgid "copy to"
 msgstr "kopieren"
 
+msgctxt "#30027"
+msgid "Move in Dropbox"
+msgstr "Verplaats in Dropbox"
+
+msgctxt "#30028"
+msgid "move to"
+msgstr "verplaatsen"
+
 
 #error messages
 msgctxt "#31000"

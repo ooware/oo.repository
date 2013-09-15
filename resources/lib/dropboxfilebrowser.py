@@ -43,6 +43,7 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
     #ACTION IDs
     ACTION_SELECT_ITEM = 7
     
+    _heading = ''
     _currentPath = ''
     selectedFolder = None
 
@@ -50,11 +51,14 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
         super(DropboxFileBrowser, self).__init__(*args, **kwargs)
         self.client = XBMCDropBoxClient()
 
+    def setHeading(self, heading):
+        self._heading = heading
+        
     def onInit(self):
         #super(DropboxFileBrowser, self).onInit()
         self.getControl(self.FLIP_IMAGE_HOR).setEnabled(False)
         self.getControl(self.THUMB_LIST).setVisible(False) #bugy! check/change FileBrowser.xml file!?
-        self.getControl(self.HEADING_LABEL).setLabel(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30026))
+        self.getControl(self.HEADING_LABEL).setLabel(self._heading)
         self.showFolders('/')
 
     def showFolders(self, path):

@@ -135,8 +135,8 @@ if ( __name__ == "__main__" ):
         elif action == 'copy':
             if 'path' in params:
                 path = urllib.unquote( params['path'] )
-                #ui = XMLRatingDialog("DialogVideoInfo.xml", os.getcwd(), "Default")
                 dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
+                dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30026))
                 dialog.doModal()
                 if dialog.selectedFolder:
                     #dropbox path -> don't use os.path.join()!
@@ -149,6 +149,25 @@ if ( __name__ == "__main__" ):
                         log('File copied: %s to %s' % (path, toPath) ) 
                     else:
                         log_error('File copy Failed: %s to %s' % (path, toPath) )
+                del dialog
+        elif action == 'move':
+            if 'path' in params:
+                path = urllib.unquote( params['path'] )
+                dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
+                dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30028))
+                dialog.doModal()
+                if dialog.selectedFolder:
+                    #dropbox path -> don't use os.path.join()!
+                    toPath = dialog.selectedFolder
+                    if dialog.selectedFolder[-1:] != '/': toPath += '/'
+                    toPath += os.path.basename(path)
+                    client = XBMCDropBoxClient()
+                    success = client.move(path, toPath)
+                    if success:
+                        log('File moved: from %s to %s' % (path, toPath) ) 
+                        xbmc.executebuiltin('container.Refresh()')
+                    else:
+                        log_error('File move Failed: from %s to %s' % (path, toPath) )
                 del dialog
                 
 

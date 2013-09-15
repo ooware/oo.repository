@@ -253,6 +253,14 @@ class XBMCDropBoxClient(object):
         if resp and 'path' in resp:
             succes = ( resp['path'] == toPath)
         return succes
+
+    @command()
+    def move(self, path, toPath):
+        succes = False
+        resp = self.DropboxAPI.file_move(path, toPath)
+        if resp and 'path' in resp:
+            succes = ( resp['path'] == toPath)
+        return succes
         
 
 class FileLoader(threading.Thread):
