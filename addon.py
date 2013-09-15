@@ -95,12 +95,20 @@ if ( __name__ == "__main__" ):
                         __import__(module)
                         current_module = sys.modules[module]
                         current_module.run(params)
-                    else: # No module chosen, list modules
-                        contentType = params.get('content_type', 'all')
-                        addDir(LANGUAGE_STRING(30016), 'browse_folder', contentType)
-                        addDir(LANGUAGE_STRING(30017), 'search_dropbox', contentType, iconImage='DefaultAddonProgram.png')
-                        # Add extra modules here, using addDir(name, module)
-                        xbmcplugin.endOfDirectory(int(sys.argv[1]))
+                    else: # No module chosen
+                        if False: #list modules, creates an extra menu for dropbox addon, but for now, do not use...
+                            contentType = params.get('content_type', 'all')
+                            addDir(LANGUAGE_STRING(30016), 'browse_folder', contentType)
+                            addDir(LANGUAGE_STRING(30017), 'search_dropbox', contentType, iconImage='DefaultAddonProgram.png')
+                            # Add extra modules here, using addDir(name, module)
+                            xbmcplugin.endOfDirectory(int(sys.argv[1]))
+                        else:
+                            #Run the browse_folder module
+                            module = 'browse_folder'
+                            params['module'] = module
+                            __import__(module)
+                            current_module = sys.modules[module]
+                            current_module.run(params)
                 else:
                     xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
         else:
