@@ -261,6 +261,14 @@ class XBMCDropBoxClient(object):
         if resp and 'path' in resp:
             succes = ( resp['path'] == toPath)
         return succes
+
+    @command()
+    def createFolder(self, path):
+        succes = False
+        resp = self.DropboxAPI.file_create_folder(path)
+        if resp and 'path' in resp:
+            succes = ( resp['path'] == path)
+        return succes
         
 
 class FileLoader(threading.Thread):

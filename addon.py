@@ -169,5 +169,21 @@ if ( __name__ == "__main__" ):
                     else:
                         log_error('File move Failed: from %s to %s' % (path, toPath) )
                 del dialog
+        elif action == 'create_folder':
+            if 'path' in params:
+                path = urllib.unquote( params['path'] )
+                keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30030))
+                keyboard.doModal()
+                if keyboard.isConfirmed():
+                    newFolder = path
+                    if path[-1:] != '/': newFolder += '/'
+                    newFolder += keyboard.getText()
+                    client = XBMCDropBoxClient()
+                    success = client.createFolder(newFolder)
+                    if success:
+                        log('New folder created: %s' % newFolder)
+                        xbmc.executebuiltin('container.Refresh()')
+                    else:
+                        log_error('Creating new folder Failed: %s' % newFolder)
                 
 

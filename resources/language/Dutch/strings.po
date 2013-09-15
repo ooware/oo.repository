@@ -132,6 +132,14 @@ msgctxt "#30028"
 msgid "move to"
 msgstr "verplaatsen"
 
+msgctxt "#30029"
+msgid "Create new folder in Dropbox"
+msgstr "Maak een nieuwe map in Dropbox"
+
+msgctxt "#30030"
+msgid "Enter the name of new folder"
+msgstr "Voer de nieuwe map naam in"
+
 
 #error messages
 msgctxt "#31000"

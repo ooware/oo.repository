@@ -132,6 +132,14 @@ msgctxt "#30028"
 msgid "move to"
 msgstr "verplaatsen"
 
+msgctxt "#30029"
+msgid "Create new folder in Dropbox"
+msgstr ""
+
+msgctxt "#30030"
+msgid "Enter the name of new folder"
+msgstr ""
+
 
 #error messages
 msgctxt "#31000"

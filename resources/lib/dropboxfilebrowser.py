@@ -93,6 +93,20 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
             self.close()
         elif controlId == self.CANCEL_BUTTON:
             self.close()
+        elif controlId == self.CREATE_FOLDER:
+            keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30030))
+            keyboard.doModal()
+            if keyboard.isConfirmed():
+                newFolder = self._currentPath
+                if self._currentPath[-1:] != '/': newFolder += '/'
+                newFolder += keyboard.getText()
+                success = self.client.createFolder(newFolder)
+                if success:
+                    log('New folder created: %s' % newFolder)
+                    #update current list
+                    self.showFolders(self._currentPath)
+                else:
+                    log_error('Creating new folder Failed: %s' % newFolder)
 
 #     def onAction(self, action):
 #         if (action.getId() == self.ACTION_SELECT_ITEM):
