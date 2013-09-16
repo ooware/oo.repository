@@ -185,5 +185,18 @@ if ( __name__ == "__main__" ):
                         xbmc.executebuiltin('container.Refresh()')
                     else:
                         log_error('Creating new folder Failed: %s' % newFolder)
+        elif action == 'upload':
+            if 'to_path' in params:
+                toPath = urllib.unquote( params['to_path'] )
+                dialog = xbmcgui.Dialog()
+                fileName = dialog.browse(1, LANGUAGE_STRING(30032), 'files')
+                if fileName:
+                    client = XBMCDropBoxClient()
+                    success = client.upload(fileName, toPath)
+                    if success:
+                        log('File uploaded: %s to %s' % (fileName, toPath) )
+                        xbmc.executebuiltin('container.Refresh()')
+                    else:
+                        log_error('File uploading Failed: %s to %s' % (fileName, toPath))
                 
 

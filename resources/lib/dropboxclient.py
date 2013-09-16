@@ -31,6 +31,7 @@ import threading, Queue
 from utils import *
 
 from dropbox import client, rest
+from StringIO import StringIO
 
 try:
     import StorageServer
@@ -269,6 +270,34 @@ class XBMCDropBoxClient(object):
         if resp and 'path' in resp:
             succes = ( resp['path'] == path)
         return succes
+
+    @command()
+    def upload(self, fileName, toPath):
+        succes = False
+        size = os.stat(fileName).st_size
+        if size > 0:
+            uploadFile = open(fileName, 'rb')
+            uploader = Uploader(self.DropboxAPI, uploadFile, size)
+            dialog = xbmcgui.DialogProgress()
+            dialog.create(LANGUAGE_STRING(30033), fileName)
+            dialog.update( (uploader.offset*100) / uploader.target_length )
+            while uploader.offset < uploader.target_length:
+                if dialog.iscanceled():
+                    log('User canceled the upload!')
+                    break
+                uploader.uploadNext()
+                dialog.update( (uploader.offset*100) / uploader.target_length )
+            dialog.close()
+            if uploader.offset == uploader.target_length:
+                #user didn't cancel
+                path = toPath + '/' + os.path.basename(fileName) 
+                resp = uploader.finish(path)
+                print "resp", resp
+                if resp and 'path' in resp:
+                    succes = ( resp['path'] == path)
+        else:
+            log_error('File size of Upload file <= 0!')
+        return succes
         
 
 class FileLoader(threading.Thread):
@@ -279,7 +308,7 @@ class FileLoader(threading.Thread):
     _itemsTotal = 0
     
     def __init__( self, DropboxAPI, module, metadata, shadowPath, thumbPath):
-        threading.Thread.__init__(self)
+        super(FileLoader, self).__init__()
         self._shadowPath = shadowPath
         self._thumbPath = thumbPath
         self.DropboxAPI = DropboxAPI
@@ -413,3 +442,33 @@ class FileLoader(threading.Thread):
             msg = e.user_error_msg or str(e)
             log_error('Failed downloading file %s. Error: %s' %(location,msg))
         return location
+
+
+class Uploader(client.DropboxClient.ChunkedUploader):
+    """
+    Use the client.DropboxClient.ChunkedUploader, but create a
+    step() function to  
+    """
+    def __init__( self, client, file_obj, length):
+        super(Uploader, self).__init__(client, file_obj, length)
+        self.chunk_size = 1*1024*1024 # 1 MB sizes
+
+    def uploadNext(self):
+        """Uploads data from this ChunkedUploader's file_obj in chunks.
+        When this function is called 1 chunk is uploaded.
+        Throws an exception when an error occurs, and can
+        be called again to resume the upload.
+        """
+        next_chunk_size = min(self.chunk_size, self.target_length - self.offset)
+        if self.last_block == None:
+            self.last_block = self.file_obj.read(next_chunk_size)
+
+        try:
+            (self.offset, self.upload_id) = self.client.upload_chunk(StringIO(self.last_block), next_chunk_size, self.offset, self.upload_id)
+            self.last_block = None
+        except rest.ErrorResponse, e:
+            reply = e.body
+            if "offset" in reply and reply['offset'] != 0:
+                if reply['offset'] > self.offset:
+                    self.last_block = None
+                    self.offset = reply['offset']

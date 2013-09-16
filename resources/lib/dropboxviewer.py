@@ -165,6 +165,7 @@ class DropboxViewer(XBMCDropBoxClient):
                 contextMenuItems.append( (LANGUAGE_STRING(30024), 'XBMC.RunScript(plugin.dropbox, action=copy&path=%s)'%urllib.quote(path)))
                 contextMenuItems.append( (LANGUAGE_STRING(30027), 'XBMC.RunScript(plugin.dropbox, action=move&path=%s)'%urllib.quote(path)))
                 contextMenuItems.append( (LANGUAGE_STRING(30029), 'XBMC.RunScript(plugin.dropbox, action=create_folder&path=%s)'%urllib.quote(os.path.dirname(path))))
+                contextMenuItems.append( (LANGUAGE_STRING(30031), 'XBMC.RunScript(plugin.dropbox, action=upload&to_path=%s)'%urllib.quote(os.path.dirname(path))))
                 listItem.addContextMenuItems(contextMenuItems)
                 xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
@@ -179,6 +180,7 @@ class DropboxViewer(XBMCDropBoxClient):
         contextMenuItems.append( (LANGUAGE_STRING(30024), 'XBMC.RunScript(plugin.dropbox, action=copy&path=%s)'%urllib.quote(path)))
         contextMenuItems.append( (LANGUAGE_STRING(30027), 'XBMC.RunScript(plugin.dropbox, action=move&path=%s)'%urllib.quote(path)))
         contextMenuItems.append( (LANGUAGE_STRING(30029), 'XBMC.RunScript(plugin.dropbox, action=create_folder&path=%s)'%urllib.quote(path)))
+        contextMenuItems.append( (LANGUAGE_STRING(30031), 'XBMC.RunScript(plugin.dropbox, action=upload&to_path=%s)'%urllib.quote(path)))
         listItem.addContextMenuItems(contextMenuItems)
         #no useful metadata of folder
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._totalItems)

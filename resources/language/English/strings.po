@@ -140,6 +140,18 @@ msgctxt "#30030"
 msgid "Enter the name of new folder"
 msgstr ""
 
+msgctxt "#30031"
+msgid "Upload to Dropbox"
+msgstr "Upload naar Dropbox"
+
+msgctxt "#30032"
+msgid "Select the file to upload"
+msgstr "Selecteer het bestand om te uploaden"
+
+msgctxt "#30033"
+msgid "Uploading file to Dropbox"
+msgstr ""
+
 
 #error messages
 msgctxt "#31000"
