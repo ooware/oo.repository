@@ -63,11 +63,15 @@ class DropboxViewer(XBMCDropBoxClient):
             #create and start the thread that will download the files
             self._loader = FileLoader(self.DropboxAPI, self._module, contents, self._shadowPath, self._thumbPath)
         #first add all the folders
+        folderItems = 0
         for f in contents:
             if f['is_dir']:
                 fpath = f['path']
                 name = os.path.basename(fpath)
                 self.addFolder(name, fpath)
+                folderItems += 1
+        #Change the totalItems, so that the progressbar is more realistic
+        self._totalItems = folderItems + self._nrOfMediaItems
         #Now add the maximum(define) number of files
         for f in contents:
             if not f['is_dir']:
@@ -123,23 +127,26 @@ class DropboxViewer(XBMCDropBoxClient):
         #print "meta: ", meta
         mediatype = 'other'
         iconImage = 'DefaultFile.png'
-        showItem = False
-        if not self._filterFiles:
-            showItem = True
         if 'image' in meta['mime_type']:
             mediatype = 'pictures'
             iconImage = 'DefaultImage.png'
-            if not showItem and (self._contentType == 'image'):
-                showItem = True
         elif 'video' in meta['mime_type']:
             mediatype = 'video'
             iconImage = 'DefaultVideo.png'
-            if not showItem and (self._contentType == 'video' or self._contentType == 'image'):
-                showItem = True
         elif 'audio' in meta['mime_type']:
             mediatype = 'music'
             iconImage = 'DefaultAudio.png'
-            if not showItem and (self._contentType == 'audio'):
+        showItem = False
+        if self._contentType == 'executable' or not self._filterFiles:
+            showItem = True
+        elif (self._contentType == 'image'):
+            if mediatype == 'pictures':
+                showItem = True
+        elif (self._contentType == 'video' or self._contentType == 'image'):
+            if mediatype == 'video':
+                showItem = True
+        elif (self._contentType == 'audio'):
+            if mediatype == 'music':
                 showItem = True
         if showItem:
             listItem = xbmcgui.ListItem(name, iconImage=iconImage)

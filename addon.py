@@ -63,8 +63,8 @@ if ( __name__ == "__main__" ):
                 elif 'media_items' in params:
                     #Loading more media items requested...
                     path = sys.argv[0] + sys.argv[2]
-                    #xbmc.executebuiltin('container.update(%s, replace)'%path) # with 'replace' the content_type is removed!!!
-                    xbmc.executebuiltin('container.update(%s)'%path)
+                    xbmc.executebuiltin('container.update(%s, replace)'%path)
+                    #xbmc.executebuiltin('container.update(%s)'%path)
             else:
                 unlocked = True
                 win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
