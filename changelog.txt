@@ -33,3 +33,9 @@ addon.xml
 - Add searching from dropbox files/folders
 - Add deleting files/folders from Dropbox
 - Add copying files/folders in Dropbox
+
+[B]0.3.2b:[/B]
+- Add move files/folders in Dropbox
+- Add create folders in Dropbox
+- Add upload files to Dropbox
+- Add the addon to the Programs menu
