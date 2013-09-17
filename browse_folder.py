@@ -38,7 +38,7 @@ class FolderBrowser(DropboxViewer):
         super(FolderBrowser, self).buildList(contents)
     
     def show(self):
-        super(FolderBrowser, self).show(cacheToDisc=True)
+        super(FolderBrowser, self).show(cacheToDisc=False)
 
     def getUrl(self, path, media_items=0, module=None):
         url = super(FolderBrowser, self).getUrl(path, media_items, module)

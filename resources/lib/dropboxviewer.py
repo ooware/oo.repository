@@ -28,7 +28,7 @@ import os, uuid
 from resources.lib.utils import *
 from resources.lib.dropboxclient import XBMCDropBoxClient, FileLoader
 
-MAX_MEDIA_ITEMS_TO_LOAD_ONCE = 15
+MAX_MEDIA_ITEMS_TO_LOAD_ONCE = 200
 
 class DropboxViewer(XBMCDropBoxClient):
     _nrOfMediaItems = 0
@@ -73,11 +73,11 @@ class DropboxViewer(XBMCDropBoxClient):
         #Change the totalItems, so that the progressbar is more realistic
         self._totalItems = folderItems + self._nrOfMediaItems
         #Now add the maximum(define) number of files
-        for f in contents:
-            if not f['is_dir']:
-                fpath = f['path']
+        for fileMeta in contents:
+            if not fileMeta['is_dir']:
+                fpath = fileMeta['path']
                 name = os.path.basename(fpath)
-                self.addFile(name, fpath)
+                self.addFile(name, fpath, fileMeta)
             if self._loadedMediaItems >= self._nrOfMediaItems:
                 #don't load more for now
                 break;
@@ -119,36 +119,29 @@ class DropboxViewer(XBMCDropBoxClient):
         else:
             return False
 
-    def addFile(self, name, path):
+    def addFile(self, name, path, meta):
         url = None
         listItem = None
-        meta = self.getMetaData(path)
         #print "path: ", path
         #print "meta: ", meta
-        mediatype = 'other'
+        mediatype = ''
         iconImage = 'DefaultFile.png'
-        if 'image' in meta['mime_type']:
-            mediatype = 'pictures'
-            iconImage = 'DefaultImage.png'
-        elif 'video' in meta['mime_type']:
-            mediatype = 'video'
-            iconImage = 'DefaultVideo.png'
-        elif 'audio' in meta['mime_type']:
-            mediatype = 'music'
-            iconImage = 'DefaultAudio.png'
-        showItem = False
         if self._contentType == 'executable' or not self._filterFiles:
-            showItem = True
+            mediatype = 'other'
+            iconImage = 'DefaultFile.png'
         elif (self._contentType == 'image'):
-            if mediatype == 'pictures':
-                showItem = True
+            if 'image' in meta['mime_type']:
+                mediatype = 'pictures'
+                iconImage = 'DefaultImage.png'
         elif (self._contentType == 'video' or self._contentType == 'image'):
-            if mediatype == 'video':
-                showItem = True
+            if 'video' in meta['mime_type']:
+                mediatype = 'video'
+                iconImage = 'DefaultVideo.png'
         elif (self._contentType == 'audio'):
-            if mediatype == 'music':
-                showItem = True
-        if showItem:
+            if 'audio' in meta['mime_type']:
+                mediatype = 'music'
+                iconImage = 'DefaultAudio.png'
+        if mediatype != '':
             listItem = xbmcgui.ListItem(name, iconImage=iconImage)
             if mediatype in ['pictures','video','music']:
                 self._loadedMediaItems += 1

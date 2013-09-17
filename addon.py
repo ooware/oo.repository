@@ -81,14 +81,14 @@ if ( __name__ == "__main__" ):
         elif ADDON.getSetting('access_token').decode("utf-8") != '':
             if int(sys.argv[1]) < 0:
                 #handle action of a file (or a "Show me more..." item)
-                if 'module' in params: # plugin (module) to run
-                    path = sys.argv[0] + sys.argv[2]
-                    xbmc.executebuiltin('container.update(%s)'%path)
-                elif 'media_items' in params:
+                if 'media_items' in params:
                     #Loading more media items requested...
                     path = sys.argv[0] + sys.argv[2]
-                    xbmc.executebuiltin('container.update(%s, replace)'%path)
-                    #xbmc.executebuiltin('container.update(%s)'%path)
+                    #xbmc.executebuiltin('container.update(%s, replace)'%path) # don't use replace because that removes the content_type from the path...
+                    xbmc.executebuiltin('container.update(%s)'%path)
+                elif 'module' in params: # plugin (module) to run
+                    path = sys.argv[0] + sys.argv[2]
+                    xbmc.executebuiltin('container.update(%s)'%path)
             else:
                 if unlock():
                     #update the unlock time
