@@ -42,6 +42,30 @@ def addDir(name, module, contentType, iconImage=''):
     listItem = xbmcgui.ListItem(name, iconImage=iconImage, thumbnailImage=iconImage)
     xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True)
 
+def unlock():
+    unlocked = True
+    win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
+    if (ADDON.getSetting('passcode') != ''):
+        unlockTimeout = float( ADDON.getSetting('passcodetimeout') ) * 60 # to minutes
+        try:
+            unlockedTime = float( win.getProperty('Unlocked') )
+        except ValueError:
+            unlockedTime = 0.0
+        #unlocked = True when timeout not expired
+        unlocked = (time.time() < (unlockedTime + unlockTimeout) )
+        if not unlocked:
+            log('Unlock with passcode required...')
+            keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30013))
+            keyboard.setHiddenInput(True)
+            keyboard.doModal()
+            if keyboard.isConfirmed() and keyboard.getText() == ADDON.getSetting('passcode'):
+                unlocked = True
+            else:
+                #Wrong passcode
+                dialog = xbmcgui.Dialog()
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(30014) )
+    return unlocked
+
  
 if ( __name__ == "__main__" ):
     log_debug('Argument List: %s' % str(sys.argv))
@@ -66,29 +90,9 @@ if ( __name__ == "__main__" ):
                     xbmc.executebuiltin('container.update(%s, replace)'%path)
                     #xbmc.executebuiltin('container.update(%s)'%path)
             else:
-                unlocked = True
-                win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
-                if ('true' == ADDON.getSetting('passcodelock').lower()):
-                    unlockTimeout = float( ADDON.getSetting('passcodetimeout') ) * 60 # to minutes
-                    try:
-                        unlockedTime = float( win.getProperty('Unlocked') )
-                    except ValueError:
-                        unlockedTime = 0.0
-                    #unlocked = True when timeout not expired
-                    unlocked = (time.time() < (unlockedTime + unlockTimeout) )
-                    if not unlocked:
-                        log('Unlock with passcode required...')
-                        keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30013))
-                        keyboard.setHiddenInput(True)
-                        keyboard.doModal()
-                        if keyboard.isConfirmed() and keyboard.getText() == ADDON.getSetting('passcode'):
-                            unlocked = True
-                        else:
-                            #Wrong passcode
-                            dialog = xbmcgui.Dialog()
-                            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30014) )
-                if unlocked:
+                if unlock():
                     #update the unlock time
+                    win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
                     win.setProperty('Unlocked', '%s'%time.time() )
                     if 'module' in params: # Module chosen, load and execute module
                         module = params['module']
@@ -120,6 +124,13 @@ if ( __name__ == "__main__" ):
             login.doTokenDialog()
         elif action == 'clear_token':
             ADDON.setSetting('access_token', '')
+        elif action == 'change_passcode':
+            if unlock():
+                keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30034))
+                keyboard.setHiddenInput(True)
+                keyboard.doModal()
+                if keyboard.isConfirmed():
+                    ADDON.setSetting('passcode', keyboard.getText())
         elif action == 'delete':
             if 'path' in params:
                 path = urllib.unquote( params['path'] )

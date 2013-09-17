@@ -61,20 +61,20 @@ msgid "Show me more..."
 msgstr "Toon me meer..."
 
 msgctxt "#30011"
-msgid "Enable passcode lock"
+msgid "Use passcode lock"
 msgstr "Gebruik passcode lock"
 
 msgctxt "#30012"
-msgid "Passcode"
-msgstr "Passcode"
+msgid "Change your passcode"
+msgstr "Verander uw passcode"
 
 msgctxt "#30013"
-msgid "Enter your Passcode"
-msgstr "Voer uw Passcode in"
+msgid "Enter your passcode"
+msgstr "Voer uw passcode in"
 
 msgctxt "#30014"
-msgid "Wrong Passcode!"
-msgstr "Foute Passcode!"
+msgid "Wrong passcode!"
+msgstr "Foute passcode!"
 
 msgctxt "#30015"
 msgid "Passcode timeout (minutes)"
@@ -151,6 +151,10 @@ msgstr "Selecteer het bestand om te uploaden"
 msgctxt "#30033"
 msgid "Uploading file to Dropbox"
 msgstr "Bestand aan het uploaden naar Dropbox"
+
+msgctxt "#30034"
+msgid "Enter your new passcode"
+msgstr "Voer uw nieuwe passcode in"
 
 
 #error messages

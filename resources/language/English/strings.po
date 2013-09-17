@@ -61,19 +61,19 @@ msgid "Show me more..."
 msgstr ""
 
 msgctxt "#30011"
-msgid "Enable passcode lock"
+msgid "Use passcode lock"
 msgstr ""
 
 msgctxt "#30012"
-msgid "Passcode"
+msgid "Change your passcode"
 msgstr ""
 
 msgctxt "#30013"
-msgid "Enter your Passcode"
+msgid "Enter your passcode"
 msgstr ""
 
 msgctxt "#30014"
-msgid "Wrong Passcode!"
+msgid "Wrong passcode!"
 msgstr ""
 
 msgctxt "#30015"
@@ -150,6 +150,10 @@ msgstr "Selecteer het bestand om te uploaden"
 
 msgctxt "#30033"
 msgid "Uploading file to Dropbox"
+msgstr ""
+
+msgctxt "#30034"
+msgid "Enter your new passcode"
 msgstr ""
 
 
