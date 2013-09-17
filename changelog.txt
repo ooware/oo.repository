@@ -39,3 +39,8 @@ addon.xml
 - Add create folders in Dropbox
 - Add upload files to Dropbox
 - Add the addon to the Programs menu
+
+[B]0.3.3b:[/B]
+- fix changing passcode without asking for current passcode
+- make loading large directories faster. Remove getting the meta data of
+  each file separately
