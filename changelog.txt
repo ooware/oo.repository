@@ -3,12 +3,6 @@ Initial version
 - Browse you dropbox files and folders
 - View pictures (with slideshow of XBMC)
 
-[B]0.1.1b:[/B]
-Bug fixes:
-- remove pkg_resources dependency, not available on Raspbmc
-- Fix using special characters (like &) in folder/file names
-- Fix not be able to go deeper than 2 directories
-
 [B]0.2.0b:[/B]
 - Added the addon to the video and music(audio) menu's
 - For media files:
@@ -23,24 +17,16 @@ Bug fixes:
 Added the Official xbmc-dropbox.sourceforge.net Add-on Repository to the
 addon.xml
 
-[B]0.3.0b:[/B]
+[B]0.4.0:[/B]
+- Add context menu items for:
+  - searching for dropbox files/folders
+  - deleting files/folders from Dropbox
+  - copying files/folders in Dropbox
+  - move files/folders in Dropbox
+  - create folders in Dropbox
+  - upload files to Dropbox
+- Added passcode lock functionality
+- Add the addon to the Programs menu
 - Added fanart image
 - Remove cached files/folders/thumbnails when items are no longer 
   present in dropbox folders
-- Added passcode lock functionality
-
-[B]0.3.1b:[/B]
-- Add searching from dropbox files/folders
-- Add deleting files/folders from Dropbox
-- Add copying files/folders in Dropbox
-
-[B]0.3.2b:[/B]
-- Add move files/folders in Dropbox
-- Add create folders in Dropbox
-- Add upload files to Dropbox
-- Add the addon to the Programs menu
-
-[B]0.3.3b:[/B]
-- fix changing passcode without asking for current passcode
-- make loading large directories faster. Remove getting the meta data of
-  each file separately

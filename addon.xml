@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.dropbox" name="Dropbox" version="0.3.3b"
+<addon id="plugin.dropbox" name="Dropbox" version="0.4.0"
 	provider-name="Joost Kop">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0" />
