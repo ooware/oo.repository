@@ -25,7 +25,7 @@ import xbmcgui
 import time
 
 from resources.lib.utils import *
-from resources.lib.dropboxclient import XBMCDropBoxClient
+from resources.lib.dropboxclient import *
 
 class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
     """
@@ -77,7 +77,7 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
             listItems.append(listItem)
         for item in items:
             if item['is_dir'] == True:
-                listItem = xbmcgui.ListItem(label=os.path.basename(item['path']), label2=item['path'], iconImage="DefaultFolder.png", thumbnailImage='DefaultFolder.png')
+                listItem = xbmcgui.ListItem(label=os.path.basename(string_path(item['path'])), label2=string_path(item['path']), iconImage="DefaultFolder.png", thumbnailImage='DefaultFolder.png')
                 listItems.append(listItem)
         listView.addItems(listItems)
         thumbView.addItems(listItems) #bugy! check/change FileBrowser.xml file!?

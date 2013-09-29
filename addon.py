@@ -182,13 +182,13 @@ if ( __name__ == "__main__" ):
                 del dialog
         elif action == 'create_folder':
             if 'path' in params:
-                path = urllib.unquote( params['path'] )
+                path = urllib.unquote( params['path'] ).decode("utf-8")
                 keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30030))
                 keyboard.doModal()
                 if keyboard.isConfirmed():
                     newFolder = path
                     if path[-1:] != '/': newFolder += '/'
-                    newFolder += keyboard.getText()
+                    newFolder += unicode(keyboard.getText(), "utf-8")
                     client = XBMCDropBoxClient()
                     success = client.createFolder(newFolder)
                     if success:

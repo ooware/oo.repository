@@ -26,7 +26,7 @@ import urllib
 import os, uuid
 
 from resources.lib.utils import *
-from resources.lib.dropboxclient import XBMCDropBoxClient, FileLoader
+from resources.lib.dropboxclient import *
 
 MAX_MEDIA_ITEMS_TO_LOAD_ONCE = 200
 
@@ -61,12 +61,12 @@ class DropboxViewer(XBMCDropBoxClient):
         self._totalItems = len(contents)
         if self._totalItems > 0:
             #create and start the thread that will download the files
-            self._loader = FileLoader(self.DropboxAPI, self._module, contents, self._shadowPath, self._thumbPath)
+            self._loader = FileLoader(self.DropboxAPI, self._module, self._shadowPath, self._thumbPath)
         #first add all the folders
         folderItems = 0
         for f in contents:
             if f['is_dir']:
-                fpath = f['path']
+                fpath = string_path(f['path'])
                 name = os.path.basename(fpath)
                 self.addFolder(name, fpath)
                 folderItems += 1
@@ -75,7 +75,7 @@ class DropboxViewer(XBMCDropBoxClient):
         #Now add the maximum(define) number of files
         for fileMeta in contents:
             if not fileMeta['is_dir']:
-                fpath = fileMeta['path']
+                fpath = string_path(fileMeta['path'])
                 name = os.path.basename(fpath)
                 self.addFile(name, fpath, fileMeta)
             if self._loadedMediaItems >= self._nrOfMediaItems:
@@ -122,14 +122,14 @@ class DropboxViewer(XBMCDropBoxClient):
     def addFile(self, name, path, meta):
         url = None
         listItem = None
-        #print "path: ", path
+        #print "path: %s" % path
         #print "meta: ", meta
         mediatype = ''
         iconImage = 'DefaultFile.png'
         if self._contentType == 'executable' or not self._filterFiles:
             mediatype = 'other'
             iconImage = 'DefaultFile.png'
-        elif (self._contentType == 'image'):
+        if (self._contentType == 'image'):
             if 'image' in meta['mime_type']:
                 mediatype = 'pictures'
                 iconImage = 'DefaultImage.png'
@@ -145,7 +145,7 @@ class DropboxViewer(XBMCDropBoxClient):
             listItem = xbmcgui.ListItem(name, iconImage=iconImage)
             if mediatype in ['pictures','video','music']:
                 self._loadedMediaItems += 1
-                tumb = self._loader.getThumbnail(path)
+                tumb = self._loader.getThumbnail(path, meta)
                 if not tumb:
                     tumb = '' 
                 listItem.setThumbnailImage(tumb)
@@ -161,11 +161,11 @@ class DropboxViewer(XBMCDropBoxClient):
                 contextMenuItems = []
                 searchUrl = self.getUrl(self._current_path, module='search_dropbox')
                 contextMenuItems.append( (LANGUAGE_STRING(30017), 'XBMC.RunPlugin(%s)'%searchUrl))
-                contextMenuItems.append( (LANGUAGE_STRING(30022), 'XBMC.RunScript(plugin.dropbox, action=delete&path=%s)'%urllib.quote(path)))
-                contextMenuItems.append( (LANGUAGE_STRING(30024), 'XBMC.RunScript(plugin.dropbox, action=copy&path=%s)'%urllib.quote(path)))
-                contextMenuItems.append( (LANGUAGE_STRING(30027), 'XBMC.RunScript(plugin.dropbox, action=move&path=%s)'%urllib.quote(path)))
-                contextMenuItems.append( (LANGUAGE_STRING(30029), 'XBMC.RunScript(plugin.dropbox, action=create_folder&path=%s)'%urllib.quote(os.path.dirname(path))))
-                contextMenuItems.append( (LANGUAGE_STRING(30031), 'XBMC.RunScript(plugin.dropbox, action=upload&to_path=%s)'%urllib.quote(os.path.dirname(path))))
+                contextMenuItems.append( (LANGUAGE_STRING(30022), self.getContextUrl(path, 'delete') ) )
+                contextMenuItems.append( (LANGUAGE_STRING(30024), self.getContextUrl(path, 'copy') ) )
+                contextMenuItems.append( (LANGUAGE_STRING(30027), self.getContextUrl(path, 'move') ) )
+                contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(path, 'create_folder') ) )
+                contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(os.path.dirname(path), 'upload') ) )
                 listItem.addContextMenuItems(contextMenuItems)
                 xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
@@ -176,11 +176,11 @@ class DropboxViewer(XBMCDropBoxClient):
         contextMenuItems = []
         searchUrl = self.getUrl(path, module='search_dropbox')
         contextMenuItems.append( (LANGUAGE_STRING(30017), 'XBMC.RunPlugin(%s)'%searchUrl))
-        contextMenuItems.append( (LANGUAGE_STRING(30022), 'XBMC.RunScript(plugin.dropbox, action=delete&path=%s)'%urllib.quote(path)))
-        contextMenuItems.append( (LANGUAGE_STRING(30024), 'XBMC.RunScript(plugin.dropbox, action=copy&path=%s)'%urllib.quote(path)))
-        contextMenuItems.append( (LANGUAGE_STRING(30027), 'XBMC.RunScript(plugin.dropbox, action=move&path=%s)'%urllib.quote(path)))
-        contextMenuItems.append( (LANGUAGE_STRING(30029), 'XBMC.RunScript(plugin.dropbox, action=create_folder&path=%s)'%urllib.quote(path)))
-        contextMenuItems.append( (LANGUAGE_STRING(30031), 'XBMC.RunScript(plugin.dropbox, action=upload&to_path=%s)'%urllib.quote(path)))
+        contextMenuItems.append( (LANGUAGE_STRING(30022), self.getContextUrl(path, 'delete') ) )
+        contextMenuItems.append( (LANGUAGE_STRING(30024), self.getContextUrl(path, 'copy') ) )
+        contextMenuItems.append( (LANGUAGE_STRING(30027), self.getContextUrl(path, 'move') ) )
+        contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(path, 'create_folder') ) )
+        contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(path, 'upload') ) )
         listItem.addContextMenuItems(contextMenuItems)
         #no useful metadata of folder
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._totalItems)
@@ -195,6 +195,15 @@ class DropboxViewer(XBMCDropBoxClient):
         url += '&path=' + urllib.quote(path)
         if media_items != 0:
             url += '&media_items=' + str(media_items)
+        return url
+
+    def getContextUrl(self, path, action):
+        url = 'XBMC.RunScript(plugin.dropbox, '
+        url += 'action=%s' %( action )
+        if action == 'upload':
+            url += '&to_path=%s)' %( urllib.quote(path) )
+        else:
+            url += '&path=%s)' %( urllib.quote(path) )
         return url
         
     def metadata2ItemInfo(self, item, metadata, mediatype):
