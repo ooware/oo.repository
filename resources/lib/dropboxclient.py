@@ -33,6 +33,8 @@ from utils import *
 from dropbox import client, rest
 from StringIO import StringIO
 
+from dropboxprogress import DropboxBackgroundProgress
+
 try:
     import StorageServer
 except:
@@ -315,7 +317,7 @@ class FileLoader(threading.Thread):
     _itemsHandled = 0
     _itemsTotal = 0
     
-    def __init__( self, DropboxAPI, module, shadowPath, thumbPath):
+    def __init__( self, DropboxAPI, parentWindow, module, shadowPath, thumbPath):
         super(FileLoader, self).__init__()
         self._shadowPath = shadowPath
         self._thumbPath = thumbPath
@@ -323,12 +325,14 @@ class FileLoader(threading.Thread):
         self._module = module
         self._thumbList = Queue.Queue() #thread safe
         self._fileList = Queue.Queue() #thread safe
-#         self._progress = xbmcgui.DialogProgress()
-#         self._progress.create('Dropbox: downloading files...', 'Dropbox: downloading files...')
+        self._progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
+        self._progress.setHeading(LANGUAGE_STRING(30035))
+        self._progress.parentWindow = parentWindow
 
     def run(self):
         #check if need to quit
         log_debug("FileLoader started for: %s"%self._module)
+        self._progress.show()
         while not self._stop and not self.ready():
             #First get all the thumbnails(priority), then all the original files
             thumb2Retrieve = None
@@ -347,8 +351,7 @@ class FileLoader(threading.Thread):
                 else:
                     log_debug("Thumbnail already downloaded: %s"%location)
                 self._itemsHandled += 1
-#                 precent = (self._itemsHandled / self._itemsTotal) * 100
-#                 self._progress.update(precent)
+                self._progress.update(self._itemsHandled, self._itemsTotal)
             elif file2Retrieve:
                 location = self._getShadowLocation(file2Retrieve)
                 #Check if thumb already exists
@@ -359,14 +362,14 @@ class FileLoader(threading.Thread):
                 else:
                     log_debug("Original file already downloaded: %s"%location)
                 self._itemsHandled += 1
-#                 precent = (self._itemsHandled / self._itemsTotal) * 100
-#                 self._progress.update(precent)
+                self._progress.update(self._itemsHandled, self._itemsTotal)
             time.sleep(0.100)
         if self._stop:
             log_debug("FileLoader stopped (as requested) for: %s"%self._module)
         else:
             log_debug("FileLoader finished for: %s"%self._module)
-#         self._progress.close()
+        self._progress.close()
+        del self._progress
         
     def stop(self):
         self._stop = True

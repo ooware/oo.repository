@@ -61,7 +61,7 @@ class DropboxViewer(XBMCDropBoxClient):
         self._totalItems = len(contents)
         if self._totalItems > 0:
             #create and start the thread that will download the files
-            self._loader = FileLoader(self.DropboxAPI, self._module, self._shadowPath, self._thumbPath)
+            self._loader = FileLoader(self.DropboxAPI, self.win, self._module, self._shadowPath, self._thumbPath)
         #first add all the folders
         folderItems = 0
         for f in contents:
