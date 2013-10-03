@@ -21,6 +21,7 @@
 
 import xbmcplugin
 import xbmcgui
+import xbmcvfs
 
 import time
 
@@ -66,156 +67,178 @@ def unlock():
                 dialog.ok(ADDON_NAME, LANGUAGE_STRING(30014) )
     return unlocked
 
+def renamePlugin():
+    renamed = False
+    pathDbmc = xbmc.translatePath( ADDON.getAddonInfo('profile') )
+    pathDropbox = pathDbmc.replace('plugin.dbmc', 'plugin.dropbox')
+    log_debug('profile new: %s old: %s'%(pathDbmc,pathDropbox))
+    if xbmcvfs.exists(pathDropbox):
+        #start moving the old plugin to the new
+        import shutil
+        if not xbmcvfs.exists(pathDbmc):
+            #the 'profile' data
+            log('Moving %s to %s' %(pathDropbox, pathDbmc))
+            shutil.move(pathDropbox, pathDbmc)
+        pathDropbox = xbmc.translatePath( ADDON.getAddonInfo('path') )
+        pathDbmc = pathDropbox.replace('plugin.dropbox', 'plugin.dbmc')
+        log_debug('path new: %s old: %s'%(pathDbmc,pathDropbox))
+        if not xbmcvfs.exists(pathDbmc):
+            #the plugin itself
+            log('Moving %s to %s' %(pathDropbox, pathDbmc))
+            shutil.move(pathDropbox, pathDbmc)
+            renamed = True
+            dialog = xbmcgui.Dialog()
+            dialog.ok(ADDON_NAME, 'Renamed plugin.dropbox to plugin.dbmc!', 'Please restart XBMC for using the Dropbox addon (Dbmc)' )
+    return renamed
  
 if ( __name__ == "__main__" ):
-    log_debug('Argument List: %s' % str(sys.argv))
-    runAsScript, params = parse_argv()
-    if not runAsScript:
-        if ADDON.getSetting('access_token').decode("utf-8") == '':
-            import resources.lib.login as login
-            dialog = xbmcgui.Dialog()
-            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30002), LANGUAGE_STRING(30003) )
-            xbmcplugin.endOfDirectory(int(sys.argv[1]),succeeded=False)
-            login.doTokenDialog()
-            #ADDON.openSettings()
-        elif ADDON.getSetting('access_token').decode("utf-8") != '':
-            if int(sys.argv[1]) < 0:
-                #handle action of a file (or a "Show me more..." item)
-                if 'media_items' in params:
-                    #Loading more media items requested...
-                    path = sys.argv[0] + sys.argv[2]
-                    #xbmc.executebuiltin('container.update(%s, replace)'%path) # don't use replace because that removes the content_type from the path...
-                    xbmc.executebuiltin('container.update(%s)'%path)
-                elif 'module' in params: # plugin (module) to run
-                    path = sys.argv[0] + sys.argv[2]
-                    xbmc.executebuiltin('container.update(%s)'%path)
-            else:
-                if unlock():
-                    #update the unlock time
-                    win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
-                    win.setProperty('Unlocked', '%s'%time.time() )
-                    if 'module' in params: # Module chosen, load and execute module
-                        module = params['module']
-                        __import__(module)
-                        current_module = sys.modules[module]
-                        current_module.run(params)
-                    elif 'action' in params and params['action'] == 'play':
-                        client = XBMCDropBoxClient()
-                        item = urllib.unquote( params['path'] )
-                        url = client.getMediaUrl(item)
-                        listItem = xbmcgui.ListItem(item)
-                        listItem.select(True)
-                        listItem.setPath(url)
-                        xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=listItem)
-                    else: # No module chosen
-                        if False: #list modules, creates an extra menu for dropbox addon, but for now, do not use...
-                            contentType = params.get('content_type', 'all')
-                            addDir(LANGUAGE_STRING(30016), 'browse_folder', contentType)
-                            addDir(LANGUAGE_STRING(30017), 'search_dropbox', contentType, iconImage='DefaultAddonProgram.png')
-                            # Add extra modules here, using addDir(name, module)
-                            xbmcplugin.endOfDirectory(int(sys.argv[1]))
-                        else:
-                            #Run the browse_folder module
-                            module = 'browse_folder'
-                            params['module'] = module
+    if( not renamePlugin() ):
+        log_debug('Argument List: %s' % str(sys.argv))
+        runAsScript, params = parse_argv()
+        if not runAsScript:
+            if ADDON.getSetting('access_token').decode("utf-8") == '':
+                import resources.lib.login as login
+                dialog = xbmcgui.Dialog()
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(30002), LANGUAGE_STRING(30003) )
+                xbmcplugin.endOfDirectory(int(sys.argv[1]),succeeded=False)
+                login.doTokenDialog()
+                #ADDON.openSettings()
+            elif ADDON.getSetting('access_token').decode("utf-8") != '':
+                if int(sys.argv[1]) < 0:
+                    #handle action of a file (or a "Show me more..." item)
+                    if 'media_items' in params:
+                        #Loading more media items requested...
+                        path = sys.argv[0] + sys.argv[2]
+                        #xbmc.executebuiltin('container.update(%s, replace)'%path) # don't use replace because that removes the content_type from the path...
+                        xbmc.executebuiltin('container.update(%s)'%path)
+                    elif 'module' in params: # plugin (module) to run
+                        path = sys.argv[0] + sys.argv[2]
+                        xbmc.executebuiltin('container.update(%s)'%path)
+                else:
+                    if unlock():
+                        #update the unlock time
+                        win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
+                        win.setProperty('Unlocked', '%s'%time.time() )
+                        if 'module' in params: # Module chosen, load and execute module
+                            module = params['module']
                             __import__(module)
                             current_module = sys.modules[module]
                             current_module.run(params)
-                else:
-                    xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
-        else:
-            xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
-    else: # run as script
-        action = params.get('action', '')
-        if action == 'login':
-            import resources.lib.login as login
-            login.doTokenDialog()
-        elif action == 'clear_token':
-            ADDON.setSetting('access_token', '')
-        elif action == 'change_passcode':
-            if unlock():
-                keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30034))
-                keyboard.setHiddenInput(True)
-                keyboard.doModal()
-                if keyboard.isConfirmed():
-                    ADDON.setSetting('passcode', keyboard.getText())
-        elif action == 'delete':
-            if 'path' in params:
-                path = urllib.unquote( params['path'] )
-                dialog = xbmcgui.Dialog()
-                if dialog.yesno(ADDON_NAME, LANGUAGE_STRING(30023), path ) == True:
-                    client = XBMCDropBoxClient()
-                    success = client.delete(path)
-                    if success:
-                        log('File removed: %s' % path)
+                        elif 'action' in params and params['action'] == 'play':
+                            client = XBMCDropBoxClient()
+                            item = urllib.unquote( params['path'] )
+                            url = client.getMediaUrl(item)
+                            listItem = xbmcgui.ListItem(item)
+                            listItem.select(True)
+                            listItem.setPath(url)
+                            xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=listItem)
+                        else: # No module chosen
+                            if False: #list modules, creates an extra menu for dropbox addon, but for now, do not use...
+                                contentType = params.get('content_type', 'all')
+                                addDir(LANGUAGE_STRING(30016), 'browse_folder', contentType)
+                                addDir(LANGUAGE_STRING(30017), 'search_dropbox', contentType, iconImage='DefaultAddonProgram.png')
+                                # Add extra modules here, using addDir(name, module)
+                                xbmcplugin.endOfDirectory(int(sys.argv[1]))
+                            else:
+                                #Run the browse_folder module
+                                module = 'browse_folder'
+                                params['module'] = module
+                                __import__(module)
+                                current_module = sys.modules[module]
+                                current_module.run(params)
                     else:
-                        log_error('File removed Failed: %s' % path)
-                    xbmc.executebuiltin('container.Refresh()')
-        elif action == 'copy':
-            if 'path' in params:
-                path = urllib.unquote( params['path'] )
-                dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
-                dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30026))
-                dialog.doModal()
-                if dialog.selectedFolder:
-                    #dropbox path -> don't use os.path.join()!
-                    toPath = dialog.selectedFolder
-                    if dialog.selectedFolder[-1:] != '/': toPath += '/'
-                    toPath += os.path.basename(path)
-                    client = XBMCDropBoxClient()
-                    success = client.copy(path, toPath)
-                    if success:
-                        log('File copied: %s to %s' % (path, toPath) ) 
-                    else:
-                        log_error('File copy Failed: %s to %s' % (path, toPath) )
-                del dialog
-        elif action == 'move':
-            if 'path' in params:
-                path = urllib.unquote( params['path'] )
-                dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
-                dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30028))
-                dialog.doModal()
-                if dialog.selectedFolder:
-                    #dropbox path -> don't use os.path.join()!
-                    toPath = dialog.selectedFolder
-                    if dialog.selectedFolder[-1:] != '/': toPath += '/'
-                    toPath += os.path.basename(path)
-                    client = XBMCDropBoxClient()
-                    success = client.move(path, toPath)
-                    if success:
-                        log('File moved: from %s to %s' % (path, toPath) ) 
+                        xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+            else:
+                xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+        else: # run as script
+            action = params.get('action', '')
+            if action == 'login':
+                import resources.lib.login as login
+                login.doTokenDialog()
+            elif action == 'clear_token':
+                ADDON.setSetting('access_token', '')
+            elif action == 'change_passcode':
+                if unlock():
+                    keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30034))
+                    keyboard.setHiddenInput(True)
+                    keyboard.doModal()
+                    if keyboard.isConfirmed():
+                        ADDON.setSetting('passcode', keyboard.getText())
+            elif action == 'delete':
+                if 'path' in params:
+                    path = urllib.unquote( params['path'] )
+                    dialog = xbmcgui.Dialog()
+                    if dialog.yesno(ADDON_NAME, LANGUAGE_STRING(30023), path ) == True:
+                        client = XBMCDropBoxClient()
+                        success = client.delete(path)
+                        if success:
+                            log('File removed: %s' % path)
+                        else:
+                            log_error('File removed Failed: %s' % path)
                         xbmc.executebuiltin('container.Refresh()')
-                    else:
-                        log_error('File move Failed: from %s to %s' % (path, toPath) )
-                del dialog
-        elif action == 'create_folder':
-            if 'path' in params:
-                path = urllib.unquote( params['path'] ).decode("utf-8")
-                keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30030))
-                keyboard.doModal()
-                if keyboard.isConfirmed():
-                    newFolder = path
-                    if path[-1:] != '/': newFolder += '/'
-                    newFolder += unicode(keyboard.getText(), "utf-8")
-                    client = XBMCDropBoxClient()
-                    success = client.createFolder(newFolder)
-                    if success:
-                        log('New folder created: %s' % newFolder)
-                        xbmc.executebuiltin('container.Refresh()')
-                    else:
-                        log_error('Creating new folder Failed: %s' % newFolder)
-        elif action == 'upload':
-            if 'to_path' in params:
-                toPath = urllib.unquote( params['to_path'] )
-                dialog = xbmcgui.Dialog()
-                fileName = dialog.browse(1, LANGUAGE_STRING(30032), 'files')
-                if fileName:
-                    client = XBMCDropBoxClient()
-                    success = client.upload(fileName, toPath)
-                    if success:
-                        log('File uploaded: %s to %s' % (fileName, toPath) )
-                        xbmc.executebuiltin('container.Refresh()')
-                    else:
-                        log_error('File uploading Failed: %s to %s' % (fileName, toPath))
-                
-
+            elif action == 'copy':
+                if 'path' in params:
+                    path = urllib.unquote( params['path'] )
+                    dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
+                    dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30026))
+                    dialog.doModal()
+                    if dialog.selectedFolder:
+                        #dropbox path -> don't use os.path.join()!
+                        toPath = dialog.selectedFolder
+                        if dialog.selectedFolder[-1:] != '/': toPath += '/'
+                        toPath += os.path.basename(path)
+                        client = XBMCDropBoxClient()
+                        success = client.copy(path, toPath)
+                        if success:
+                            log('File copied: %s to %s' % (path, toPath) ) 
+                        else:
+                            log_error('File copy Failed: %s to %s' % (path, toPath) )
+                    del dialog
+            elif action == 'move':
+                if 'path' in params:
+                    path = urllib.unquote( params['path'] )
+                    dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
+                    dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30028))
+                    dialog.doModal()
+                    if dialog.selectedFolder:
+                        #dropbox path -> don't use os.path.join()!
+                        toPath = dialog.selectedFolder
+                        if dialog.selectedFolder[-1:] != '/': toPath += '/'
+                        toPath += os.path.basename(path)
+                        client = XBMCDropBoxClient()
+                        success = client.move(path, toPath)
+                        if success:
+                            log('File moved: from %s to %s' % (path, toPath) ) 
+                            xbmc.executebuiltin('container.Refresh()')
+                        else:
+                            log_error('File move Failed: from %s to %s' % (path, toPath) )
+                    del dialog
+            elif action == 'create_folder':
+                if 'path' in params:
+                    path = urllib.unquote( params['path'] ).decode("utf-8")
+                    keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30030))
+                    keyboard.doModal()
+                    if keyboard.isConfirmed():
+                        newFolder = path
+                        if path[-1:] != '/': newFolder += '/'
+                        newFolder += unicode(keyboard.getText(), "utf-8")
+                        client = XBMCDropBoxClient()
+                        success = client.createFolder(newFolder)
+                        if success:
+                            log('New folder created: %s' % newFolder)
+                            xbmc.executebuiltin('container.Refresh()')
+                        else:
+                            log_error('Creating new folder Failed: %s' % newFolder)
+            elif action == 'upload':
+                if 'to_path' in params:
+                    toPath = urllib.unquote( params['to_path'] )
+                    dialog = xbmcgui.Dialog()
+                    fileName = dialog.browse(1, LANGUAGE_STRING(30032), 'files')
+                    if fileName:
+                        client = XBMCDropBoxClient()
+                        success = client.upload(fileName, toPath)
+                        if success:
+                            log('File uploaded: %s to %s' % (fileName, toPath) )
+                            xbmc.executebuiltin('container.Refresh()')
+                        else:
+                            log_error('File uploading Failed: %s to %s' % (fileName, toPath))
