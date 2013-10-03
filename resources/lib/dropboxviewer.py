@@ -198,7 +198,7 @@ class DropboxViewer(XBMCDropBoxClient):
         return url
 
     def getContextUrl(self, path, action):
-        url = 'XBMC.RunScript(plugin.dropbox, '
+        url = 'XBMC.RunScript(plugin.dbmc, '
         url += 'action=%s' %( action )
         if action == 'upload':
             url += '&to_path=%s)' %( urllib.quote(path) )

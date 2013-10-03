@@ -6,10 +6,10 @@
         <setting label="30007" type="folder" id="cachepath" source="auto" option="writeable" default=""/>
         <setting label="30011" type="lsep"/>
         <setting label="30012" type="text" id="passcode" visible="false" default=""/>
-        <setting label="30012" type="action" action="RunScript(plugin.dropbox, action=change_passcode)" default=""/>
+        <setting label="30012" type="action" action="RunScript(plugin.dbmc, action=change_passcode)" default=""/>
         <setting label="30015" type="slider" id="passcodetimeout" enable="!eq(-2,)" range="1,120" option="int" default="30"/>
         <setting label="30006" type="lsep"/>
-        <setting label="30005" type="action" action="RunScript(plugin.dropbox, action=clear_token)"/>
+        <setting label="30005" type="action" action="RunScript(plugin.dbmc, action=clear_token)"/>
         <setting label="30006" type="text" id="access_token" default=""/>
     </category>
 </settings>

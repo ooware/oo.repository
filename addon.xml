@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.dropbox" name="Dropbox" version="0.4.0"
+<addon id="plugin.dbmc" name="Dbmc" version="0.5.0"
 	provider-name="Joost Kop">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0" />
@@ -12,16 +12,14 @@
 	<extension point="xbmc.addon.metadata">
 		<language>en</language>
 		<summary lang="en">View files from your Dropbox account</summary>
-		<summary lang="nl">Bekijk bestanden van je Dropbox account
-		</summary>
-		<description lang="en">View files from your Dropbox account. This addon can access to all files and folders in your Dropbox.
+		<summary lang="nl">Bekijk bestanden van je Dropbox account</summary>
+		<description lang="en">View files from your Dropbox account. This addon can access to all files and folders in your Dropbox account. Dbmc is not affiliated with or otherwise sponsored by Dropbox, Inc.
 		</description>
-		"/home/joost/net.rieter.xot.repository/addon.xml"
-		<description lang="nl">Bekijk bestanden van je Dropbox account. Deze addon heeft toegang tot alle bestanden en mappen in uw Dropbox.
+		<description lang="nl">Bekijk bestanden van je Dropbox account. Deze addon heeft toegang tot alle bestanden en mappen in uw Dropbox account. Dbmc is niet aangesloten bij of anderszins gesponsord door Dropbox, Inc.
 		</description>
 		<platform>all</platform>
 		<license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
-		<forum />
+		<forum>http://forum.xbmc.org/showthread.php?tid=172902</forum>
 		<website>https://sourceforge.net/projects/xbmc-dropbox/</website>
 		<email />
 		<source />

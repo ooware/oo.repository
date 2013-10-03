@@ -1,7 +1,7 @@
 import os, sys, urllib
 import xbmc, xbmcaddon
 
-ADDON           = xbmcaddon.Addon(id='plugin.dropbox')
+ADDON           = xbmcaddon.Addon(id='plugin.dbmc')
 LANGUAGE_STRING = ADDON.getLocalizedString
 ADDON_NAME      = xbmcaddon.Addon().getAddonInfo('id')
 DATAPATH        = xbmc.translatePath( xbmcaddon.Addon().getAddonInfo('profile') )
