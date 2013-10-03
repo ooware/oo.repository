@@ -99,6 +99,14 @@ if ( __name__ == "__main__" ):
                         __import__(module)
                         current_module = sys.modules[module]
                         current_module.run(params)
+                    elif 'action' in params and params['action'] == 'play':
+                        client = XBMCDropBoxClient()
+                        item = urllib.unquote( params['path'] )
+                        url = client.getMediaUrl(item)
+                        listItem = xbmcgui.ListItem(item)
+                        listItem.select(True)
+                        listItem.setPath(url)
+                        xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=listItem)
                     else: # No module chosen
                         if False: #list modules, creates an extra menu for dropbox addon, but for now, do not use...
                             contentType = params.get('content_type', 'all')

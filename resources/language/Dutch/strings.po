@@ -156,6 +156,10 @@ msgctxt "#30034"
 msgid "Enter your new passcode"
 msgstr "Voer uw nieuwe passcode in"
 
+msgctxt "#30035"
+msgid "Caching media files in background..."
+msgstr "Media bestand opslaan op de achtergrond..."
+
 
 #error messages
 msgctxt "#31000"

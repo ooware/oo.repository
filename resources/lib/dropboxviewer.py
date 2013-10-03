@@ -37,6 +37,7 @@ class DropboxViewer(XBMCDropBoxClient):
     _filterFiles = False
     _loader = None
     _session = ''
+    _useStreamingURLs = False
         
     def __init__( self, params ):
         super(DropboxViewer, self).__init__()
@@ -61,7 +62,7 @@ class DropboxViewer(XBMCDropBoxClient):
         self._totalItems = len(contents)
         if self._totalItems > 0:
             #create and start the thread that will download the files
-            self._loader = FileLoader(self.DropboxAPI, self._module, self._shadowPath, self._thumbPath)
+            self._loader = FileLoader(self.DropboxAPI, self.win, self._module, self._shadowPath, self._thumbPath)
         #first add all the folders
         folderItems = 0
         for f in contents:
@@ -145,13 +146,17 @@ class DropboxViewer(XBMCDropBoxClient):
             listItem = xbmcgui.ListItem(name, iconImage=iconImage)
             if mediatype in ['pictures','video','music']:
                 self._loadedMediaItems += 1
-                tumb = self._loader.getThumbnail(path, meta)
-                if not tumb:
-                    tumb = '' 
-                listItem.setThumbnailImage(tumb)
-                #listItem.setInfo( type=mediatype, infoLabels={ 'Title': name } ) don't for media items, it screws up the 'default' (file)content scanner
-                url = self._loader.getFile(path)
-                #url = self.getMediaUrl(path)
+                if self._useStreamingURLs:
+                    listItem.setProperty("IsPlayable", "true")
+                    url = sys.argv[0] + '?path=' + urllib.quote(path) + '&action=play'
+                else:
+                    tumb = self._loader.getThumbnail(path, meta)
+                    if not tumb:
+                        tumb = '' 
+                    listItem.setThumbnailImage(tumb)
+                    #listItem.setInfo( type=mediatype, infoLabels={ 'Title': name } ) don't for media items, it screws up the 'default' (file)content scanner
+                    url = self._loader.getFile(path)
+                    #url = self.getMediaUrl(path)
                 self.metadata2ItemInfo(listItem, meta, mediatype)
             else:
                 listItem.setInfo( type='pictures', infoLabels={ 'Title': name } )
