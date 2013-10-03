@@ -30,3 +30,10 @@ addon.xml
 - Added fanart image
 - Remove cached files/folders/thumbnails when items are no longer 
   present in dropbox folders
+
+[B]0.5.0:[/B]
+- Changed plugin name from plugin.dropbox to plugin.dbmc
+  As needed for requesting production status at Dropbox
+- Fixed unicode string problem
+- Show (some kind of) background progress dialog for caching media files
+  in the background
