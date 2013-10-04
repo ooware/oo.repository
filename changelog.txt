@@ -37,3 +37,7 @@ addon.xml
 - Fixed unicode string problem
 - Show (some kind of) background progress dialog for caching media files
   in the background
+
+[B]0.5.1:[/B]
+- Removed fanart image. Contained dropbox logo which is not allowed
+  
