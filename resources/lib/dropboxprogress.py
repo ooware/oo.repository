@@ -41,6 +41,9 @@ class DropboxBackgroundProgress(xbmcgui.WindowXMLDialog):
     parentWindow = None
     
     _heading = ''
+    _visible = False
+    _closedTime = 0
+    TIMEOUT = 3 #secs
 
     def __init__(self, *args, **kwargs):
         super(DropboxBackgroundProgress, self).__init__(*args, **kwargs)
@@ -49,11 +52,14 @@ class DropboxBackgroundProgress(xbmcgui.WindowXMLDialog):
         self._heading = heading
         
     def onInit(self):
-        super(DropboxBackgroundProgress, self).onInit()
+        #super(DropboxBackgroundProgress, self).onInit()
         self.getControl(self.HEADING_LABEL).setLabel(self._heading)
+        self._visible = True
         
     def update(self, itemsHandled, itemsTotal, text=None):
-        percent = (itemsHandled / itemsTotal) * 100
+        if not self._visible and (self._closedTime + self.TIMEOUT) < time.time():
+            self.show()
+        percent = (itemsHandled *100) / itemsTotal
         line1 = "(%s/%s)"%(itemsHandled, itemsTotal)
         if text:
             line1 += text
@@ -61,8 +67,12 @@ class DropboxBackgroundProgress(xbmcgui.WindowXMLDialog):
         self.getControl(self.PROGRESS_BAR).setPercent(percent)
 
     def onClick(self, controlId):
+        self._visible = False
+        self._closedTime = time.time()
         self.close()
         
     def onAction(self, action):
+        self._visible = False
+        self._closedTime = time.time()
         self.close()
 

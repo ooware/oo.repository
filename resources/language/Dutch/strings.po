@@ -160,6 +160,10 @@ msgctxt "#30035"
 msgid "Caching media files in background..."
 msgstr "Media bestand opslaan op de achtergrond..."
 
+msgctxt "#30036"
+msgid "Stream video and music media (don't cache)"
+msgstr "Stream video en muziek media (niet cachen)"
+
 
 #error messages
 msgctxt "#31000"

@@ -42,7 +42,8 @@ class DropboxViewer(XBMCDropBoxClient):
     def __init__( self, params ):
         super(DropboxViewer, self).__init__()
         #get Settings
-        self._filterFiles = ('true' == ADDON.getSetting('filefilter').lower()) 
+        self._filterFiles = ('true' == ADDON.getSetting('filefilter').lower())
+        self._useStreamingURLs = ('true' == ADDON.getSetting('streammedia').lower())
         #form default url
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
         self._module = params.get('module', '')
@@ -146,20 +147,19 @@ class DropboxViewer(XBMCDropBoxClient):
             listItem = xbmcgui.ListItem(name, iconImage=iconImage)
             if mediatype in ['pictures','video','music']:
                 self._loadedMediaItems += 1
-                if self._useStreamingURLs:
+                tumb = self._loader.getThumbnail(path, meta)
+                if tumb:
+                    listItem.setThumbnailImage(tumb)
+                if self._useStreamingURLs and mediatype in ['video','music']:
+                    #this doesn't work for pictures...
                     listItem.setProperty("IsPlayable", "true")
                     url = sys.argv[0] + '?path=' + urllib.quote(path) + '&action=play'
                 else:
-                    tumb = self._loader.getThumbnail(path, meta)
-                    if not tumb:
-                        tumb = '' 
-                    listItem.setThumbnailImage(tumb)
-                    #listItem.setInfo( type=mediatype, infoLabels={ 'Title': name } ) don't for media items, it screws up the 'default' (file)content scanner
                     url = self._loader.getFile(path)
                     #url = self.getMediaUrl(path)
                 self.metadata2ItemInfo(listItem, meta, mediatype)
             else:
-                listItem.setInfo( type='pictures', infoLabels={ 'Title': name } )
+                listItem.setProperty("IsPlayable", "false")
                 self.metadata2ItemInfo(listItem, meta, 'pictures')
                 url='No action'
             if listItem:
@@ -229,6 +229,7 @@ class DropboxViewer(XBMCDropBoxClient):
         #added value for picture is only the size. the other data is retrieved from the photo itself...
         if mediatype == 'pictures':
             info['size'] = str(metadata['bytes'])
+            info['title'] = str(metadata['path'])
         # For video and music, nothing interesting...
         # elif mediatype == 'video':
         # elif mediatype == 'music':

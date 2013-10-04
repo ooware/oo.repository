@@ -332,7 +332,8 @@ class FileLoader(threading.Thread):
     def run(self):
         #check if need to quit
         log_debug("FileLoader started for: %s"%self._module)
-        self._progress.show()
+        if self._itemsTotal > 0:
+            self._progress.show()
         while not self._stop and not self.ready():
             #First get all the thumbnails(priority), then all the original files
             thumb2Retrieve = None
@@ -341,6 +342,7 @@ class FileLoader(threading.Thread):
                 thumb2Retrieve = self._thumbList.get()
             elif not self._fileList.empty():
                 file2Retrieve = self._fileList.get()
+            self._progress.update(self._itemsHandled, self._itemsTotal)
             if thumb2Retrieve:
                 location = self._getThumbLocation(thumb2Retrieve)
                 #Check if thumb already exists
@@ -351,7 +353,6 @@ class FileLoader(threading.Thread):
                 else:
                     log_debug("Thumbnail already downloaded: %s"%location)
                 self._itemsHandled += 1
-                self._progress.update(self._itemsHandled, self._itemsTotal)
             elif file2Retrieve:
                 location = self._getShadowLocation(file2Retrieve)
                 #Check if thumb already exists
@@ -362,8 +363,8 @@ class FileLoader(threading.Thread):
                 else:
                     log_debug("Original file already downloaded: %s"%location)
                 self._itemsHandled += 1
-                self._progress.update(self._itemsHandled, self._itemsTotal)
             time.sleep(0.100)
+        self._progress.update(self._itemsHandled, self._itemsTotal)
         if self._stop:
             log_debug("FileLoader stopped (as requested) for: %s"%self._module)
         else:

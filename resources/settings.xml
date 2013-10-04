@@ -4,6 +4,7 @@
         <setting label="30008" type="bool" id="filefilter" default="true"/>
         <setting label="30007" type="lsep"/>
         <setting label="30007" type="folder" id="cachepath" source="auto" option="writeable" default=""/>
+        <setting label="30036" type="bool" id="streammedia" default="false"/>
         <setting label="30011" type="lsep"/>
         <setting label="30012" type="text" id="passcode" visible="false" default=""/>
         <setting label="30012" type="action" action="RunScript(plugin.dbmc, action=change_passcode)" default=""/>
