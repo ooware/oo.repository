@@ -40,4 +40,9 @@ addon.xml
 
 [B]0.5.1:[/B]
 - Removed fanart image. Contained dropbox logo which is not allowed
-  
+
+[B]0.5.2:[/B]
+- Added option to stream music and video i.s.o. caching them. Note: picture 
+  cannot be streamed, they are still cached
+- Added renaming the old (plugin.dropbox) to the new name (plugin.dbmc)
+- Addon has now the Dropbox production status!
