@@ -153,7 +153,7 @@ class DropboxViewer(XBMCDropBoxClient):
                 if self._useStreamingURLs and mediatype in ['video','music']:
                     #this doesn't work for pictures...
                     listItem.setProperty("IsPlayable", "true")
-                    url = sys.argv[0] + '?path=' + urllib.quote(path) + '&action=play'
+                    url = sys.argv[0] + '&action=play' + '&path=' + urllib.quote(path)
                 else:
                     url = self._loader.getFile(path)
                     #url = self.getMediaUrl(path)

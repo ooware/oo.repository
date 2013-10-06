@@ -364,7 +364,8 @@ class FileLoader(threading.Thread):
                     log_debug("Original file already downloaded: %s"%location)
                 self._itemsHandled += 1
             time.sleep(0.100)
-        self._progress.update(self._itemsHandled, self._itemsTotal)
+        if self._itemsTotal > 0:
+            self._progress.update(self._itemsHandled, self._itemsTotal)
         if self._stop:
             log_debug("FileLoader stopped (as requested) for: %s"%self._module)
         else:
