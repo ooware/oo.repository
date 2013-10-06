@@ -72,21 +72,34 @@ def renamePlugin():
     pathDbmc = xbmc.translatePath( ADDON.getAddonInfo('profile') )
     pathDropbox = pathDbmc.replace('plugin.dbmc', 'plugin.dropbox')
     log_debug('profile new: %s old: %s'%(pathDbmc,pathDropbox))
-    if xbmcvfs.exists(pathDropbox):
+    if not xbmcvfs.exists(pathDbmc):
         #start moving the old plugin to the new
         import shutil
-        if not xbmcvfs.exists(pathDbmc):
+        if xbmcvfs.exists(pathDropbox):
             #the 'profile' data
             log('Moving %s to %s' %(pathDropbox, pathDbmc))
             shutil.move(pathDropbox, pathDbmc)
-        pathDropbox = xbmc.translatePath( ADDON.getAddonInfo('path') )
-        pathDbmc = pathDropbox.replace('plugin.dropbox', 'plugin.dbmc')
-        log_debug('path new: %s old: %s'%(pathDbmc,pathDropbox))
-        if not xbmcvfs.exists(pathDbmc):
-            #the plugin itself
-            log('Moving %s to %s' %(pathDropbox, pathDbmc))
-            shutil.move(pathDropbox, pathDbmc)
-            renamed = True
+        pathAddon = xbmc.translatePath( ADDON.getAddonInfo('path') )
+        log_debug('Current addon path: %s'%(pathAddon))
+        if 'plugin.dropbox' in pathAddon:
+            #move the addon path to 'plugin.dbmc'
+            pathNew = pathAddon.replace('plugin.dropbox', 'plugin.dbmc')
+            log('Moving %s to %s' %(pathAddon, pathNew))
+            if xbmcvfs.exists(pathAddon) and not xbmcvfs.exists(pathNew):
+                shutil.move(pathAddon, pathNew)
+                renamed = True
+            else:
+                log_error('Move failed: %s exists:%s, %s exists:%s' %(pathAddon, xbmcvfs.exists(pathAddon), pathNew, xbmcvfs.exists(pathNew) ) )
+        elif 'plugin.dbmc' in pathAddon:
+            #deleted the old addon path 'plugin.dropbox'
+            pathOld = pathAddon.replace('plugin.dbmc', 'plugin.dropbox')
+            log('Delete old addon: %s' %(pathOld))
+            if xbmcvfs.exists(pathDbmc):
+                shutil.rmtree(pathOld)
+                renamed = True
+            else:
+                log_error('Delete failed: %s exists:%s' %(pathOld, xbmcvfs.exists(pathOld) ) )
+        if renamed:
             dialog = xbmcgui.Dialog()
             dialog.ok(ADDON_NAME, 'Renamed plugin.dropbox to plugin.dbmc!', 'Please restart XBMC for using the Dropbox addon (Dbmc)' )
     return renamed
