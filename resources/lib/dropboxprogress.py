@@ -43,7 +43,7 @@ class DropboxBackgroundProgress(xbmcgui.WindowXMLDialog):
     _heading = ''
     _visible = False
     _closedTime = 0
-    TIMEOUT = 3 #secs
+    TIMEOUT = 7 #secs
 
     def __init__(self, *args, **kwargs):
         super(DropboxBackgroundProgress, self).__init__(*args, **kwargs)

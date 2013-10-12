@@ -169,8 +169,8 @@ class DropboxViewer(XBMCDropBoxClient):
                 contextMenuItems.append( (LANGUAGE_STRING(30022), self.getContextUrl(path, 'delete') ) )
                 contextMenuItems.append( (LANGUAGE_STRING(30024), self.getContextUrl(path, 'copy') ) )
                 contextMenuItems.append( (LANGUAGE_STRING(30027), self.getContextUrl(path, 'move') ) )
-                contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(path, 'create_folder') ) )
-                contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(os.path.dirname(path), 'upload') ) )
+                contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(self._current_path, 'create_folder') ) )
+                contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(self._current_path, 'upload') ) )
                 listItem.addContextMenuItems(contextMenuItems)
                 xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
@@ -229,7 +229,7 @@ class DropboxViewer(XBMCDropBoxClient):
         #added value for picture is only the size. the other data is retrieved from the photo itself...
         if mediatype == 'pictures':
             info['size'] = str(metadata['bytes'])
-            info['title'] = str(metadata['path'])
+            info['title'] = string_path(metadata['path'])
         # For video and music, nothing interesting...
         # elif mediatype == 'video':
         # elif mediatype == 'music':
