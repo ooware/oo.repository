@@ -1,20 +1,8 @@
 # XBMC Media Center language file
-# Addon Name: Last.fm
-# Addon id: plugin.audio.lastfm
-# Addon Provider: Team-XBMC
+# Addon Name: Dbmc
+# Addon id: plugin.dbmc
 msgid ""
 msgstr ""
-"Project-Id-Version: XBMC Addons\n"
-"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
-"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: XBMC Translation Team\n"
-"Language-Team: Dutch (http://www.transifex.com/projects/p/xbmc-addons/language/nl/)\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Language: nl\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgctxt "#30000"
 msgid "General"
@@ -163,6 +151,30 @@ msgstr "Media bestand opslaan op de achtergrond..."
 msgctxt "#30036"
 msgid "Stream video and music media (don't cache)"
 msgstr "Stream video en muziek media (niet cachen)"
+
+msgctxt "#30100"
+msgid "Synchronisation"
+msgstr "Synchronisatie"
+
+msgctxt "#30101"
+msgid "Enable synchronisation"
+msgstr "Synchronisatie activeren"
+
+msgctxt "#30102"
+msgid "Synchronisation location"
+msgstr "Synchronisatie lokatie"
+
+msgctxt "#30103"
+msgid "Moving files/folders to new synchronisation location:"
+msgstr "Verplaatsen van bestande/mappen naar nieuwe synchronisatie lokatie:"
+
+msgctxt "#30104"
+msgid "New synchronisation location is not empty!"
+msgstr "Nieuwe synchronisatie lokatie is niet leeg!"
+
+msgctxt "#30105"
+msgid "Synchronisation interval (minutes)"
+msgstr "Synchronisatie interval (minuten)"
 
 
 #error messages

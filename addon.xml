@@ -9,6 +9,7 @@
 	<extension point="xbmc.python.pluginsource" library="addon.py">
 		<provides>audio image video executable</provides>
 	</extension>
+	<extension point="xbmc.service" library="sync_dropbox.py" start="run"/>
 	<extension point="xbmc.addon.metadata">
 		<language>en</language>
 		<summary lang="en">View files from your Dropbox account</summary>

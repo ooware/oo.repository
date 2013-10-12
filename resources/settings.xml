@@ -13,4 +13,9 @@
         <setting label="30005" type="action" action="RunScript(plugin.dbmc, action=clear_token)"/>
         <setting label="30006" type="text" id="access_token" default=""/>
     </category>
+    <category label="30100">
+        <setting label="30101" type="bool" id="synchronisation" default="false"/>
+        <setting label="30102" type="folder" id="syncpath" enable="eq(-1,true)" source="auto" option="writeable" default=""/>
+        <setting label="30105" type="slider" id="syncfreq" enable="eq(-2,true)" range="5,5,1440" option="int" default="5"/>
+    </category>
 </settings>
