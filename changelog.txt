@@ -46,3 +46,8 @@ addon.xml
   cannot be streamed, they are still cached
 - Added renaming the old (plugin.dropbox) to the new name (plugin.dbmc)
 - Addon has now the Dropbox production status!
+
+[B]0.5.3:[/B]
+- Fix showing unicoded-string directory
+- Fix creating new folder on file-item
+- Set Background cache dialog timeout to 7 secs
