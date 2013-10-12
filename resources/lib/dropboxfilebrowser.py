@@ -70,6 +70,7 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
         thumbView.reset()
         self._currentPath = path
         items = self.client.getFolderContents(path)
+        print items
         listItems = []
         if path != '/':
             backPath = os.path.dirname(path)

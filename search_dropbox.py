@@ -35,7 +35,7 @@ class DropboxSearch(DropboxViewer):
 
     def buildList(self):
         #get the list
-        searchResult = self.search(self._searchText, self._current_path)
+        searchResult = self._client.search(self._searchText, self._current_path)
         #Build the list
         super(DropboxSearch, self).buildList(searchResult)
         

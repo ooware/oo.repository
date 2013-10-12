@@ -70,6 +70,10 @@ def string_path(path):
 
 
 class XBMCDropBoxClient(object):
+    '''
+    Provides a more 'general' interface to dropbox.
+    Handles all dropbox API specifics
+    '''
     DropboxAPI = None
     _cache = None
     
@@ -81,18 +85,19 @@ class XBMCDropBoxClient(object):
 #                                 cls, *args, **kwargs)
 #         return cls._instance
 
-    def __init__( self ):
-        #get Settings
-        token = ADDON.getSetting('access_token').decode("utf-8")
-        #Use user defined location?
-        datapath = ADDON.getSetting('cachepath').decode("utf-8")
-        if datapath == '' or os.path.normpath(datapath) == '':
-            #get the default path 
-            datapath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-        self._shadowPath = datapath + '/shadow/'
-        self._thumbPath = datapath + '/thumb/'
+    def __init__( self, autoConnect = True ):
         #get storage server
         self._cache = StorageServer.StorageServer(ADDON_NAME, 168) # (Your plugin name, Cache time in hours)
+        if autoConnect:
+            succes, msg = self.connect()
+            if not succes:
+                dialog = xbmcgui.Dialog()
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
+
+    def connect(self):
+        msg = 'No error'
+        #get Settings
+        token = ADDON.getSetting('access_token').decode("utf-8")
         #get Dropbox API (handle)
         if self.DropboxAPI == None:
             #log_debug("Getting dropbox client with token: %s"%token)
@@ -100,12 +105,14 @@ class XBMCDropBoxClient(object):
                 self.DropboxAPI = client.DropboxClient(token)
             except rest.ErrorResponse, e:
                 msg = e.user_error_msg or str(e)
-                dialog = xbmcgui.Dialog()
-                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
+        return (self.DropboxAPI != None), msg
+
+    def disconnect(self):
+        self.DropboxAPI == None
 
     def getFolderContents(self, path):
         contents = []
-        resp = self.getMetaData(path, directory=True)
+        resp, changed = self.getMetaData(path, directory=True)
         if 'contents' in resp:
             contents = resp['contents']
         return contents
@@ -118,6 +125,7 @@ class XBMCDropBoxClient(object):
         (script.common.plugin.cache addon) is used.
         '''
         hashstr = None
+        changed = False
         dirname = path
         if not directory:
             #strip the filename
@@ -150,7 +158,7 @@ class XBMCDropBoxClient(object):
                     #When no exception: store new retrieved data
                     log_debug("New/updated Metadata is stored for %s"%dirname)
                     self._cache.set(dirname.decode("utf-8"), repr(resp))
-                    self._removeCachedFileFolder(resp)
+                    changed = True
             else:
                 #get the file metadata using the stored data
                 resp = stored
@@ -162,53 +170,8 @@ class XBMCDropBoxClient(object):
                     if string_path(item['path']) == path:
                         resp = item
                         break;
-        return resp
+        return resp, changed
 
-    def _removeCachedFileFolder(self, metadata):
-        cachedLocation = self._shadowPath + string_path(metadata['path'])
-        cachedLocation = os.path.normpath(cachedLocation)
-        tumbLocation = self._thumbPath + string_path(metadata['path'])
-        tumbLocation = os.path.normpath(tumbLocation)
-        folderItems = []
-        fileItems = []
-        if xbmcvfs.exists(cachedLocation) or xbmcvfs.exists(tumbLocation):
-            #folderItems = (os.path.basename(item['path']) for item in metadata['contents'] if item['is_dir']) if folder not in folderitems of generator expression does not work...
-            for item in metadata['contents']:
-                if item['is_dir']:
-                    folderItems.append(os.path.basename(string_path(item['path'])))
-                else:
-                    fileItems.append(os.path.basename(string_path(item['path'])))
-        #remove shadow files/folders
-        if xbmcvfs.exists(cachedLocation):
-            for f in os.listdir(cachedLocation):
-                #check if folders/files needs to be removed
-                fName = os.path.join(cachedLocation, f)
-                if not os.path.isfile(fName):
-                    if f not in folderItems:
-                        log_debug('Removing cached folder: %s' % (fName))
-                        shutil.rmtree(fName)
-                else:
-                    if f not in fileItems:
-                        log_debug('Removing cached file: %s' % (fName))
-                        os.remove(fName)
-        #remove tumb files/folders
-        if xbmcvfs.exists(tumbLocation):
-            #first replace the tumb file extention
-            for i, f in enumerate(fileItems):
-                fileItems[i] = replaceFileExtension(f, 'jpg')
-            for f in os.listdir(tumbLocation):
-                #check if folders/files needs to be removed
-                fName = os.path.join(tumbLocation, f)
-                if not os.path.isfile(fName):
-                    if f not in folderItems:
-                        log_debug('Removing tumb folder: %s' % (fName))
-                        shutil.rmtree(fName)
-                else:
-                    if f not in fileItems:
-                        log_debug('Removing tumb file: %s' % (fName))
-                        os.remove(fName)
-            
-        
     @command()
     def getMediaUrl(self, path, cachedonly=False):
         '''
@@ -309,101 +272,8 @@ class XBMCDropBoxClient(object):
             log_error('File size of Upload file <= 0!')
         return succes
         
-
-class FileLoader(threading.Thread):
-    DropboxAPI = None
-    _stop = False
-    stopWhenFinished = False
-    _itemsHandled = 0
-    _itemsTotal = 0
-    
-    def __init__( self, DropboxAPI, parentWindow, module, shadowPath, thumbPath):
-        super(FileLoader, self).__init__()
-        self._shadowPath = shadowPath
-        self._thumbPath = thumbPath
-        self.DropboxAPI = DropboxAPI
-        self._module = module
-        self._thumbList = Queue.Queue() #thread safe
-        self._fileList = Queue.Queue() #thread safe
-        self._progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
-        self._progress.setHeading(LANGUAGE_STRING(30035))
-        self._progress.parentWindow = parentWindow
-
-    def run(self):
-        #check if need to quit
-        log_debug("FileLoader started for: %s"%self._module)
-        if self._itemsTotal > 0:
-            self._progress.show()
-        while not self._stop and not self.ready():
-            #First get all the thumbnails(priority), then all the original files
-            thumb2Retrieve = None
-            file2Retrieve = None
-            if not self._thumbList.empty():
-                thumb2Retrieve = self._thumbList.get()
-            elif not self._fileList.empty():
-                file2Retrieve = self._fileList.get()
-            self._progress.update(self._itemsHandled, self._itemsTotal)
-            if thumb2Retrieve:
-                location = self._getThumbLocation(thumb2Retrieve)
-                #Check if thumb already exists
-                # TODO: use database checking for this!
-                if not xbmcvfs.exists(location):
-                    #Doesn't exist so download it.
-                    self._getThumbnail(thumb2Retrieve)
-                else:
-                    log_debug("Thumbnail already downloaded: %s"%location)
-                self._itemsHandled += 1
-            elif file2Retrieve:
-                location = self._getShadowLocation(file2Retrieve)
-                #Check if thumb already exists
-                #TODO: use database checking for this!
-                if not xbmcvfs.exists(location):
-                    #Doesn't exist so download it.
-                    self._getFile(file2Retrieve)
-                else:
-                    log_debug("Original file already downloaded: %s"%location)
-                self._itemsHandled += 1
-            time.sleep(0.100)
-        if self._itemsTotal > 0:
-            self._progress.update(self._itemsHandled, self._itemsTotal)
-        if self._stop:
-            log_debug("FileLoader stopped (as requested) for: %s"%self._module)
-        else:
-            log_debug("FileLoader finished for: %s"%self._module)
-        self._progress.close()
-        del self._progress
-        
-    def stop(self):
-        self._stop = True
-        
-    def ready(self):
-        if self.stopWhenFinished and ( self._thumbList.empty() and self._fileList.empty() ):
-            return True
-        else:
-            return False
-        
-    def getThumbnail(self, path, metadata):
-        if metadata['thumb_exists']:
-            self._thumbList.put(path)
-            self._itemsTotal += 1
-            return self._getThumbLocation(path)
-        else:
-            return None
-
-    def getFile(self, path):
-        self._fileList.put(path)
-        self._itemsTotal += 1
-        return self._getShadowLocation(path)
-    
-    def _getThumbLocation(self, path):
-        #jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital art.
-        location = replaceFileExtension(path, 'jpg')
-        location = self._thumbPath + location
-        location = os.path.normpath(location)
-        return location
-
-    def _getThumbnail(self, path):
-        location = self._getThumbLocation(path)
+    def saveThumbnail(self, path, location):
+        succes = False
         dirName = os.path.dirname(location)
         # create the data dir if needed
         if not xbmcvfs.exists( dirName ):
@@ -416,21 +286,17 @@ class FileLoader(threading.Thread):
             shutil.copyfileobj(tumbFile, cacheFile)
             cacheFile.close()
             log_debug("Downloaded file to: %s"%location)
+            succes = True
         except IOError, e:
             msg = str(e)
             log_error('Failed saving file %s. Error: %s' %(location,msg) )
         except rest.ErrorResponse, e:
             msg = e.user_error_msg or str(e)
             log_error('Failed downloading file %s. Error: %s' %(location,msg))
-        return location
+        return succes
 
-    def _getShadowLocation(self, path):
-        location = self._shadowPath + path
-        location = os.path.normpath(location)
-        return location
-    
-    def _getFile(self, path):
-        location = self._getShadowLocation(path)
+    def saveFile(self, path, location):
+        succes = False
         dirName = os.path.dirname(location)
         # create the data dir if needed
         if not xbmcvfs.exists( dirName ):
@@ -442,14 +308,17 @@ class FileLoader(threading.Thread):
             shutil.copyfileobj(orgFile, cacheFile)
             cacheFile.close()
             log_debug("Downloaded file to: %s"%location)
+            succes = True
         except IOError, e:
             msg = str(e)
             log_error('Failed saving file %s. Error: %s' %(location,msg) )
         except rest.ErrorResponse, e:
             msg = e.user_error_msg or str(e)
             log_error('Failed downloading file %s. Error: %s' %(location,msg))
-        return location
+        return succes
 
+    def getRemoteChanges(self, cursor):
+        return None, cursor
 
 class Uploader(client.DropboxClient.ChunkedUploader):
     """

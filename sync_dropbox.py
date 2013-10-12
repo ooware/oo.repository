@@ -29,25 +29,38 @@ import shutil, os
 from resources.lib.utils import *
 from resources.lib.dropboxclient import XBMCDropBoxClient
 
+try:
+    import StorageServer
+except:
+    import storageserverdummy as StorageServer
+
 class DropboxSynchronizer:
     _enabled = False
     _syncPath = ''
     _syncFreq = 0 #minutes
     _newSyncTime = 0
+    _client = None
     
     def __init__( self ):
         # get addon settings
         self._get_settings()
+        #get storage server
+        self._DB = StorageServer.StorageServer(ADDON_NAME+'sync', 168) # (Your plugin name, Cache time in hours)
+        #TODO remove +'sync'
+        self._clientCursor = self._DB.get('client_cursor')
 
     def run(self):
         # start daemon
         while (not xbmc.abortRequested):
-            if self._enabled:
+            if self._enabled and self._client:
                 now = time.time()
                 if self._newSyncTime < now:
                     #update new sync time
                     self._updateSyncTime()
                     log_debug('Start sync...')
+                    self._getRemoteChanges()
+                    if not xbmc.abortRequested:
+                        self._downloadFiles()
                     log_debug('Finished sync...')
             xbmc.sleep(1000)
         
@@ -74,6 +87,15 @@ class DropboxSynchronizer:
                 ADDON.setSetting('syncpath', self._syncPath)
         tempFreq = float( ADDON.getSetting('syncfreq') )
         self._updateSyncTime(tempFreq)
+        #reconnect to Dropbox (in case the token has changed)
+        if self._client:
+            self._client.disconnect()
+        else:
+            self._client = XBMCDropBoxClient(autoConnect=False)
+        succes, msg = self._client.connect()
+        if not succes:
+            log_error('DropboxSynchronizer could not connect to dropbox: %s'%(msg))
+            self._client = None
         # init the player class (re-init when settings have changed)
         self.monitor = SettingsMonitor(callback=self._get_settings)
 
@@ -96,7 +118,19 @@ class DropboxSynchronizer:
                 if self._newSyncTime < now:
                     self._newSyncTime += freqSecs
                 log_debug('New sync time: %s'%( time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime(self._newSyncTime) ) ) )
+    
+    def _getRemoteChanges(self):
+        meta = '' #fake
+        while meta and not xbmc.abortRequested:
+            #initial sync, get all metadata
+            meta, self._clientCursor = self._client.getRemoteChanges(self._clientCursor)
+            #store new cursor
+            self._DB.set('client_cursor', self._clientCursor)
+            #store new data
+            self._DB.set(meta['path'], meta)
         
+    def _downloadFiles(self):
+        return
 
 class SettingsMonitor(xbmc.Monitor):
     def __init__( self, callback ):

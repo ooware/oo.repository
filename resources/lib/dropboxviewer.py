@@ -30,7 +30,10 @@ from resources.lib.dropboxclient import *
 
 MAX_MEDIA_ITEMS_TO_LOAD_ONCE = 200
 
-class DropboxViewer(XBMCDropBoxClient):
+class DropboxViewer(object):
+    '''
+    Handles the XBMC GUI/View behaviour and takes care of caching the files
+    '''
     _nrOfMediaItems = 0
     _loadedMediaItems = 0
     _totalItems = 0
@@ -40,10 +43,17 @@ class DropboxViewer(XBMCDropBoxClient):
     _useStreamingURLs = False
         
     def __init__( self, params ):
-        super(DropboxViewer, self).__init__()
+        self._client = XBMCDropBoxClient()
         #get Settings
         self._filterFiles = ('true' == ADDON.getSetting('filefilter').lower())
         self._useStreamingURLs = ('true' == ADDON.getSetting('streammedia').lower())
+        #Use user defined location?
+        datapath = ADDON.getSetting('cachepath').decode("utf-8")
+        if datapath == '' or os.path.normpath(datapath) == '':
+            #get the default path 
+            datapath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
+        self._shadowPath = datapath + '/shadow/'
+        self._thumbPath = datapath + '/thumb/'
         #form default url
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
         self._module = params.get('module', '')
@@ -63,7 +73,7 @@ class DropboxViewer(XBMCDropBoxClient):
         self._totalItems = len(contents)
         if self._totalItems > 0:
             #create and start the thread that will download the files
-            self._loader = FileLoader(self.DropboxAPI, self.win, self._module, self._shadowPath, self._thumbPath)
+            self._loader = FileLoader(self._client, self._module, self._shadowPath, self._thumbPath)
         #first add all the folders
         folderItems = 0
         for f in contents:
@@ -153,7 +163,7 @@ class DropboxViewer(XBMCDropBoxClient):
                 if self._useStreamingURLs and mediatype in ['video','music']:
                     #this doesn't work for pictures...
                     listItem.setProperty("IsPlayable", "true")
-                    url = sys.argv[0] + '&action=play' + '&path=' + urllib.quote(path)
+                    url = sys.argv[0] + '?action=play' + '&path=' + urllib.quote(path)
                 else:
                     url = self._loader.getFile(path)
                     #url = self.getMediaUrl(path)
@@ -169,8 +179,8 @@ class DropboxViewer(XBMCDropBoxClient):
                 contextMenuItems.append( (LANGUAGE_STRING(30022), self.getContextUrl(path, 'delete') ) )
                 contextMenuItems.append( (LANGUAGE_STRING(30024), self.getContextUrl(path, 'copy') ) )
                 contextMenuItems.append( (LANGUAGE_STRING(30027), self.getContextUrl(path, 'move') ) )
-                contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(path, 'create_folder') ) )
-                contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(os.path.dirname(path), 'upload') ) )
+                contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(self._current_path, 'create_folder') ) )
+                contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(self._current_path, 'upload') ) )
                 listItem.addContextMenuItems(contextMenuItems)
                 xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
@@ -229,9 +239,165 @@ class DropboxViewer(XBMCDropBoxClient):
         #added value for picture is only the size. the other data is retrieved from the photo itself...
         if mediatype == 'pictures':
             info['size'] = str(metadata['bytes'])
-            info['title'] = str(metadata['path'])
+            info['title'] = string_path(metadata['path'])
         # For video and music, nothing interesting...
         # elif mediatype == 'video':
         # elif mediatype == 'music':
 
         if len(info) > 0: item.setInfo(mediatype, info)
+        
+    def getMetaData(self, path, directory=False):
+        meta, changed = self._client.getMetaData(path, directory)
+        if changed:
+            self._removeCachedFileFolder(meta)
+        return meta
+
+    def _removeCachedFileFolder(self, metadata):
+        cachedLocation = self._shadowPath + string_path(metadata['path'])
+        cachedLocation = os.path.normpath(cachedLocation)
+        tumbLocation = self._thumbPath + string_path(metadata['path'])
+        tumbLocation = os.path.normpath(tumbLocation)
+        folderItems = []
+        fileItems = []
+        if xbmcvfs.exists(cachedLocation) or xbmcvfs.exists(tumbLocation):
+            #folderItems = (os.path.basename(item['path']) for item in metadata['contents'] if item['is_dir']) if folder not in folderitems of generator expression does not work...
+            for item in metadata['contents']:
+                if item['is_dir']:
+                    folderItems.append(os.path.basename(string_path(item['path'])))
+                else:
+                    fileItems.append(os.path.basename(string_path(item['path'])))
+        #remove shadow files/folders
+        if xbmcvfs.exists(cachedLocation):
+            for f in os.listdir(cachedLocation):
+                #check if folders/files needs to be removed
+                fName = os.path.join(cachedLocation, f)
+                if not os.path.isfile(fName):
+                    if f not in folderItems:
+                        log_debug('Removing cached folder: %s' % (fName))
+                        shutil.rmtree(fName)
+                else:
+                    if f not in fileItems:
+                        log_debug('Removing cached file: %s' % (fName))
+                        os.remove(fName)
+        #remove tumb files/folders
+        if xbmcvfs.exists(tumbLocation):
+            #first replace the tumb file extention
+            for i, f in enumerate(fileItems):
+                fileItems[i] = replaceFileExtension(f, 'jpg')
+            for f in os.listdir(tumbLocation):
+                #check if folders/files needs to be removed
+                fName = os.path.join(tumbLocation, f)
+                if not os.path.isfile(fName):
+                    if f not in folderItems:
+                        log_debug('Removing tumb folder: %s' % (fName))
+                        shutil.rmtree(fName)
+                else:
+                    if f not in fileItems:
+                        log_debug('Removing tumb file: %s' % (fName))
+                        os.remove(fName)
+
+
+class FileLoader(threading.Thread):
+    _stop = False
+    stopWhenFinished = False
+    _itemsHandled = 0
+    _itemsTotal = 0
+    
+    def __init__( self, client, module, shadowPath, thumbPath):
+        super(FileLoader, self).__init__()
+        self._shadowPath = shadowPath
+        self._thumbPath = thumbPath
+        self._client = client
+        self._module = module
+        self._thumbList = Queue.Queue() #thread safe
+        self._fileList = Queue.Queue() #thread safe
+        self._progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
+        self._progress.setHeading(LANGUAGE_STRING(30035))
+
+    def run(self):
+        #check if need to quit
+        log_debug("FileLoader started for: %s"%self._module)
+        if self._itemsTotal > 0:
+            self._progress.show()
+        while not self._stop and not self.ready():
+            #First get all the thumbnails(priority), then all the original files
+            thumb2Retrieve = None
+            file2Retrieve = None
+            if not self._thumbList.empty():
+                thumb2Retrieve = self._thumbList.get()
+            elif not self._fileList.empty():
+                file2Retrieve = self._fileList.get()
+            self._progress.update(self._itemsHandled, self._itemsTotal)
+            if thumb2Retrieve:
+                location = self._getThumbLocation(thumb2Retrieve)
+                #Check if thumb already exists
+                # TODO: use database checking for this!
+                if not xbmcvfs.exists(location):
+                    #Doesn't exist so download it.
+                    self._getThumbnail(thumb2Retrieve)
+                else:
+                    log_debug("Thumbnail already downloaded: %s"%location)
+                self._itemsHandled += 1
+            elif file2Retrieve:
+                location = self._getShadowLocation(file2Retrieve)
+                #Check if thumb already exists
+                #TODO: use database checking for this!
+                if not xbmcvfs.exists(location):
+                    #Doesn't exist so download it.
+                    self._getFile(file2Retrieve)
+                else:
+                    log_debug("Original file already downloaded: %s"%location)
+                self._itemsHandled += 1
+            time.sleep(0.100)
+        if self._itemsTotal > 0:
+            self._progress.update(self._itemsHandled, self._itemsTotal)
+        if self._stop:
+            log_debug("FileLoader stopped (as requested) for: %s"%self._module)
+        else:
+            log_debug("FileLoader finished for: %s"%self._module)
+        self._progress.close()
+        del self._progress
+        
+    def stop(self):
+        self._stop = True
+        
+    def ready(self):
+        if self.stopWhenFinished and ( self._thumbList.empty() and self._fileList.empty() ):
+            return True
+        else:
+            return False
+        
+    def getThumbnail(self, path, metadata):
+        if metadata['thumb_exists']:
+            self._thumbList.put(path)
+            self._itemsTotal += 1
+            return self._getThumbLocation(path)
+        else:
+            return None
+
+    def getFile(self, path):
+        self._fileList.put(path)
+        self._itemsTotal += 1
+        return self._getShadowLocation(path)
+    
+    def _getThumbLocation(self, path):
+        #jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital art.
+        location = replaceFileExtension(path, 'jpg')
+        location = self._thumbPath + location
+        location = os.path.normpath(location)
+        return location
+
+    def _getThumbnail(self, path):
+        location = self._getThumbLocation(path)
+        self._client.saveThumbnail(path, location)
+        return location
+
+    def _getShadowLocation(self, path):
+        location = self._shadowPath + path
+        location = os.path.normpath(location)
+        return location
+    
+    def _getFile(self, path):
+        location = self._getShadowLocation(path)
+        self._client.saveFile(path, location)
+        return location

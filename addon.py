@@ -139,8 +139,9 @@ if ( __name__ == "__main__" ):
                             current_module.run(params)
                         elif 'action' in params and params['action'] == 'play':
                             client = XBMCDropBoxClient()
-                            item = urllib.unquote( params['path'] )
+                            item = urllib.unquote( urllib.unquote( params['path'] ) )
                             url = client.getMediaUrl(item)
+                            log_debug('MediaUrl: %s'%url)
                             listItem = xbmcgui.ListItem(item)
                             listItem.select(True)
                             listItem.setPath(url)
