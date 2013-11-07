@@ -27,21 +27,14 @@ from utils import *
 
 from dropbox import client, rest
 
-APP_KEY = 'ehe9o5q5abevvq5'
-APP_SECRET = '6mbp7ww9hwzzczd'
-# auth-code examples:
-# KmrKcr8l6AIAAAAAAAAAAdKV9E6_DGeylAj6N61lfrI
-# nF5ycr2qK1YAAAAAAAAAAcgHQWbOap7GnSbj1zhDQqw
-# k0c7obmA-mYAAAAAAAAAAfPg6WbRBBLICalu7FU0aUg
-# nZ3O9v_AAwQAAAAAAAAAAemaJUPi4ON8D3HFN2voubU
-# 
-
+APP_KEY= 'QF9EBAwGS10NWBJFDRcCHxhfUR5bDhIcQhAeV0YTGBcACgg='
 
 def doTokenDialog():
+    key, secret = decode_key(APP_KEY).split('|')
     try:
         from webviewer import webviewer #@UnresolvedImport @UnusedImport
         #start the flow process (getting the auth-code
-        flow = client.DropboxOAuth2FlowNoRedirect(APP_KEY, APP_SECRET)
+        flow = client.DropboxOAuth2FlowNoRedirect(key, secret)
         authorize_url = flow.start()
         html_resp = doNormalTokenDialog(authorize_url)
         code = None
@@ -51,9 +44,9 @@ def doTokenDialog():
         if code:
             code = code.group(0)
             try:
-                log('Received auth-code: %s'%code)
+                log('Received auth-code')
                 access_token, user_id = flow.finish(code)
-                log('Received token: %s'%access_token)
+                log('Received token')
                 #save the token in settings
                 ADDON.setSetting('access_token', access_token)
             except rest.ErrorResponse, e:
