@@ -165,15 +165,23 @@ msgid "Synchronisation location"
 msgstr ""
 
 msgctxt "#30103"
-msgid "Moving files/folders to new synchronisation location:"
+msgid "Dbmc: Moving files/folders to new synchronisation location:"
 msgstr ""
 
 msgctxt "#30104"
-msgid "New synchronisation location is not empty!"
+msgid "Dbmc: New synchronisation location is not empty!"
 msgstr ""
 
 msgctxt "#30105"
 msgid "Synchronisation interval (minutes)"
+msgstr ""
+
+msgctxt "#30106"
+msgid "Dbmc: Synchronisation finished."
+msgstr ""
+
+msgctxt "#30107"
+msgid "Number of items synchronized: "
 msgstr ""
 
 

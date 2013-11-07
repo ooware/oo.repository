@@ -165,16 +165,24 @@ msgid "Synchronisation location"
 msgstr "Synchronisatie lokatie"
 
 msgctxt "#30103"
-msgid "Moving files/folders to new synchronisation location:"
-msgstr "Verplaatsen van bestande/mappen naar nieuwe synchronisatie lokatie:"
+msgid "Dbmc: Moving files/folders to new synchronisation location:"
+msgstr "Dbmc: Verplaatsen van bestande/mappen naar nieuwe synchronisatie lokatie:"
 
 msgctxt "#30104"
-msgid "New synchronisation location is not empty!"
-msgstr "Nieuwe synchronisatie lokatie is niet leeg!"
+msgid "Dbmc: New synchronisation location is not empty!"
+msgstr "Dbmc: Nieuwe synchronisatie lokatie is niet leeg!"
 
 msgctxt "#30105"
 msgid "Synchronisation interval (minutes)"
 msgstr "Synchronisatie interval (minuten)"
+
+msgctxt "#30106"
+msgid "Dbmc: Synchronisation finished."
+msgstr "Dbmc: Synchronisatie gereed."
+
+msgctxt "#30107"
+msgid "Number of items synchronized: "
+msgstr "Aantal items gesynchroniseerd: "
 
 
 #error messages

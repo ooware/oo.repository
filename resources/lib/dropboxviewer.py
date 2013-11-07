@@ -58,7 +58,7 @@ class DropboxViewer(object):
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
         self._module = params.get('module', '')
         self._contentType = params.get('content_type', 'other')
-        self._current_path = urllib.unquote( params.get('path', '/') )
+        self._current_path = urllib.unquote( params.get('path', self._client.SEP) )
         #Add sorting options
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)

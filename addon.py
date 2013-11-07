@@ -197,11 +197,11 @@ if ( __name__ == "__main__" ):
                     dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30026))
                     dialog.doModal()
                     if dialog.selectedFolder:
+                        client = XBMCDropBoxClient()
                         #dropbox path -> don't use os.path.join()!
                         toPath = dialog.selectedFolder
-                        if dialog.selectedFolder[-1:] != '/': toPath += '/'
+                        if dialog.selectedFolder[-1:] != client.SEP: toPath += client.SEP
                         toPath += os.path.basename(path)
-                        client = XBMCDropBoxClient()
                         success = client.copy(path, toPath)
                         if success:
                             log('File copied: %s to %s' % (path, toPath) ) 
@@ -215,11 +215,11 @@ if ( __name__ == "__main__" ):
                     dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30028))
                     dialog.doModal()
                     if dialog.selectedFolder:
+                        client = XBMCDropBoxClient()
                         #dropbox path -> don't use os.path.join()!
                         toPath = dialog.selectedFolder
-                        if dialog.selectedFolder[-1:] != '/': toPath += '/'
+                        if dialog.selectedFolder[-1:] != client.SEP: toPath += client.SEP
                         toPath += os.path.basename(path)
-                        client = XBMCDropBoxClient()
                         success = client.move(path, toPath)
                         if success:
                             log('File moved: from %s to %s' % (path, toPath) ) 
@@ -233,10 +233,10 @@ if ( __name__ == "__main__" ):
                     keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30030))
                     keyboard.doModal()
                     if keyboard.isConfirmed():
-                        newFolder = path
-                        if path[-1:] != '/': newFolder += '/'
-                        newFolder += unicode(keyboard.getText(), "utf-8")
                         client = XBMCDropBoxClient()
+                        newFolder = path
+                        if path[-1:] != client.SEP: newFolder += client.SEP
+                        newFolder += unicode(keyboard.getText(), "utf-8")
                         success = client.createFolder(newFolder)
                         if success:
                             log('New folder created: %s' % newFolder)
@@ -250,7 +250,7 @@ if ( __name__ == "__main__" ):
                     fileName = dialog.browse(1, LANGUAGE_STRING(30032), 'files')
                     if fileName:
                         client = XBMCDropBoxClient()
-                        success = client.upload(fileName, toPath)
+                        success = client.upload(fileName, toPath, dialog=True)
                         if success:
                             log('File uploaded: %s to %s' % (fileName, toPath) )
                             xbmc.executebuiltin('container.Refresh()')

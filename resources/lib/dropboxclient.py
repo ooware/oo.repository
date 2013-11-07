@@ -76,6 +76,7 @@ class XBMCDropBoxClient(object):
     '''
     DropboxAPI = None
     _cache = None
+    SEP = '/'
     
 #TODO: fix singleton --> it doesn't work!
 #     _instance = None
@@ -245,7 +246,7 @@ class XBMCDropBoxClient(object):
         return succes
 
     @command()
-    def upload(self, fileName, toPath):
+    def upload(self, fileName, toPath, dialog=False):
         succes = False
         size = os.stat(fileName).st_size
         if size > 0:
@@ -263,7 +264,7 @@ class XBMCDropBoxClient(object):
             dialog.close()
             if uploader.offset == uploader.target_length:
                 #user didn't cancel
-                path = toPath + '/' + os.path.basename(fileName) 
+                path = toPath + self.SEP + os.path.basename(fileName) 
                 resp = uploader.finish(path)
                 print "resp", resp
                 if resp and 'path' in resp:
@@ -317,8 +318,24 @@ class XBMCDropBoxClient(object):
             log_error('Failed downloading file %s. Error: %s' %(location,msg))
         return succes
 
+    @command()
     def getRemoteChanges(self, cursor):
-        return None, cursor
+        if cursor == '':
+            cursor = None
+        response = self.DropboxAPI.delta(cursor)
+        data = response['entries']
+        items = {}
+        for item in data:
+            meta = item[1]
+            path = item[0] #case-insensitive!
+            # But cannot use the meta['path'] because it is not 
+            # there when the item is removed!
+            #path = string_path( meta['path'] )
+            items[path] = meta
+        cursor = response['cursor']
+        reset = response['reset']
+        has_more = response['has_more']
+        return items, cursor, reset, has_more
 
 class Uploader(client.DropboxClient.ChunkedUploader):
     """

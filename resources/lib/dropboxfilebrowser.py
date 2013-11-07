@@ -59,7 +59,7 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
         self.getControl(self.FLIP_IMAGE_HOR).setEnabled(False)
         self.getControl(self.THUMB_LIST).setVisible(False) #bugy! check/change FileBrowser.xml file!?
         self.getControl(self.HEADING_LABEL).setLabel(self._heading)
-        self.showFolders('/')
+        self.showFolders(self.client.SEP)
 
     def showFolders(self, path):
         log_debug('Selecting path: %s'%path)
@@ -72,7 +72,7 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
         items = self.client.getFolderContents(path)
         print items
         listItems = []
-        if path != '/':
+        if path != self.client.SEP:
             backPath = os.path.dirname(path)
             listItem = xbmcgui.ListItem(label='..', label2=backPath, iconImage="DefaultFolderBack.png", thumbnailImage='DefaultFolderBack.png')
             listItems.append(listItem)
@@ -99,7 +99,7 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
             keyboard.doModal()
             if keyboard.isConfirmed():
                 newFolder = self._currentPath
-                if self._currentPath[-1:] != '/': newFolder += '/'
+                if self._currentPath[-1:] != self.client.SEP: newFolder += self.client.SEP
                 newFolder += keyboard.getText()
                 success = self.client.createFolder(newFolder)
                 if success:

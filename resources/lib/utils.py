@@ -1,4 +1,4 @@
-import os, sys, urllib
+import os, sys, urllib, time
 import xbmc, xbmcaddon
 
 ADDON           = xbmcaddon.Addon(id='plugin.dbmc')
@@ -50,3 +50,17 @@ def replaceFileExtension(path, extension):
     else:
         newPath = path.rsplit('.',1)[0]
         return newPath + extension
+    
+def utc2local(utc):
+    offset = time.timezone
+    if time.daylight:
+        if time.altzone and time.localtime().tm_isdst == 1: # using only if defined 
+            offset = time.altzone 
+    return utc - offset
+
+def local2utc(local):
+    offset = time.timezone
+    if time.daylight:
+        if time.altzone and time.localtime().tm_isdst == 1: # using only if defined 
+            offset = time.altzone 
+    return local + offset
