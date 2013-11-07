@@ -50,6 +50,18 @@ def replaceFileExtension(path, extension):
     else:
         newPath = path.rsplit('.',1)[0]
         return newPath + extension
+
+def xor(w1, w2):
+    from itertools import izip, cycle
+    '''xor two strings together with the lenght of the first string limiting'''
+    return ''.join(chr(ord(c1)^ord(c2)) for c1, c2 in izip(w1, cycle(w2)))
+    
+def decode_key(word):
+    from base64 import b64encode, b64decode
+    '''decode the word which was encoded with the given secret key.
+    '''
+    base = xor(b64decode(word, '-_'), ADDON_NAME)
+    return base[4:int(base[:3], 10)+4]
     
 def utc2local(utc):
     offset = time.timezone
