@@ -70,8 +70,13 @@ def string_path(path):
 
 
 class XBMCDropBoxClient(object):
+    '''
+    Provides a more 'general' interface to dropbox.
+    Handles all dropbox API specifics
+    '''
     DropboxAPI = None
     _cache = None
+    SEP = '/'
     
 #TODO: fix singleton --> it doesn't work!
 #     _instance = None
@@ -309,25 +314,67 @@ class XBMCDropBoxClient(object):
             log_error('File size of Upload file <= 0!')
         return succes
         
+    def saveThumbnail(self, path, location):
+        succes = False
+        dirName = os.path.dirname(location)
+        # create the data dir if needed
+        if not xbmcvfs.exists( dirName ):
+            xbmcvfs.mkdirs( dirName )
+        try:
+            cacheFile = open(location, 'wb') # 'b' option required for windows!
+            #download the file
+            #jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital art.
+            tumbFile = self.DropboxAPI.thumbnail(path, size='large', format='JPEG')
+            shutil.copyfileobj(tumbFile, cacheFile)
+            cacheFile.close()
+            log_debug("Downloaded file to: %s"%location)
+            succes = True
+        except IOError, e:
+            msg = str(e)
+            log_error('Failed saving file %s. Error: %s' %(location,msg) )
+        except rest.ErrorResponse, e:
+            msg = e.user_error_msg or str(e)
+            log_error('Failed downloading file %s. Error: %s' %(location,msg))
+        return succes
+
+    def saveFile(self, path, location):
+        succes = False
+        dirName = os.path.dirname(location)
+        # create the data dir if needed
+        if not xbmcvfs.exists( dirName ):
+            xbmcvfs.mkdirs( dirName )
+        try:
+            cacheFile = open(location, 'wb') # 'b' option required for windows!
+            #download the file
+            orgFile = self.DropboxAPI.get_file(path)
+            shutil.copyfileobj(orgFile, cacheFile)
+            cacheFile.close()
+            log_debug("Downloaded file to: %s"%location)
+            succes = True
+        except IOError, e:
+            msg = str(e)
+            log_error('Failed saving file %s. Error: %s' %(location,msg) )
+        except rest.ErrorResponse, e:
+            msg = e.user_error_msg or str(e)
+            log_error('Failed downloading file %s. Error: %s' %(location,msg))
+        return succes
 
 class FileLoader(threading.Thread):
-    DropboxAPI = None
     _stop = False
     stopWhenFinished = False
     _itemsHandled = 0
     _itemsTotal = 0
     
-    def __init__( self, DropboxAPI, parentWindow, module, shadowPath, thumbPath):
+    def __init__( self, client, module, shadowPath, thumbPath):
         super(FileLoader, self).__init__()
         self._shadowPath = shadowPath
         self._thumbPath = thumbPath
-        self.DropboxAPI = DropboxAPI
+        self._client = client
         self._module = module
         self._thumbList = Queue.Queue() #thread safe
         self._fileList = Queue.Queue() #thread safe
         self._progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
         self._progress.setHeading(LANGUAGE_STRING(30035))
-        self._progress.parentWindow = parentWindow
 
     def run(self):
         #check if need to quit
@@ -404,24 +451,7 @@ class FileLoader(threading.Thread):
 
     def _getThumbnail(self, path):
         location = self._getThumbLocation(path)
-        dirName = os.path.dirname(location)
-        # create the data dir if needed
-        if not xbmcvfs.exists( dirName ):
-            xbmcvfs.mkdirs( dirName )
-        try:
-            cacheFile = open(location, 'wb') # 'b' option required for windows!
-            #download the file
-            #jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital art.
-            tumbFile = self.DropboxAPI.thumbnail(path, size='large', format='JPEG')
-            shutil.copyfileobj(tumbFile, cacheFile)
-            cacheFile.close()
-            log_debug("Downloaded file to: %s"%location)
-        except IOError, e:
-            msg = str(e)
-            log_error('Failed saving file %s. Error: %s' %(location,msg) )
-        except rest.ErrorResponse, e:
-            msg = e.user_error_msg or str(e)
-            log_error('Failed downloading file %s. Error: %s' %(location,msg))
+        self._client.saveThumbnail(path, location)
         return location
 
     def _getShadowLocation(self, path):
@@ -431,23 +461,7 @@ class FileLoader(threading.Thread):
     
     def _getFile(self, path):
         location = self._getShadowLocation(path)
-        dirName = os.path.dirname(location)
-        # create the data dir if needed
-        if not xbmcvfs.exists( dirName ):
-            xbmcvfs.mkdirs( dirName )
-        try:
-            cacheFile = open(location, 'wb') # 'b' option required for windows!
-            #download the file
-            orgFile = self.DropboxAPI.get_file(path)
-            shutil.copyfileobj(orgFile, cacheFile)
-            cacheFile.close()
-            log_debug("Downloaded file to: %s"%location)
-        except IOError, e:
-            msg = str(e)
-            log_error('Failed saving file %s. Error: %s' %(location,msg) )
-        except rest.ErrorResponse, e:
-            msg = e.user_error_msg or str(e)
-            log_error('Failed downloading file %s. Error: %s' %(location,msg))
+        self._client.saveFile(path, location)
         return location
 
 
@@ -479,3 +493,65 @@ class Uploader(client.DropboxClient.ChunkedUploader):
                 if reply['offset'] > self.offset:
                     self.last_block = None
                     self.offset = reply['offset']
+
+class Downloader(threading.Thread):
+    _itemsHandled = 0
+    _itemsTotal = 0
+    
+    def __init__( self, client, path, location, isDir):
+        super(Downloader, self).__init__()
+        self.path = path
+        self.remoteBasePath = os.path.dirname( string_path(path) )
+        self.location = location
+        self.isDir = isDir
+        self._client = client
+        self._fileList = Queue.Queue() #thread safe
+        self._progress = xbmcgui.DialogProgress()
+        self._progress.create(LANGUAGE_STRING(30039))
+        self._progress.update( 0 )
+        self.canceled = False
+
+    def run(self):
+        log_debug("Downloader started for: %s"%self.path)
+        #First get all the file-items in the path
+        if not self.isDir:
+            #Download a single file
+            self._fileList.put( self._client.getMetaData(self.path) )
+        else:
+            #Download a directory
+            self.getFileItems(self.path)
+        self._itemsTotal = self._fileList.qsize()
+        #check if need to quit
+        while not self._progress.iscanceled() and not self._fileList.empty():
+            #Download the list of files/dirs
+            item2Retrieve = self._fileList.get()
+            if item2Retrieve:
+                self._progress.update( (self._itemsHandled *100) / self._itemsTotal, LANGUAGE_STRING(30041), string_path(item2Retrieve['path']) )
+                basePath = string_path(item2Retrieve['path'])
+                basePath = basePath.replace(self.remoteBasePath, '', 1) # remove the remote base path
+                location = self.location + basePath
+                location = os.path.normpath(location)
+                if item2Retrieve['is_dir']:
+                    #create dir if not present yet
+                    if not xbmcvfs.exists( location ):
+                        xbmcvfs.mkdirs( location )
+                else:
+                    if not self._client.saveFile(item2Retrieve['path'], location):
+                        log_error("Downloader failed for: %s"%( string_path(item2Retrieve['path']) ) )
+                self._itemsHandled += 1
+            time.sleep(0.100)
+        if self._progress.iscanceled():
+            log_debug("Downloader stopped (as requested) for: %s"%self.path)
+            self.canceled = True
+        else:
+            self._progress.update(100)
+            log_debug("Downloader finished for: %s"%self.path)
+        self._progress.close()
+        del self._progress
+        
+    def getFileItems(self, path):
+        items = self._client.getFolderContents(path)
+        for item in items:
+            self._fileList.put(item)
+            if item['is_dir']:
+                self.getFileItems( string_path(item['path']) )

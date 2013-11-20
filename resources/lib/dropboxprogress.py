@@ -78,4 +78,3 @@ class DropboxBackgroundProgress(xbmcgui.WindowXMLDialog):
         self._visible = False
         self._closedTime = time.time()
         self.close()
-

@@ -63,7 +63,7 @@ class DropboxViewer(XBMCDropBoxClient):
         self._totalItems = len(contents)
         if self._totalItems > 0:
             #create and start the thread that will download the files
-            self._loader = FileLoader(self.DropboxAPI, self.win, self._module, self._shadowPath, self._thumbPath)
+            self._loader = FileLoader(self, self._module, self._shadowPath, self._thumbPath)
         #first add all the folders
         folderItems = 0
         for f in contents:
@@ -171,6 +171,7 @@ class DropboxViewer(XBMCDropBoxClient):
                 contextMenuItems.append( (LANGUAGE_STRING(30027), self.getContextUrl(path, 'move') ) )
                 contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(self._current_path, 'create_folder') ) )
                 contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(self._current_path, 'upload') ) )
+                contextMenuItems.append( (LANGUAGE_STRING(30037), self.getContextUrl(path, 'download', extra='isDir=False') ) )
                 listItem.addContextMenuItems(contextMenuItems)
                 xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
@@ -186,6 +187,7 @@ class DropboxViewer(XBMCDropBoxClient):
         contextMenuItems.append( (LANGUAGE_STRING(30027), self.getContextUrl(path, 'move') ) )
         contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(path, 'create_folder') ) )
         contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(path, 'upload') ) )
+        contextMenuItems.append( (LANGUAGE_STRING(30037), self.getContextUrl(path, 'download', extra='isDir=True') ) )
         listItem.addContextMenuItems(contextMenuItems)
         #no useful metadata of folder
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._totalItems)
@@ -202,13 +204,16 @@ class DropboxViewer(XBMCDropBoxClient):
             url += '&media_items=' + str(media_items)
         return url
 
-    def getContextUrl(self, path, action):
+    def getContextUrl(self, path, action, extra = None):
         url = 'XBMC.RunScript(plugin.dbmc, '
         url += 'action=%s' %( action )
         if action == 'upload':
-            url += '&to_path=%s)' %( urllib.quote(path) )
+            url += '&to_path=%s' %( urllib.quote(path) )
         else:
-            url += '&path=%s)' %( urllib.quote(path) )
+            url += '&path=%s' %( urllib.quote(path) )
+        if extra:
+            url += '&' + extra
+        url += ')'
         return url
         
     def metadata2ItemInfo(self, item, metadata, mediatype):

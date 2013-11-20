@@ -164,6 +164,26 @@ msgctxt "#30036"
 msgid "Stream video and music media (don't cache)"
 msgstr ""
 
+msgctxt "#30037"
+msgid "Download from Dropbox"
+msgstr ""
+
+msgctxt "#30038"
+msgid "download to"
+msgstr ""
+
+msgctxt "#30039"
+msgid "Downloading file(s) from Dropbox"
+msgstr ""
+
+msgctxt "#30040"
+msgid "Finished downloading file(s) to:"
+msgstr ""
+
+msgctxt "#30041"
+msgid "Downloading file:"
+msgstr ""
+
 
 #error messages
 msgctxt "#31000"
