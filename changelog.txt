@@ -51,3 +51,6 @@ addon.xml
 - Fix showing unicoded-string directory
 - Fix creating new folder on file-item
 - Set Background cache dialog timeout to 7 secs
+
+[B]0.5.4:[/B]
+- Added File/Folder download context menu item
