@@ -266,7 +266,6 @@ class XBMCDropBoxClient(object):
                 #user didn't cancel
                 path = toPath + self.SEP + os.path.basename(fileName) 
                 resp = uploader.finish(path)
-                print "resp", resp
                 if resp and 'path' in resp:
                     succes = ( string_path(resp['path']) == path)
         else:

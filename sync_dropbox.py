@@ -84,29 +84,32 @@ class DropboxSynchronizer:
         
     def _get_settings( self ):
         self._enabled = ('true' == ADDON.getSetting('synchronisation').lower())
-        tempPath = ADDON.getSetting('syncpath').decode("utf-8")
+        tempPath = ADDON.getSetting('syncpath')
         if tempPath == '' or os.path.normpath(tempPath) == '':
             #get the default path 
             tempPath = xbmc.translatePath( ADDON.getAddonInfo('profile') ) + '/sync/'
+            tempPath = os.path.normpath(tempPath)
         if self._syncPath == '':
             #get initial location
             self._syncPath = tempPath
         if self._syncPath != tempPath:
-            if os.listdir(tempPath).empty():
+            if len(os.listdir(tempPath)) == 0:
                 #move the old sync path to the new one
-                xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30103), tempPath, 7000))
                 log('Moving sync location from %s to %s'%(self._syncPath, tempPath))
-                shutil.move(self._syncPath, tempPath)
+                names = os.listdir(self._syncPath)
+                for name in names:
+                    srcname = os.path.join(self._syncPath, name)
+                    shutil.move(srcname, tempPath)
                 self._syncPath = tempPath
                 if self._root:
                     self._root.updateLocalPath(self._syncPath)
+                log('Move finished')
+                xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30103), tempPath, 7000))
             else:
                 log_error('New sync location is not empty: %s'%(tempPath))
                 xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30104), tempPath, 7000))
                 #restore the old location
                 ADDON.setSetting('syncpath', self._syncPath)
-            #update the SyncFolders/SyncFiles
-            #TODO
         tempFreq = float( ADDON.getSetting('syncfreq') )
         self._updateSyncTime(tempFreq)
         #reconnect to Dropbox (in case the token has changed)
@@ -255,7 +258,8 @@ class SyncObject(object):
     def setItemInfo(self, meta):
         log_debug('Set stored metaData: %s'%self.path)
         if meta:
-            self.path = meta['path']
+            if self.path != meta['path']:
+                log_error('Stored metaData path(%s) not equal to path %s'%(meta['path'], self.path) )
             if 'present' in meta:
                 self._remotePresent = meta['present']
             if 'local_mtime' in meta:
@@ -266,7 +270,7 @@ class SyncObject(object):
             if 'client_mtime' in meta:
                 self._remoteClientModifiedTime = meta['client_mtime']
             if 'Path' in meta:
-                self._Path = meta['Path']
+                self._Path = string_path(meta['Path'])
         else:
             self._remotePresent = False
         
@@ -324,7 +328,7 @@ class SyncObject(object):
         if self._Path:
             itemPath = self._Path
         else:
-            itemPath = self.path #use case-insensitive one...
+            itemPath = string_path(self.path) #use case-insensitive one...
         itemPath = itemPath.replace(self._syncRoot, '', 1)
         self._localPath = os.path.normpath(self._syncPath + self._client.SEP + itemPath)
 
@@ -531,7 +535,7 @@ class SyncFolder(SyncObject):
     
     def setClient(self, client):
         self._client = client
-        for child in self._children:
+        for child in self._children.itervalues():
             child.setClient(client)
 
     def updateLocalPath(self, syncPath):
