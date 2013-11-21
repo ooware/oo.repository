@@ -26,7 +26,7 @@ import xbmcvfs
 import time
 
 from resources.lib.utils import *
-from resources.lib.dropboxclient import XBMCDropBoxClient
+from resources.lib.dropboxclient import XBMCDropBoxClient, Downloader
 from resources.lib.dropboxfilebrowser import DropboxFileBrowser
 
 def addDir(name, module, contentType, iconImage=''):
@@ -256,3 +256,26 @@ if ( __name__ == "__main__" ):
                             xbmc.executebuiltin('container.Refresh()')
                         else:
                             log_error('File uploading Failed: %s to %s' % (fileName, toPath))
+            elif action == 'download':
+                if 'path' in params:
+                    path = urllib.unquote( params['path'] )
+                    isDir = ('true' == params['isDir'].lower())
+                    dialog = xbmcgui.Dialog()
+                    location = dialog.browse(3, LANGUAGE_STRING(30025) + LANGUAGE_STRING(30038), 'files')
+                    if location:
+                        success = True
+                        client = XBMCDropBoxClient()
+                        downloader = Downloader(client, path, location, isDir)
+                        downloader.start()
+                        #now wait for the FileLoader
+                        downloader.stopWhenFinished = True
+                        while downloader.isAlive():
+                            xbmc.sleep(100)
+                        #Wait for the thread
+                        downloader.join()
+                        if downloader.canceled:
+                            log('Downloading canceled')
+                        else:
+                            log('Downloading finished')
+                            dialog = xbmcgui.Dialog()
+                            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30040), location)

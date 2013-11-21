@@ -365,3 +365,66 @@ class Uploader(client.DropboxClient.ChunkedUploader):
                 if reply['offset'] > self.offset:
                     self.last_block = None
                     self.offset = reply['offset']
+
+class Downloader(threading.Thread):
+    _itemsHandled = 0
+    _itemsTotal = 0
+    
+    def __init__( self, client, path, location, isDir):
+        super(Downloader, self).__init__()
+        self.path = path
+        self.remoteBasePath = os.path.dirname( string_path(path) )
+        self.location = location
+        self.isDir = isDir
+        self._client = client
+        self._fileList = Queue.Queue() #thread safe
+        self._progress = xbmcgui.DialogProgress()
+        self._progress.create(LANGUAGE_STRING(30039))
+        self._progress.update( 0 )
+        self.canceled = False
+
+    def run(self):
+        log_debug("Downloader started for: %s"%self.path)
+        #First get all the file-items in the path
+        if not self.isDir:
+            #Download a single file
+            item, changed = self._client.getMetaData(self.path)
+            self._fileList.put( item )
+        else:
+            #Download a directory
+            self.getFileItems(self.path)
+        self._itemsTotal = self._fileList.qsize()
+        #check if need to quit
+        while not self._progress.iscanceled() and not self._fileList.empty():
+            #Download the list of files/dirs
+            item2Retrieve = self._fileList.get()
+            if item2Retrieve:
+                self._progress.update( (self._itemsHandled *100) / self._itemsTotal, LANGUAGE_STRING(30041), string_path(item2Retrieve['path']) )
+                basePath = string_path(item2Retrieve['path'])
+                basePath = basePath.replace(self.remoteBasePath, '', 1) # remove the remote base path
+                location = self.location + basePath
+                location = os.path.normpath(location)
+                if item2Retrieve['is_dir']:
+                    #create dir if not present yet
+                    if not xbmcvfs.exists( location ):
+                        xbmcvfs.mkdirs( location )
+                else:
+                    if not self._client.saveFile(item2Retrieve['path'], location):
+                        log_error("Downloader failed for: %s"%( string_path(item2Retrieve['path']) ) )
+                self._itemsHandled += 1
+            time.sleep(0.100)
+        if self._progress.iscanceled():
+            log_debug("Downloader stopped (as requested) for: %s"%self.path)
+            self.canceled = True
+        else:
+            self._progress.update(100)
+            log_debug("Downloader finished for: %s"%self.path)
+        self._progress.close()
+        del self._progress
+        
+    def getFileItems(self, path):
+        items = self._client.getFolderContents(path)
+        for item in items:
+            self._fileList.put(item)
+            if item['is_dir']:
+                self.getFileItems( string_path(item['path']) )
