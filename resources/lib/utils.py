@@ -5,6 +5,7 @@ ADDON           = xbmcaddon.Addon(id='plugin.dbmc')
 LANGUAGE_STRING = ADDON.getLocalizedString
 ADDON_NAME      = xbmcaddon.Addon().getAddonInfo('id')
 DATAPATH        = xbmc.translatePath( xbmcaddon.Addon().getAddonInfo('profile') )
+DROPBOX_SEP     = '/'
 
 def log(txt):
     if isinstance (txt,str):

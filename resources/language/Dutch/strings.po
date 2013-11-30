@@ -189,8 +189,8 @@ msgid "Dbmc: Moved files/folders to new synchronization location:"
 msgstr "Dbmc: Bestanden/mappen verplaatst naar nieuwe synchronisatie lokatie:"
 
 msgctxt "#30104"
-msgid "Dbmc: New synchronization location is not empty!"
-msgstr "Dbmc: Nieuwe synchronisatie lokatie is niet leeg!"
+msgid "New synchronization location is not empty!"
+msgstr "Nieuwe synchronisatie lokatie is niet leeg!"
 
 msgctxt "#30105"
 msgid "Synchronization interval (minutes)"

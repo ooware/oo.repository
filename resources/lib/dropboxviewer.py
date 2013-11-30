@@ -47,8 +47,11 @@ class DropboxViewer(object):
         #get Settings
         self._filterFiles = ('true' == ADDON.getSetting('filefilter').lower())
         self._useStreamingURLs = ('true' == ADDON.getSetting('streammedia').lower())
-        #Use user defined location?
         datapath = ADDON.getSetting('cachepath').decode("utf-8")
+        self._enabledSync = ('true' == ADDON.getSetting('synchronisation').lower())
+        self._localSyncPath = ADDON.getSetting('syncpath')
+        self._remoteSyncPath = ADDON.getSetting('remotepath')
+        #Use user defined location?
         if datapath == '' or os.path.normpath(datapath) == '':
             #get the default path 
             datapath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
@@ -58,7 +61,7 @@ class DropboxViewer(object):
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
         self._module = params.get('module', '')
         self._contentType = params.get('content_type', 'other')
-        self._current_path = urllib.unquote( params.get('path', self._client.SEP) )
+        self._current_path = urllib.unquote( params.get('path', DROPBOX_SEP) )
         #Add sorting options
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)
@@ -155,7 +158,12 @@ class DropboxViewer(object):
                 iconImage = 'DefaultAudio.png'
         if mediatype != '':
             listItem = xbmcgui.ListItem(name, iconImage=iconImage)
-            if mediatype in ['pictures','video','music']:
+            self.metadata2ItemInfo(listItem, meta, mediatype)
+            if self._enabledSync and self._remoteSyncPath in path:
+                #Use the synchronized location for url
+                self._loadedMediaItems += 1
+                url = getLocalSyncPath(self._localSyncPath, self._remoteSyncPath, path)
+            elif mediatype in ['pictures','video','music']:
                 self._loadedMediaItems += 1
                 tumb = self._loader.getThumbnail(path, meta)
                 if tumb:
@@ -167,10 +175,8 @@ class DropboxViewer(object):
                 else:
                     url = self._loader.getFile(path)
                     #url = self.getMediaUrl(path)
-                self.metadata2ItemInfo(listItem, meta, mediatype)
             else:
                 listItem.setProperty("IsPlayable", "false")
-                self.metadata2ItemInfo(listItem, meta, 'pictures')
                 url='No action'
             if listItem:
                 contextMenuItems = []
@@ -242,6 +248,8 @@ class DropboxViewer(object):
         #'revision': 2685
         info = {}
         #added value for picture is only the size. the other data is retrieved from the photo itself...
+        if mediatype == 'other':
+            mediatype = 'pictures' #fake to get more info on the item...
         if mediatype == 'pictures':
             info['size'] = str(metadata['bytes'])
             info['title'] = string_path(metadata['path'])

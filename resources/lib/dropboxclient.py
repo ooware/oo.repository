@@ -68,6 +68,11 @@ def string_path(path):
         path = path.encode("utf-8")
     return path
 
+def getLocalSyncPath(localSyncPath, remoteSyncPath, itemPath):
+    itemPath = itemPath.replace(remoteSyncPath, '', 1)
+    localPath = os.path.normpath(localSyncPath + DROPBOX_SEP + itemPath)
+    return localPath
+
 
 class XBMCDropBoxClient(object):
     '''
@@ -76,7 +81,6 @@ class XBMCDropBoxClient(object):
     '''
     DropboxAPI = None
     _cache = None
-    SEP = '/'
     
 #TODO: fix singleton --> it doesn't work!
 #     _instance = None
@@ -264,7 +268,7 @@ class XBMCDropBoxClient(object):
             dialog.close()
             if uploader.offset == uploader.target_length:
                 #user didn't cancel
-                path = toPath + self.SEP + os.path.basename(fileName) 
+                path = toPath + DROPBOX_SEP + os.path.basename(fileName) 
                 resp = uploader.finish(path)
                 if resp and 'path' in resp:
                     succes = ( string_path(resp['path']) == path)

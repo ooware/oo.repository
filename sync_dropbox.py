@@ -47,7 +47,7 @@ class DropboxSynchronizer:
     _client = None
     _root = None
     _synchronizing = False
-    _remoteSyncPath = '' #self._client.SEP
+    _remoteSyncPath = '' #DROPBOX_SEP
     
     def __init__( self ):
         # get addon settings
@@ -121,7 +121,8 @@ class DropboxSynchronizer:
                 xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30103), tempPath, 7000))
             else:
                 log_error('New sync location is not empty: %s'%(tempPath))
-                xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30104), tempPath, 7000))
+                dialog = xbmcgui.Dialog()
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(30104), tempPath)
                 #restore the old location
                 ADDON.setSetting('syncpath', self._syncPath)
         #remote path changed?
@@ -360,8 +361,7 @@ class SyncObject(object):
             itemPath = self._Path
         else:
             itemPath = string_path(self.path) #use case-insensitive one...
-        itemPath = itemPath.replace(self._syncRoot, '', 1)
-        self._localPath = os.path.normpath(self._syncPath + self._client.SEP + itemPath)
+        self._localPath = getLocalSyncPath(self._syncPath, self._syncRoot, itemPath)
 
 class SyncFile(SyncObject):
     
@@ -479,7 +479,7 @@ class SyncFolder(SyncObject):
     def getItem(self, path, meta):
         #strip the child name
         #exclude it's own path from the search for the first seperator
-        end = path.find(self._client.SEP, len(self.path)+1)
+        end = path.find(DROPBOX_SEP, len(self.path)+1)
         isDir = True
         if end > 0:
             #it wasn't my own child so create the new folder and search/update that one

@@ -63,7 +63,7 @@ def run(params): # This is the entrypoint
         if keyboard.isConfirmed():
             searchText = keyboard.getText()
             params['search_text'] = searchText
-            params['path'] = params.get('path', self._client.SEP)
+            params['path'] = params.get('path', DROPBOX_SEP)
     if len(searchText) < 3:
         #Search text has to be atleast 3 chars
         dialog = xbmcgui.Dialog()

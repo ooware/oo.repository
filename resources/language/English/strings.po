@@ -189,7 +189,7 @@ msgid "Dbmc: Moved files/folders to new synchronization location:"
 msgstr ""
 
 msgctxt "#30104"
-msgid "Dbmc: New synchronization location is not empty!"
+msgid "New synchronization location is not empty!"
 msgstr ""
 
 msgctxt "#30105"

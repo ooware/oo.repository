@@ -200,7 +200,7 @@ if ( __name__ == "__main__" ):
                         client = XBMCDropBoxClient()
                         #dropbox path -> don't use os.path.join()!
                         toPath = dialog.selectedFolder
-                        if dialog.selectedFolder[-1:] != client.SEP: toPath += client.SEP
+                        if dialog.selectedFolder[-1:] != DROPBOX_SEP: toPath += DROPBOX_SEP
                         toPath += os.path.basename(path)
                         success = client.copy(path, toPath)
                         if success:
@@ -218,7 +218,7 @@ if ( __name__ == "__main__" ):
                         client = XBMCDropBoxClient()
                         #dropbox path -> don't use os.path.join()!
                         toPath = dialog.selectedFolder
-                        if dialog.selectedFolder[-1:] != client.SEP: toPath += client.SEP
+                        if dialog.selectedFolder[-1:] != DROPBOX_SEP: toPath += DROPBOX_SEP
                         toPath += os.path.basename(path)
                         success = client.move(path, toPath)
                         if success:
@@ -235,7 +235,7 @@ if ( __name__ == "__main__" ):
                     if keyboard.isConfirmed():
                         client = XBMCDropBoxClient()
                         newFolder = path
-                        if path[-1:] != client.SEP: newFolder += client.SEP
+                        if path[-1:] != DROPBOX_SEP: newFolder += DROPBOX_SEP
                         newFolder += unicode(keyboard.getText(), "utf-8")
                         success = client.createFolder(newFolder)
                         if success:
