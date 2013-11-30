@@ -173,31 +173,31 @@ msgid "Downloading file:"
 msgstr "Download bestand:"
 
 msgctxt "#30100"
-msgid "Synchronisation"
+msgid "Synchronization"
 msgstr "Synchronisatie"
 
 msgctxt "#30101"
-msgid "Enable synchronisation"
+msgid "Enable synchronization"
 msgstr "Synchronisatie activeren"
 
 msgctxt "#30102"
-msgid "Synchronisation location (local)"
-msgstr "Synchronisatie lokatie (lokaal)"
+msgid "Select the local folder"
+msgstr "Selecteer de lokale map"
 
 msgctxt "#30103"
-msgid "Dbmc: Moved files/folders to new synchronisation location:"
+msgid "Dbmc: Moved files/folders to new synchronization location:"
 msgstr "Dbmc: Bestanden/mappen verplaatst naar nieuwe synchronisatie lokatie:"
 
 msgctxt "#30104"
-msgid "Dbmc: New synchronisation location is not empty!"
+msgid "Dbmc: New synchronization location is not empty!"
 msgstr "Dbmc: Nieuwe synchronisatie lokatie is niet leeg!"
 
 msgctxt "#30105"
-msgid "Synchronisation interval (minutes)"
+msgid "Synchronization interval (minutes)"
 msgstr "Synchronisatie interval (minuten)"
 
 msgctxt "#30106"
-msgid "Dbmc: Synchronisation finished."
+msgid "Dbmc: Synchronization finished."
 msgstr "Dbmc: Synchronisatie gereed."
 
 msgctxt "#30107"
@@ -205,8 +205,8 @@ msgid "Number of items synchronized: "
 msgstr "Aantal items gesynchroniseerd: "
 
 msgctxt "#30108"
-msgid "Synchronisation location (Dropbox)"
-msgstr "Synchronisatie lokatie (Dropbox)"
+msgid "Synchronization locations"
+msgstr "Synchronisatie lokaties"
 
 msgctxt "#30109"
 msgid "Select the Dropbox folder to synchronize with"
@@ -215,6 +215,10 @@ msgstr "Selecteer de Dropbox map om mee te synchroniseren"
 msgctxt "#30110"
 msgid "Can't change settings while synchronizing!"
 msgstr "Kan de instellingen niet wijzigen tijdens het synchroniseren"
+
+msgctxt "#30111"
+msgid "Can't enable synchronization:\nFirst set synchronization locations!"
+msgstr "Kan synchronisatie niet aan zetten:\nPas eerst de synchronisatie lokaties aan!"
 
 
 #error messages

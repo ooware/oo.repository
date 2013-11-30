@@ -173,31 +173,31 @@ msgid "Downloading file:"
 msgstr ""
 
 msgctxt "#30100"
-msgid "Synchronisation"
+msgid "Synchronization"
 msgstr ""
 
 msgctxt "#30101"
-msgid "Enable synchronisation"
+msgid "Enable synchronization"
 msgstr ""
 
 msgctxt "#30102"
-msgid "Synchronisation location (local)"
+msgid "Select the local folder"
 msgstr ""
 
 msgctxt "#30103"
-msgid "Dbmc: Moved files/folders to new synchronisation location:"
+msgid "Dbmc: Moved files/folders to new synchronization location:"
 msgstr ""
 
 msgctxt "#30104"
-msgid "Dbmc: New synchronisation location is not empty!"
+msgid "Dbmc: New synchronization location is not empty!"
 msgstr ""
 
 msgctxt "#30105"
-msgid "Synchronisation interval (minutes)"
+msgid "Synchronization interval (minutes)"
 msgstr ""
 
 msgctxt "#30106"
-msgid "Dbmc: Synchronisation finished."
+msgid "Dbmc: Synchronization finished."
 msgstr ""
 
 msgctxt "#30107"
@@ -205,7 +205,7 @@ msgid "Number of items synchronized: "
 msgstr ""
 
 msgctxt "#30108"
-msgid "Synchronisation location (Dropbox)"
+msgid "Synchronization locations"
 msgstr ""
 
 msgctxt "#30109"
@@ -214,6 +214,10 @@ msgstr ""
 
 msgctxt "#30110"
 msgid "Can't change settings while synchronizing!"
+msgstr ""
+
+msgctxt "#30111"
+msgid "Can't enable synchronization:\nFirst set synchronization locations!"
 msgstr ""
 
 

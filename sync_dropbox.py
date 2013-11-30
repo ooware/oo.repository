@@ -85,16 +85,23 @@ class DropboxSynchronizer:
         
     def _get_settings( self ):
         if self._synchronizing:
-            log('Can\'t change settings while synchronizing!')
+            log_error('Can\'t change settings while synchronizing!')
             dialog = xbmcgui.Dialog()
             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30110))
             return
-        self._enabled = ('true' == ADDON.getSetting('synchronisation').lower())
+        
+        enable = ('true' == ADDON.getSetting('synchronisation').lower())
         tempPath = ADDON.getSetting('syncpath')
-        if tempPath == '' or os.path.normpath(tempPath) == '':
-            #get the default path 
-            tempPath = xbmc.translatePath( ADDON.getAddonInfo('profile') ) + '/sync/'
-            tempPath = os.path.normpath(tempPath)
+        tempRemotePath = ADDON.getSetting('remotepath')
+        tempFreq = float( ADDON.getSetting('syncfreq') )
+        #Enable?
+        if enable and (tempPath == '' or tempRemotePath == ''):
+            enable = False
+            ADDON.setSetting('synchronisation', 'false')
+            log_error('Can\'t enable synchronization: syncpath or remotepath not set!')
+            dialog = xbmcgui.Dialog()
+            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30111))
+        self._enabled = enable
         if self._syncPath == '':
             #get initial location
             self._syncPath = tempPath
@@ -117,9 +124,6 @@ class DropboxSynchronizer:
                 xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30104), tempPath, 7000))
                 #restore the old location
                 ADDON.setSetting('syncpath', self._syncPath)
-        tempRemotePath = ADDON.getSetting('remotepath')
-        if tempRemotePath == '':
-            tempRemotePath = XBMCDropBoxClient.SEP
         #remote path changed?
         if tempRemotePath != self._remoteSyncPath:
             self._remoteSyncPath = tempRemotePath
@@ -135,7 +139,7 @@ class DropboxSynchronizer:
                 self._root = SyncFolder(self._remoteSyncPath, self._client, self._syncPath, self._remoteSyncPath)
                 #Start sync immediately
                 self._newSyncTime = time.time()
-        tempFreq = float( ADDON.getSetting('syncfreq') )
+        #Time interval changed?
         self._updateSyncTime(tempFreq)
         #reconnect to Dropbox (in case the token has changed)
         self._getClient(reconnect=True)
