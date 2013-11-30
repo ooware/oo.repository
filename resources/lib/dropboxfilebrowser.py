@@ -70,7 +70,6 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
         thumbView.reset()
         self._currentPath = path
         items = self.client.getFolderContents(path)
-        print items
         listItems = []
         if path != self.client.SEP:
             backPath = os.path.dirname(path)
@@ -90,7 +89,7 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
             newPath = self.getControl(controlId).getSelectedItem().getLabel2()
             self.showFolders(newPath)
         elif controlId == self.OK_BUTTON:
-            self.selectedFolder = self._currentPath
+            self.selectedFolder = string_path(self._currentPath)
             self.close()
         elif controlId == self.CANCEL_BUTTON:
             self.close()

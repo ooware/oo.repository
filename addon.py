@@ -279,3 +279,13 @@ if ( __name__ == "__main__" ):
                             log('Downloading finished')
                             dialog = xbmcgui.Dialog()
                             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30040), location)
+            elif action == 'set_remote_sync_path':
+                tempRemotePath = ADDON.getSetting('remotepath')
+                dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
+                dialog.setHeading(LANGUAGE_STRING(30109))
+                dialog.doModal()
+                if dialog.selectedFolder:
+                    ADDON.setSetting('remotepath', dialog.selectedFolder)
+                del dialog
+                #open the Settings dialog again
+                ADDON.openSettings()

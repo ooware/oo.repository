@@ -326,7 +326,7 @@ class XBMCDropBoxClient(object):
         items = {}
         for item in data:
             meta = item[1]
-            path = item[0] #case-insensitive!
+            path = string_path(item[0]) #case-insensitive!
             # But cannot use the meta['path'] because it is not 
             # there when the item is removed!
             #path = string_path( meta['path'] )

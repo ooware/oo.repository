@@ -11,11 +11,14 @@
         <setting label="30015" type="slider" id="passcodetimeout" enable="!eq(-2,)" range="1,120" option="int" default="30"/>
         <setting label="30006" type="lsep"/>
         <setting label="30005" type="action" action="RunScript(plugin.dbmc, action=clear_token)"/>
-        <setting label="30006" type="text" id="access_token" default="" option="hidden"/>
+        <setting label="30006" type="text" id="access_token" enable=false default="" option="hidden"/>
     </category>
     <category label="30100">
         <setting label="30101" type="bool" id="synchronisation" default="false"/>
-        <setting label="30102" type="folder" id="syncpath" enable="eq(-1,true)" source="auto" option="writeable" default=""/>
-        <setting label="30105" type="slider" id="syncfreq" enable="eq(-2,true)" range="5,5,1440" option="int" default="5"/>
+        <setting label="30105" type="slider" id="syncfreq" enable="eq(-1,true)" range="5,5,1440" option="int" default="5"/>
+        <setting label="30102" type="lsep"/>
+        <setting label="30102" type="folder" id="syncpath" source="auto" option="writeable" default=""/>
+        <setting label="30108" type="lsep"/>
+        <setting label="30109" type="action" id="remotepath" option="close" action="RunScript(plugin.dbmc, action=set_remote_sync_path)" default=""/>
     </category>
 </settings>

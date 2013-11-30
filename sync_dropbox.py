@@ -46,7 +46,8 @@ class DropboxSynchronizer:
     _newSyncTime = 0
     _client = None
     _root = None
-    remoteSyncPath = '/1test' #self._client.SEP
+    _synchronizing = False
+    _remoteSyncPath = '' #self._client.SEP
     
     def __init__( self ):
         # get addon settings
@@ -83,6 +84,11 @@ class DropboxSynchronizer:
                 xbmc.sleep(1000) #1 secs
         
     def _get_settings( self ):
+        if self._synchronizing:
+            log('Can\'t change settings while synchronizing!')
+            dialog = xbmcgui.Dialog()
+            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30110))
+            return
         self._enabled = ('true' == ADDON.getSetting('synchronisation').lower())
         tempPath = ADDON.getSetting('syncpath')
         if tempPath == '' or os.path.normpath(tempPath) == '':
@@ -92,6 +98,7 @@ class DropboxSynchronizer:
         if self._syncPath == '':
             #get initial location
             self._syncPath = tempPath
+        #Sync path changed?
         if self._syncPath != tempPath:
             if len(os.listdir(tempPath)) == 0:
                 #move the old sync path to the new one
@@ -110,11 +117,29 @@ class DropboxSynchronizer:
                 xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30104), tempPath, 7000))
                 #restore the old location
                 ADDON.setSetting('syncpath', self._syncPath)
+        tempRemotePath = ADDON.getSetting('remotepath')
+        if tempRemotePath == '':
+            tempRemotePath = XBMCDropBoxClient.SEP
+        #remote path changed?
+        if tempRemotePath != self._remoteSyncPath:
+            self._remoteSyncPath = tempRemotePath
+            log('Changed remote path to %s'%(self._remoteSyncPath))
+            if self._root:
+                #restart the synchronization 
+                #remove all the files in current syncPath
+                if len(os.listdir(self._syncPath)) > 0:
+                    shutil.rmtree(self._syncPath)
+                #reset the complete data on client side
+                self._DB.delete('%') #delete all
+                del self._root
+                self._root = SyncFolder(self._remoteSyncPath, self._client, self._syncPath, self._remoteSyncPath)
+                #Start sync immediately
+                self._newSyncTime = time.time()
         tempFreq = float( ADDON.getSetting('syncfreq') )
         self._updateSyncTime(tempFreq)
         #reconnect to Dropbox (in case the token has changed)
         self._getClient(reconnect=True)
-        # init the player class (re-init when settings have changed)
+        # re-init when settings have changed
         self.monitor = SettingsMonitor(callback=self._get_settings)
 
     def _getClient(self, reconnect=False):
@@ -153,7 +178,7 @@ class DropboxSynchronizer:
                 log_debug('New sync time: %s'%( time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime(self._newSyncTime) ) ) )
     
     def _setupSyncRoot(self):
-        self._root = SyncFolder(self.remoteSyncPath, self._client, self._syncPath, self.remoteSyncPath)
+        self._root = SyncFolder(self._remoteSyncPath, self._client, self._syncPath, self._remoteSyncPath)
         #Update items which are in the cache
         clientCursor = self._DB.get(self.DB_CURSOR)
         if clientCursor != '':
@@ -163,7 +188,7 @@ class DropboxSynchronizer:
             if remoteData != '':
                 remoteData = eval(remoteData)
                 for path, meta in remoteData.iteritems():
-                    if path.find(self.remoteSyncPath) == 0:
+                    if path.find(self._remoteSyncPath) == 0:
                         self._root.setItemInfo(path, meta)
             else:
                 log_error('Remote cursor present, but no remote data!')
@@ -186,13 +211,13 @@ class DropboxSynchronizer:
                 log('Reset requested from remote server...')
                 self._DB.delete('%') #delete all
                 del self._root
-                self._root = SyncFolder(self.remoteSyncPath, self._client, self._syncPath, self.remoteSyncPath)
+                self._root = SyncFolder(self._remoteSyncPath, self._client, self._syncPath, self._remoteSyncPath)
                 initalSync = True
             #prepare item list
             for path, meta in items.iteritems():
                 if not initalSync:
                     log_debug('New item info received for %s'%(path) )
-                if path.find(self.remoteSyncPath) == 0:
+                if path.find(self._remoteSyncPath) == 0:
                     self._root.updateRemoteInfo(path, meta)
             if len(items) > 0:
                 #store the new data
@@ -204,6 +229,7 @@ class DropboxSynchronizer:
             self._DB.set(self.DB_CURSOR, repr(clientCursor))
 
     def _synchronize(self):
+        self._synchronizing = True
         #progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
         #progress.setHeading(LANGUAGE_STRING(30035))
         #Get the items to sync
@@ -231,6 +257,7 @@ class DropboxSynchronizer:
             self._DB.set(self.DB_DATA, data)
             log('Number of items synchronized: %s' % (itemNr) )
             xbmc.executebuiltin('Notification(%s,%s%s,%i)' % (LANGUAGE_STRING(30106), LANGUAGE_STRING(30107), itemNr, 7000))
+        self._synchronizing = False
 
 class SyncObject(object):
     OBJECT_IN_SYNC = 0
@@ -258,7 +285,7 @@ class SyncObject(object):
     def setItemInfo(self, meta):
         log_debug('Set stored metaData: %s'%self.path)
         if meta:
-            if self.path != meta['path']:
+            if self.path != string_path(meta['path']):
                 log_error('Stored metaData path(%s) not equal to path %s'%(meta['path'], self.path) )
             if 'present' in meta:
                 self._remotePresent = meta['present']
