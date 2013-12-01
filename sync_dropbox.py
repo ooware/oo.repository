@@ -24,6 +24,7 @@ import xbmcgui
 import xbmcvfs
 
 import time, datetime
+import threading
 import shutil, os
 from stat import *
 
@@ -46,12 +47,10 @@ class DropboxSynchronizer:
     _newSyncTime = 0
     _client = None
     _root = None
-    _synchronizing = False
     _remoteSyncPath = '' #DROPBOX_SEP
     
     def __init__( self ):
-        # get addon settings
-        self._get_settings()
+        self._syncSemaphore = threading.Semaphore()
         #get storage server
         self._DB = StorageServer.StorageServer(self.DB_TABLE, 8760) # 1 year! (Your plugin name, Cache time in hours)
 
@@ -59,12 +58,14 @@ class DropboxSynchronizer:
         # start daemon
         xbmc.sleep(10000) #wait for CommonCache to startup
         #self._DB.delete('%')
-        self._setupSyncRoot()
+        # get addon settings
+        self._get_settings()
         while (not xbmc.abortRequested):
             if self._enabled:
                 if self._getClient():
                     now = time.time()
                     if self._newSyncTime < now:
+                        self._syncSemaphore.acquire()
                         #update new sync time
                         self._updateSyncTime()
                         log_debug('Start sync...')
@@ -75,6 +76,7 @@ class DropboxSynchronizer:
                             log_debug('Finished sync...')
                         else:
                             log('DropboxSynchronizer: Sync aborted...')
+                        self._syncSemaphore.release()
                     else:
                         xbmc.sleep(1000) #1 secs
                 else:
@@ -84,7 +86,7 @@ class DropboxSynchronizer:
                 xbmc.sleep(1000) #1 secs
         
     def _get_settings( self ):
-        if self._synchronizing:
+        if not self._syncSemaphore.acquire(False):
             log_error('Can\'t change settings while synchronizing!')
             dialog = xbmcgui.Dialog()
             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30110))
@@ -125,6 +127,9 @@ class DropboxSynchronizer:
                 dialog.ok(ADDON_NAME, LANGUAGE_STRING(30104), tempPath)
                 #restore the old location
                 ADDON.setSetting('syncpath', self._syncPath)
+        if self._remoteSyncPath == '':
+            #get initial location
+            self._remoteSyncPath = tempRemotePath
         #remote path changed?
         if tempRemotePath != self._remoteSyncPath:
             self._remoteSyncPath = tempRemotePath
@@ -137,15 +142,21 @@ class DropboxSynchronizer:
                 #reset the complete data on client side
                 self._DB.delete('%') #delete all
                 del self._root
-                self._root = SyncFolder(self._remoteSyncPath, self._client, self._syncPath, self._remoteSyncPath)
+                self._root = None
                 #Start sync immediately
                 self._newSyncTime = time.time()
         #Time interval changed?
         self._updateSyncTime(tempFreq)
         #reconnect to Dropbox (in case the token has changed)
         self._getClient(reconnect=True)
+        if self._enabled and not self._root:
+            self._setupSyncRoot()
+        elif not self._enabled and self._root:
+            del self._root
+            self._root = None
         # re-init when settings have changed
         self.monitor = SettingsMonitor(callback=self._get_settings)
+        self._syncSemaphore.release()
 
     def _getClient(self, reconnect=False):
         if reconnect and self._client:
@@ -234,7 +245,6 @@ class DropboxSynchronizer:
             self._DB.set(self.DB_CURSOR, repr(clientCursor))
 
     def _synchronize(self):
-        self._synchronizing = True
         #progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
         #progress.setHeading(LANGUAGE_STRING(30035))
         #Get the items to sync
@@ -262,7 +272,6 @@ class DropboxSynchronizer:
             self._DB.set(self.DB_DATA, data)
             log('Number of items synchronized: %s' % (itemNr) )
             xbmc.executebuiltin('Notification(%s,%s%s,%i)' % (LANGUAGE_STRING(30106), LANGUAGE_STRING(30107), itemNr, 7000))
-        self._synchronizing = False
 
 class SyncObject(object):
     OBJECT_IN_SYNC = 0
