@@ -1,21 +1,21 @@
-[B]0.1.0b:[/B]
-Initial version
-- Browse you dropbox files and folders
-- View pictures (with slideshow of XBMC)
+[B]0.6.0:[/B]
+- Added one way (from dropbox to local system) synchronization option
 
-[B]0.2.0b:[/B]
-- Added the addon to the video and music(audio) menu's
-- For media files:
-   Using thumbnails from dropbox and cache them to disk.
-   Also cache the original files to disk.
-   This is all done in the background, keeping the addon responsive!
-- Added a limit to loading media items (getting the media_urls take
-  long...) and showing a "Show me more..." item to show/load more items in
-  the current folder
+[B]0.5.2:[/B]
+- Added option to stream music and video i.s.o. caching them. Note: picture 
+  cannot be streamed, they are still cached
+- Added renaming the old (plugin.dropbox) to the new name (plugin.dbmc)
+- Addon has now the Dropbox production status!
 
-[B]0.2.1b:[/B]
-Added the Official xbmc-dropbox.sourceforge.net Add-on Repository to the
-addon.xml
+[B]0.5.1:[/B]
+- Removed fanart image. Contained dropbox logo which is not allowed
+
+[B]0.5.0:[/B]
+- Changed plugin name from plugin.dropbox to plugin.dbmc
+  As needed for requesting production status at Dropbox
+- Fixed unicode string problem
+- Show (some kind of) background progress dialog for caching media files
+  in the background
 
 [B]0.4.0:[/B]
 - Add context menu items for:
@@ -31,18 +31,21 @@ addon.xml
 - Remove cached files/folders/thumbnails when items are no longer 
   present in dropbox folders
 
-[B]0.5.0:[/B]
-- Changed plugin name from plugin.dropbox to plugin.dbmc
-  As needed for requesting production status at Dropbox
-- Fixed unicode string problem
-- Show (some kind of) background progress dialog for caching media files
-  in the background
+[B]0.2.1b:[/B]
+Added the Official xbmc-dropbox.sourceforge.net Add-on Repository to the
+addon.xml
 
-[B]0.5.1:[/B]
-- Removed fanart image. Contained dropbox logo which is not allowed
+[B]0.2.0b:[/B]
+- Added the addon to the video and music(audio) menu's
+- For media files:
+   Using thumbnails from dropbox and cache them to disk.
+   Also cache the original files to disk.
+   This is all done in the background, keeping the addon responsive!
+- Added a limit to loading media items (getting the media_urls take
+  long...) and showing a "Show me more..." item to show/load more items in
+  the current folder
 
-[B]0.5.2:[/B]
-- Added option to stream music and video i.s.o. caching them. Note: picture 
-  cannot be streamed, they are still cached
-- Added renaming the old (plugin.dropbox) to the new name (plugin.dbmc)
-- Addon has now the Dropbox production status!
+[B]0.1.0b:[/B]
+Initial version
+- Browse you dropbox files and folders
+- View pictures (with slideshow of XBMC)
