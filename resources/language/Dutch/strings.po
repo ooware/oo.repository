@@ -220,6 +220,10 @@ msgctxt "#30111"
 msgid "Can't enable synchronization:\nFirst set synchronization locations!"
 msgstr "Kan synchronisatie niet aan zetten:\nPas eerst de synchronisatie lokaties aan!"
 
+msgctxt "#30112"
+msgid "Synchronize now"
+msgstr "Synchroniseer nu"
+
 
 #error messages
 msgctxt "#31000"

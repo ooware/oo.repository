@@ -30,6 +30,7 @@ from stat import *
 
 from resources.lib.utils import *
 from resources.lib.dropboxclient import *
+from resources.lib.notifysync import *
 
 try:
     import StorageServer
@@ -41,15 +42,15 @@ class DropboxSynchronizer:
     DB_CURSOR = 'client_cursor'
     DB_DATA = 'client_data'
     
-    _enabled = False
-    _syncPath = ''
-    _syncFreq = 0 #minutes
-    _newSyncTime = 0
-    _client = None
-    _root = None
-    _remoteSyncPath = '' #DROPBOX_SEP
-    
     def __init__( self ):
+        self._enabled = False
+        self._syncPath = ''
+        self._syncFreq = 0 #minutes
+        self._newSyncTime = 0
+        self._client = None
+        self._root = None
+        self._remoteSyncPath = '' #DROPBOX_SEP
+        self._notified = None
         self._syncSemaphore = threading.Semaphore()
         #get storage server
         self._DB = StorageServer.StorageServer(self.DB_TABLE, 8760) # 1 year! (Your plugin name, Cache time in hours)
@@ -62,21 +63,30 @@ class DropboxSynchronizer:
         self._get_settings()
         while (not xbmc.abortRequested):
             if self._enabled:
+                if not self._notified:
+                    self._notified = NotifySyncServer()
+                    self._notified.start()
                 if self._getClient():
                     now = time.time()
+                    updates = self._notified.getNotification()
+                    syncNow = False
                     if self._newSyncTime < now:
-                        self._syncSemaphore.acquire()
+                        syncNow = True
                         #update new sync time
                         self._updateSyncTime()
+                    elif len(updates) > 0:
+                        syncNow = True
+                    if syncNow:
+                        self._syncSemaphore.acquire()
                         log_debug('Start sync...')
                         self._getRemoteChanges()
                         if not xbmc.abortRequested:
                             self._synchronize()
+                        self._syncSemaphore.release()
                         if not xbmc.abortRequested:
                             log_debug('Finished sync...')
                         else:
                             log('DropboxSynchronizer: Sync aborted...')
-                        self._syncSemaphore.release()
                     else:
                         xbmc.sleep(1000) #1 secs
                 else:
@@ -84,6 +94,8 @@ class DropboxSynchronizer:
                     xbmc.sleep(5000)
             else:
                 xbmc.sleep(1000) #1 secs
+        if self._notified:
+            self._notified.closeServer()
         
     def _get_settings( self ):
         if not self._syncSemaphore.acquire(False):
@@ -150,8 +162,13 @@ class DropboxSynchronizer:
         #reconnect to Dropbox (in case the token has changed)
         self._getClient(reconnect=True)
         if self._enabled and not self._root:
+            log('Enabled synchronization')
             self._setupSyncRoot()
         elif not self._enabled and self._root:
+            log('Disabled synchronization')
+            self._notified.closeServer()
+            del self._notified
+            self._notified = None
             del self._root
             self._root = None
         # re-init when settings have changed

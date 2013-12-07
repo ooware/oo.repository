@@ -19,5 +19,6 @@
         <setting label="30108" type="lsep"/>
         <setting label="30102" type="folder" id="syncpath" source="auto" option="writeable" default=""/>
         <setting label="30109" type="action" id="remotepath" option="close" action="RunScript(plugin.dbmc, action=set_remote_sync_path)" default=""/>
+        <setting label="30108" type="number" id="notify_server_port" visible="false" default="0"/>
     </category>
 </settings>

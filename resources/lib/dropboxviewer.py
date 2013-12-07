@@ -24,6 +24,7 @@ import xbmcgui
 
 import urllib
 import os, uuid
+import threading, Queue
 
 from resources.lib.utils import *
 from resources.lib.dropboxclient import *
@@ -188,6 +189,8 @@ class DropboxViewer(object):
                 contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(self._current_path, 'create_folder') ) )
                 contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(self._current_path, 'upload') ) )
                 contextMenuItems.append( (LANGUAGE_STRING(30037), self.getContextUrl(path, 'download', extra='isDir=False') ) )
+                if self._enabledSync and self._remoteSyncPath in path:
+                    contextMenuItems.append( (LANGUAGE_STRING(30112), self.getContextUrl(self._current_path, 'sync_now') ) )
                 listItem.addContextMenuItems(contextMenuItems)
                 xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=False, totalItems=self._totalItems)
     
@@ -204,6 +207,8 @@ class DropboxViewer(object):
         contextMenuItems.append( (LANGUAGE_STRING(30029), self.getContextUrl(path, 'create_folder') ) )
         contextMenuItems.append( (LANGUAGE_STRING(30031), self.getContextUrl(path, 'upload') ) )
         contextMenuItems.append( (LANGUAGE_STRING(30037), self.getContextUrl(path, 'download', extra='isDir=True') ) )
+        if self._enabledSync and self._remoteSyncPath in path:
+            contextMenuItems.append( (LANGUAGE_STRING(30112), self.getContextUrl(path, 'sync_now') ) )
         listItem.addContextMenuItems(contextMenuItems)
         #no useful metadata of folder
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True, totalItems=self._totalItems)
