@@ -24,7 +24,7 @@ import threading, Queue
 
 from resources.lib.utils import *
 
-HOST = ''
+HOST = '127.0.0.1' #use 127.0.0.1 needed for windows
 PORT = 0 #Let OS get a free port
 SOCKET_BUFFER_SIZE = 1024
 

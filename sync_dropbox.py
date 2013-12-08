@@ -96,7 +96,7 @@ class DropboxSynchronizer:
                 xbmc.sleep(1000) #1 secs
         if self._notified:
             self._notified.closeServer()
-        
+
     def _get_settings( self ):
         if not self._syncSemaphore.acquire(False):
             log_error('Can\'t change settings while synchronizing!')
@@ -387,7 +387,9 @@ class SyncObject(object):
             itemPath = self._Path
         else:
             itemPath = string_path(self.path) #use case-insensitive one...
-        self._localPath = getLocalSyncPath(self._syncPath, self._syncRoot, itemPath)
+        #decode the _localPath to 'utf-8'
+        # in windows os.stat() only works with unicode...
+        self._localPath = getLocalSyncPath(self._syncPath, self._syncRoot, itemPath).decode('utf-8')
 
 class SyncFile(SyncObject):
     
