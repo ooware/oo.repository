@@ -211,7 +211,8 @@ class DropboxSynchronizer:
                 log_debug('New sync time: %s'%( time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime(self._newSyncTime) ) ) )
     
     def _setupSyncRoot(self):
-        self._root = SyncFolder(self._remoteSyncPath, self._client, self._syncPath, self._remoteSyncPath)
+        #Root path is _remoteSyncPath but then with lower case!
+        self._root = SyncFolder(self._remoteSyncPath.lower(), self._client, self._syncPath, self._remoteSyncPath)
         #Update items which are in the cache
         clientCursor = self._DB.get(self.DB_CURSOR)
         if clientCursor != '':
@@ -221,7 +222,7 @@ class DropboxSynchronizer:
             if remoteData != '':
                 remoteData = eval(remoteData)
                 for path, meta in remoteData.iteritems():
-                    if path.find(self._remoteSyncPath) == 0:
+                    if path.find(self._root.path) == 0:
                         self._root.setItemInfo(path, meta)
             else:
                 log_error('Remote cursor present, but no remote data!')
@@ -244,13 +245,14 @@ class DropboxSynchronizer:
                 log('Reset requested from remote server...')
                 self._DB.delete('%') #delete all
                 del self._root
-                self._root = SyncFolder(self._remoteSyncPath, self._client, self._syncPath, self._remoteSyncPath)
+                #Root path is _remoteSyncPath but then with lower case!
+                self._root = SyncFolder(self._remoteSyncPath.lower(), self._client, self._syncPath, self._remoteSyncPath)
                 initalSync = True
             #prepare item list
             for path, meta in items.iteritems():
                 if not initalSync:
                     log_debug('New item info received for %s'%(path) )
-                if path.find(self._remoteSyncPath) == 0:
+                if path.find(self._root.path) == 0:
                     self._root.updateRemoteInfo(path, meta)
             if len(items) > 0:
                 #store the new data
@@ -389,7 +391,7 @@ class SyncObject(object):
             itemPath = string_path(self.path) #use case-insensitive one...
         #decode the _localPath to 'utf-8'
         # in windows os.stat() only works with unicode...
-        self._localPath = getLocalSyncPath(self._syncPath, self._syncRoot, itemPath).decode('utf-8')
+        self._localPath = getLocalSyncPath(self._syncPath, self._syncRoot, itemPath).decode("utf-8")
 
 class SyncFile(SyncObject):
     

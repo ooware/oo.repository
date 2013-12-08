@@ -43,7 +43,7 @@ class NotifySyncServer(threading.Thread):
             self._socket.bind( (HOST, PORT) )
             self._usedPort = self._socket.getsockname()[1]
             self._socket.listen(1)
-        except Exception, e:
+        except Exception as e:
             log_error("NotifySyncServer failed to bind to socket: %s" %(repr(e)) )
             self._socket.close()
             self._socket = None
@@ -57,7 +57,7 @@ class NotifySyncServer(threading.Thread):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((HOST, self._usedPort))
             s.sendall('')
-        except socket.error, e:
+        except socket.error as e:
             log_error("NotifySyncServer EXCEPTION : %s" %(repr(e)) )
         finally:
             if s:
@@ -79,7 +79,9 @@ class NotifySyncServer(threading.Thread):
             #Check for new client connection
             try:
                 (clientsocket, address) = self._socket.accept()
-            except socket.error, e:
+            except socket.timeout as e:
+                log_debug("NotifySyncServer exception : %s" %(repr(e)) )
+            except socket.error as e:
                 log_error("NotifySyncServer EXCEPTION : %s" %(repr(e)) )
             except:
                 log_error("NotifySyncServer EXCEPTION!")
@@ -106,7 +108,7 @@ class NotifySyncClient(object):
                 s.connect((HOST, usedPort))
                 s.sendall(path)
                 log_debug('NotifySyncClient send: %s' %(repr(path)))
-            except socket.error, e:
+            except socket.error as e:
                 log_error("NotifySyncClient EXCEPTION : %s" %(repr(e)) )
             finally:
                 if s:
