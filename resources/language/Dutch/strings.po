@@ -224,6 +224,14 @@ msgctxt "#30112"
 msgid "Synchronize now"
 msgstr "Synchroniseer nu"
 
+msgctxt "#30113"
+msgid "Stop Synchronizing now?"
+msgstr "Synchroniseren nu stoppen?"
+
+msgctxt "#30114"
+msgid "Dbmc: Synchronizing files..."
+msgstr "Dbmc: Synchroniseren van bestanden..."
+
 
 #error messages
 msgctxt "#31000"

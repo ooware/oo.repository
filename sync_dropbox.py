@@ -48,17 +48,18 @@ class DropboxSynchronizer:
         self._syncFreq = 0 #minutes
         self._newSyncTime = 0
         self._client = None
-        self._root = None
+        self.root = None
         self._remoteSyncPath = '' #DROPBOX_SEP
         self._notified = None
-        self._syncSemaphore = threading.Semaphore()
+        self.syncSemaphore = threading.Semaphore()
+        self._syncThread = None
         #get storage server
         self._DB = StorageServer.StorageServer(self.DB_TABLE, 8760) # 1 year! (Your plugin name, Cache time in hours)
 
     def run(self):
         # start daemon
         xbmc.sleep(10000) #wait for CommonCache to startup
-        #self._DB.delete('%')
+        #self.clearSyncData()
         # get addon settings
         self._get_settings()
         while (not xbmc.abortRequested):
@@ -68,21 +69,27 @@ class DropboxSynchronizer:
                     self._notified.start()
                 if self._getClient():
                     now = time.time()
-                    updates = self._notified.getNotification()
+                    #get remote sync requests
+                    syncRequests = self._notified.getNotification()
                     syncNow = False
                     if self._newSyncTime < now:
                         syncNow = True
                         #update new sync time
                         self._updateSyncTime()
-                    elif len(updates) > 0:
+                    elif len(syncRequests) > 0:
                         syncNow = True
                     if syncNow:
-                        self._syncSemaphore.acquire()
                         log_debug('Start sync...')
-                        self._getRemoteChanges()
-                        if not xbmc.abortRequested:
-                            self._synchronize()
-                        self._syncSemaphore.release()
+                        #use a separate thread to do the syncing, so that the DropboxSynchronizer
+                        # can still handle other stuff (like changing settings) during syncing
+                        self._syncThread = SynchronizeThread(self)
+                        self._syncThread.start()
+                        while self._syncThread.isAlive():
+                            if xbmc.abortRequested:
+                                self._syncThread.stop()
+                            xbmc.sleep(100)
+                        del self._syncThread
+                        self._syncThread = None
                         if not xbmc.abortRequested:
                             log_debug('Finished sync...')
                         else:
@@ -98,16 +105,36 @@ class DropboxSynchronizer:
             self._notified.closeServer()
 
     def _get_settings( self ):
-        if not self._syncSemaphore.acquire(False):
-            log_error('Can\'t change settings while synchronizing!')
-            dialog = xbmcgui.Dialog()
-            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30110))
-            return
-        
+        gotSemaphore = True
         enable = ('true' == ADDON.getSetting('synchronisation').lower())
         tempPath = ADDON.getSetting('syncpath')
         tempRemotePath = ADDON.getSetting('remotepath')
         tempFreq = float( ADDON.getSetting('syncfreq') )
+        #The following settings can't be changed while syncing!
+        if not self.syncSemaphore.acquire(False):
+            gotSemaphore = False
+            settingsChanged = False
+            if (enable != self._enabled) or (tempPath != self._syncPath) or (tempRemotePath != self._remoteSyncPath):
+                log('Can\'t change settings while synchronizing!')
+                dialog = xbmcgui.Dialog()
+                stopSync = dialog.yesno(ADDON_NAME, LANGUAGE_STRING(30110), LANGUAGE_STRING(30113))
+                if stopSync:
+                    if self._syncThread: #should always be true, but just in case check...
+                        self._syncThread.stop()
+                    log('Synchronizing stopped!')
+                    #wait for the semaphore to be released
+                    self.syncSemaphore.acquire()
+                    gotSemaphore = True
+                else:
+                    #revert the changes
+                    if self._enabled:
+                        enabledStr = 'true'
+                    else:
+                        enabledStr = 'false'
+                    ADDON.setSetting('synchronisation', enabledStr)
+                    ADDON.setSetting('syncpath', self._syncPath)
+                    ADDON.setSetting('remotepath', self._remoteSyncPath)
+                    return
         #Enable?
         if enable and (tempPath == '' or tempRemotePath == ''):
             enable = False
@@ -129,8 +156,8 @@ class DropboxSynchronizer:
                     srcname = os.path.join(self._syncPath, name)
                     shutil.move(srcname, tempPath)
                 self._syncPath = tempPath
-                if self._root:
-                    self._root.updateLocalPath(self._syncPath)
+                if self.root:
+                    self.root.updateLocalPath(self._syncPath)
                 log('Move finished')
                 xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30103), tempPath, 7000))
             else:
@@ -146,34 +173,35 @@ class DropboxSynchronizer:
         if tempRemotePath != self._remoteSyncPath:
             self._remoteSyncPath = tempRemotePath
             log('Changed remote path to %s'%(self._remoteSyncPath))
-            if self._root:
+            if self.root:
                 #restart the synchronization 
                 #remove all the files in current syncPath
                 if len(os.listdir(self._syncPath)) > 0:
                     shutil.rmtree(self._syncPath)
                 #reset the complete data on client side
-                self._DB.delete('%') #delete all
-                del self._root
-                self._root = None
+                self.clearSyncData()
+                del self.root
+                self.root = None
                 #Start sync immediately
                 self._newSyncTime = time.time()
         #Time interval changed?
         self._updateSyncTime(tempFreq)
         #reconnect to Dropbox (in case the token has changed)
         self._getClient(reconnect=True)
-        if self._enabled and not self._root:
+        if self._enabled and not self.root:
             log('Enabled synchronization')
             self._setupSyncRoot()
-        elif not self._enabled and self._root:
+        elif not self._enabled and self.root:
             log('Disabled synchronization')
             self._notified.closeServer()
             del self._notified
             self._notified = None
-            del self._root
-            self._root = None
+            del self.root
+            self.root = None
         # re-init when settings have changed
         self.monitor = SettingsMonitor(callback=self._get_settings)
-        self._syncSemaphore.release()
+        if gotSemaphore:
+            self.syncSemaphore.release()
 
     def _getClient(self, reconnect=False):
         if reconnect and self._client:
@@ -186,8 +214,8 @@ class DropboxSynchronizer:
                 log_error('DropboxSynchronizer could not connect to dropbox: %s'%(msg))
                 self._client = None
             #update changed client to the root syncfolder
-            if self._root:
-                self._root.setClient(self._client)
+            if self.root:
+                self.root.setClient(self._client)
         return self._client
         
     def _updateSyncTime(self, newFreq = None):
@@ -211,86 +239,133 @@ class DropboxSynchronizer:
                 log_debug('New sync time: %s'%( time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime(self._newSyncTime) ) ) )
     
     def _setupSyncRoot(self):
-        #Root path is _remoteSyncPath but then with lower case!
-        self._root = SyncFolder(self._remoteSyncPath.lower(), self._client, self._syncPath, self._remoteSyncPath)
+        self.createSyncRoot()
         #Update items which are in the cache
-        clientCursor = self._DB.get(self.DB_CURSOR)
-        if clientCursor != '':
-            clientCursor = eval(clientCursor)
+        clientCursor = self.getClientCursor()
+        if clientCursor:
             log_debug('Setup SyncRoot with stored remote data')
-            remoteData = self._DB.get(self.DB_DATA)
-            if remoteData != '':
-                remoteData = eval(remoteData)
+            remoteData = self.getSyncData()
+            if remoteData:
                 for path, meta in remoteData.iteritems():
-                    if path.find(self._root.path) == 0:
-                        self._root.setItemInfo(path, meta)
+                    if path.find(self.root.path) == 0:
+                        self.root.setItemInfo(path, meta)
             else:
                 log_error('Remote cursor present, but no remote data!')
     
-    def _getRemoteChanges(self):
-        hasMore = True
+    def createSyncRoot(self):
+        #Root path is _remoteSyncPath but then with lower case!
+        self.root = SyncFolder(self._remoteSyncPath.lower(), self._client, self._syncPath, self._remoteSyncPath)
+
+    def storeClientCursor(self, clientCursor):
+        log_debug('Storing remote cursor')
+        self._DB.set(self.DB_CURSOR, repr(clientCursor))
+
+    def getClientCursor(self):
         clientCursor = self._DB.get(self.DB_CURSOR)
-        initalSync = False
         if clientCursor != '':
             clientCursor = eval(clientCursor)
             log_debug('Using stored remote cursor')
         else:
+            clientCursor = None
+        return clientCursor
+
+    def storeSyncData(self):
+        data = repr(self.root.getItemsInfo())
+        log_debug('Storing items info')
+        self._DB.set(self.DB_DATA, data)
+
+    def getSyncData(self):
+        remoteData = self._DB.get(self.DB_DATA)
+        if remoteData != '':
+            remoteData = eval(remoteData)
+        else:
+            remoteData = None
+        return remoteData
+
+    def clearSyncData(self):
+        self._DB.delete('%') #delete all
+
+class SynchronizeThread(threading.Thread):
+    
+    def __init__(self, dropboxSyncer):
+        super(SynchronizeThread, self).__init__()
+        self._stop = False
+        self._dropboxSyncer = dropboxSyncer
+    
+    def stop(self):
+        self._stop = True
+
+    def run(self):
+        self._dropboxSyncer.syncSemaphore.acquire()
+        self._getRemoteChanges()
+        if not self._stop:
+            self._synchronize()
+        self._dropboxSyncer.syncSemaphore.release()
+
+    def _getRemoteChanges(self):
+        hasMore = True
+        clientCursor = self._dropboxSyncer.getClientCursor()
+        initalSync = False
+        if clientCursor == None:
             initalSync = True
             log('Starting first sync...')
-        while hasMore and not xbmc.abortRequested:
+        while hasMore and not self._stop:
             #Sync, get all metadata
-            items, clientCursor, reset, hasMore = self._client.getRemoteChanges(clientCursor)
+            items, clientCursor, reset, hasMore = self._dropboxSyncer._client.getRemoteChanges(clientCursor)
             if reset:
                 #reset the complete data on client side
                 log('Reset requested from remote server...')
-                self._DB.delete('%') #delete all
-                del self._root
+                self._dropboxSyncer.clearSyncData()
+                del self._dropboxSyncer.root
                 #Root path is _remoteSyncPath but then with lower case!
-                self._root = SyncFolder(self._remoteSyncPath.lower(), self._client, self._syncPath, self._remoteSyncPath)
+                self._dropboxSyncer.createSyncRoot()
                 initalSync = True
             #prepare item list
             for path, meta in items.iteritems():
                 if not initalSync:
                     log_debug('New item info received for %s'%(path) )
-                if path.find(self._root.path) == 0:
-                    self._root.updateRemoteInfo(path, meta)
+                if path.find(self._dropboxSyncer.root.path) == 0:
+                    self._dropboxSyncer.root.updateRemoteInfo(path, meta)
             if len(items) > 0:
                 #store the new data
-                data = repr(self._root.getItemsInfo())
-                log_debug('Storing items info')
-                self._DB.set(self.DB_DATA, data)
+                self._dropboxSyncer.storeSyncData()
             #store new cursor
-            log_debug('Storing remote cursor')
-            self._DB.set(self.DB_CURSOR, repr(clientCursor))
+            self._dropboxSyncer.storeClientCursor(clientCursor)
 
     def _synchronize(self):
-        #progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
-        #progress.setHeading(LANGUAGE_STRING(30035))
         #Get the items to sync
-        syncDirs, syncItems = self._root.getItems2Sync()
+        syncDirs, syncItems = self._dropboxSyncer.root.getItems2Sync()
         #alsways first sync(create) dirs, so that they will have the correct time stamps
-        for dir in syncDirs:
-            dir.sync()
-        itemsTotal = len(syncItems)
-        if itemsTotal > 0:
-            itemNr = 0
+        if (len(syncItems) > 0) or (len(syncDirs) > 0):
             #progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
-            #progress.setHeading(LANGUAGE_STRING(30035))
-            #progress.show()
-            for item in syncItems:
-                if not xbmc.abortRequested:
-                    #progress.update(itemNr, itemsTotal)
-                    item.sync()
-                    itemNr += 1
-                else:
+            #progress.setHeading('Syncing files...')
+            for dir in syncDirs:
+                if self._stop:
                     break #exit for loop
-            #progress.update(itemNr, itemsTotal)
+                dir.sync()
+            itemsTotal = len(syncItems)
+            if itemsTotal > 0 and not self._stop:
+                log('Synchronizing number of items: %s' % (itemsTotal) )
+                xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30114), str(itemsTotal), 7000))
+                itemNr = 0
+                #progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
+                #progress.setHeading(LANGUAGE_STRING(30035))
+                #progress.show()
+                for item in syncItems:
+                    if self._stop:
+                        break #exit for loop
+                    else:
+                        #progress.update(itemNr, itemsTotal)
+                        item.sync()
+                        itemNr += 1
+                #progress.update(itemNr, itemsTotal)
+                log('Number of items synchronized: %s' % (itemNr) )
+                xbmc.executebuiltin('Notification(%s,%s%s,%i)' % (LANGUAGE_STRING(30106), LANGUAGE_STRING(30107), itemNr, 7000))
             #store the new data
-            data = repr(self._root.getItemsInfo())
-            log_debug('Storing items info')
-            self._DB.set(self.DB_DATA, data)
-            log('Number of items synchronized: %s' % (itemNr) )
-            xbmc.executebuiltin('Notification(%s,%s%s,%i)' % (LANGUAGE_STRING(30106), LANGUAGE_STRING(30107), itemNr, 7000))
+            self._dropboxSyncer.storeSyncData()
+            #progress.close()
+            #del progress
+
 
 class SyncObject(object):
     OBJECT_IN_SYNC = 0
