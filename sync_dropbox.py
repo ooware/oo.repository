@@ -286,11 +286,13 @@ class DropboxSynchronizer:
         self._DB.delete('%') #delete all
 
 class SynchronizeThread(threading.Thread):
+    PROGRESS_TIMEOUT = 20.0
     
     def __init__(self, dropboxSyncer):
         super(SynchronizeThread, self).__init__()
         self._stop = False
         self._dropboxSyncer = dropboxSyncer
+        self._lastProgressUpdate = 0.0
     
     def stop(self):
         self._stop = True
@@ -337,35 +339,37 @@ class SynchronizeThread(threading.Thread):
         syncDirs, syncItems = self._dropboxSyncer.root.getItems2Sync()
         #alsways first sync(create) dirs, so that they will have the correct time stamps
         if (len(syncItems) > 0) or (len(syncDirs) > 0):
-            #progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
-            #progress.setHeading('Syncing files...')
             for dir in syncDirs:
                 if self._stop:
                     break #exit for loop
                 dir.sync()
             itemsTotal = len(syncItems)
             if itemsTotal > 0 and not self._stop:
-                log('Synchronizing number of items: %s' % (itemsTotal) )
-                xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30114), str(itemsTotal), 7000))
                 itemNr = 0
-                #progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
-                #progress.setHeading(LANGUAGE_STRING(30035))
-                #progress.show()
                 for item in syncItems:
                     if self._stop:
                         break #exit for loop
                     else:
-                        #progress.update(itemNr, itemsTotal)
+                        self.updateProgress(itemNr, itemsTotal)
                         item.sync()
                         itemNr += 1
-                #progress.update(itemNr, itemsTotal)
-                log('Number of items synchronized: %s' % (itemNr) )
-                xbmc.executebuiltin('Notification(%s,%s%s,%i)' % (LANGUAGE_STRING(30106), LANGUAGE_STRING(30107), itemNr, 7000))
+                self.updateProgressFinished(itemNr, itemsTotal)
             #store the new data
             self._dropboxSyncer.storeSyncData()
-            #progress.close()
-            #del progress
 
+    def updateProgress(self, handled, total):
+        now = time.time()
+        if (self._lastProgressUpdate + self.PROGRESS_TIMEOUT) < now:
+            log_debug('Synchronizing number of items: %s/%s' % (total, handled) )
+            xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30114), str(total)+'/'+str(handled), 7000))
+            self._lastProgressUpdate = now
+            #Also store the new data (frequently)
+            self._dropboxSyncer.storeSyncData()
+
+    def updateProgressFinished(self, handled, total):
+        log('Number of items synchronized: %s' % (handled) )
+        xbmc.executebuiltin('Notification(%s,%s%s,%i)' % (LANGUAGE_STRING(30106), LANGUAGE_STRING(30107), handled, 7000))
+            
 
 class SyncObject(object):
     OBJECT_IN_SYNC = 0
@@ -406,6 +410,7 @@ class SyncObject(object):
                 self._remoteClientModifiedTime = meta['client_mtime']
             if 'Path' in meta:
                 self._Path = string_path(meta['Path'])
+                self.updateLocalPath(self._syncPath) # update with case-sensitive path!
         else:
             self._remotePresent = False
         
@@ -421,7 +426,7 @@ class SyncObject(object):
         return meta
 
     def updateRemoteInfo(self, meta):
-        log_debug('Updated remote metaData: %s'%self.path)
+        log_debug('Update remote metaData: %s'%self.path)
         if meta:
             self._Path = string_path(meta['path']) # get the case-sensitive path!
             self.updateLocalPath(self._syncPath) # update with case-sensitive path!
@@ -440,45 +445,39 @@ class SyncObject(object):
             
     def updateTimeStamp(self):
         #local modified time = client_mtime
-        st = os.stat(self.getLocalPath())
+        st = os.stat(self._localPath)
         atime = st[ST_ATIME] #access time
         mtime = st[ST_MTIME] #modification time
         #modify the file timestamp
-        os.utime(self.getLocalPath(), (atime, int(self._remoteClientModifiedTime) ))
+        os.utime(self._localPath, (atime, int(self._remoteClientModifiedTime) ))
         #read back and store the local timestamp value
         # this is used for comparison to the remote modified time
-        st = os.stat(self.getLocalPath())
+        st = os.stat(self._localPath)
         self._localTimeStamp = st[ST_MTIME]
         self._remoteTimeStamp = self._newRemoteTimeStamp
         
-    def getLocalPath(self):
-        if not self._localPath:
-            self.updateLocalPath(self._syncPath)
-        return self._localPath 
-
     def updateLocalPath(self, syncPath):
         #Note: self.path should be the case-sensitive path by now!
-        #localpath consists of syncPath + (self.path - syncRoot)
+        #localpath consists of syncPath + (self._Path - syncRoot)
         self._syncPath = syncPath
         if self._Path:
-            itemPath = self._Path
-        else:
-            itemPath = string_path(self.path) #use case-insensitive one...
-        #decode the _localPath to 'utf-8'
-        # in windows os.stat() only works with unicode...
-        self._localPath = getLocalSyncPath(self._syncPath, self._syncRoot, itemPath).decode("utf-8")
+            #decode the _localPath to 'utf-8'
+            # in windows os.stat() only works with unicode...
+            self._localPath = getLocalSyncPath(self._syncPath, self._syncRoot, self._Path).decode("utf-8")
 
 class SyncFile(SyncObject):
     
     def __init__( self, path, client, syncPath, syncRoot):
-        log_debug('SyncFile created: %s'%path)
+        log_debug('Create SyncFile: %s'%path)
         super(SyncFile, self).__init__(path, client, syncPath, syncRoot)
 
     def inSync(self):
-        localPresent = xbmcvfs.exists(self.getLocalPath())
+        localPresent = False
+        if self._localPath:
+            localPresent = xbmcvfs.exists(self._localPath)
         localTimeStamp = 0
         if localPresent:
-            st = os.stat(self.getLocalPath())
+            st = os.stat(self._localPath)
             localTimeStamp = st[ST_MTIME]
         #File present
         if not localPresent and self._remotePresent:
@@ -511,21 +510,21 @@ class SyncFile(SyncObject):
     def sync(self):
         fileStatus = self.inSync()
         if fileStatus == self.OBJECT_2_DOWNLOAD:
-            log_debug('Download file: %s'%self.path)
-            self._client.saveFile(self.path, self.getLocalPath())
+            log_debug('Download file to: %s'%self._localPath)
+            self._client.saveFile(self.path, self._localPath)
             self.updateTimeStamp()
         elif fileStatus == self.OBJECT_2_UPLOAD:
-            log_debug('Upload file: %s'%self.path)
-            self._client.upload(self.getLocalPath(), self.path)
-            st = os.stat(self.getLocalPath())
+            log_debug('Upload file: %s'%self._localPath)
+            self._client.upload(self._localPath, self.path)
+            st = os.stat(self._localPath)
             self._localTimeStamp = st[ST_MTIME] 
         elif fileStatus == self.OBJECT_2_REMOVE:
-            log_debug('Removing file: %s'%self.path)
-            os.remove(self.getLocalPath())
+            log_debug('Removing file: %s'%self._localPath)
+            os.remove(self._localPath)
         elif fileStatus == self.OBJECT_IN_SYNC or fileStatus == self.OBJECT_REMOVED:
             pass
         else:
-            log_error('Unknown file status(%s) for: %s!'%(fileStatus, self.path))
+            log_error('Unknown file status(%s) for: %s!'%(fileStatus, self._Path))
     
     def setItemInfo(self, path, meta):
         if path == self.path:
@@ -545,7 +544,7 @@ class SyncFile(SyncObject):
 class SyncFolder(SyncObject):
 
     def __init__( self, path, client, syncPath, syncRoot):
-        log_debug('SyncFolder created: %s'%path)
+        log_debug('Create SyncFolder: %s'%path)
         super(SyncFolder, self).__init__(path, client, syncPath, syncRoot)
         self.isDir = True
         self._children = {}
@@ -607,7 +606,9 @@ class SyncFolder(SyncObject):
         return self._children[childPath]
 
     def inSync(self):
-        localPresent = xbmcvfs.exists(self.getLocalPath())
+        localPresent = False
+        if self._localPath:
+            localPresent = xbmcvfs.exists(self._localPath)
         #File present
         if not localPresent and self._remotePresent:
             return self.OBJECT_2_DOWNLOAD
@@ -627,16 +628,16 @@ class SyncFolder(SyncObject):
     def sync(self):
         folderStatus = self.inSync() 
         if folderStatus == self.OBJECT_2_DOWNLOAD:
-            log_debug('Create folder: %s'%self.path)
-            xbmcvfs.mkdirs( self.getLocalPath() )
+            log_debug('Create folder: %s'%self._localPath)
+            xbmcvfs.mkdirs( self._localPath )
             self.updateTimeStamp()
         elif folderStatus == self.OBJECT_2_UPLOAD:
-            log_error('Can\'t upload folder: %s'%self.path)
+            log_error('Can\'t upload folder: %s'%self._localPath)
             #TODO Add files if new files found local
             #TODO: modify timestamp of dir...
         elif folderStatus == self.OBJECT_2_REMOVE:
-            log_debug('Remove folder: %s'%self.path)
-            shutil.rmtree(self.getLocalPath())
+            log_debug('Remove folder: %s'%self._localPath)
+            shutil.rmtree(self._localPath)
         elif folderStatus == self.OBJECT_ADD_CHILD:
             #TODO
             pass
@@ -664,6 +665,9 @@ class SyncFolder(SyncObject):
                 else:
                     items2Sync.append(child)
         #Remove child's from list (this we can do now)
+        if len(removeList) > 0:
+            #sync this dir (dummy sync to remove the deleted child from storage)
+            dirs2Sync.append(self)
         for path in removeList:
             child = self._children.pop(path) 
             del child
