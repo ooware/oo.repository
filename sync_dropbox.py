@@ -27,6 +27,7 @@ import time, datetime
 import threading
 import shutil, os
 from stat import *
+import pickle
 
 from resources.lib.utils import *
 from resources.lib.dropboxclient import *
@@ -38,9 +39,6 @@ except:
     import storageserverdummy as StorageServer
 
 class DropboxSynchronizer:
-    DB_TABLE = 'remote_data'
-    DB_CURSOR = 'client_cursor'
-    DB_DATA = 'client_data'
     
     def __init__( self ):
         self._enabled = False
@@ -48,13 +46,14 @@ class DropboxSynchronizer:
         self._syncFreq = 0 #minutes
         self._newSyncTime = 0
         self._client = None
+        self._clientCursor = None
         self.root = None
         self._remoteSyncPath = '' #DROPBOX_SEP
         self._notified = None
         self.syncSemaphore = threading.Semaphore()
         self._syncThread = None
-        #get storage server
-        self._DB = StorageServer.StorageServer(self.DB_TABLE, 8760) # 1 year! (Your plugin name, Cache time in hours)
+        dataPath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
+        self._storageFile = dataPath + '/sync_data.pik'
 
     def run(self):
         # start daemon
@@ -244,7 +243,7 @@ class DropboxSynchronizer:
         clientCursor = self.getClientCursor()
         if clientCursor:
             log_debug('Setup SyncRoot with stored remote data')
-            remoteData = self.getSyncData()
+            cursor, remoteData = self.getSyncData()
             if remoteData:
                 for path, meta in remoteData.iteritems():
                     if path.find(self.root.path) == 0:
@@ -256,34 +255,43 @@ class DropboxSynchronizer:
         #Root path is _remoteSyncPath but then with lower case!
         self.root = SyncFolder(self._remoteSyncPath.lower(), self._client, self._syncPath, self._remoteSyncPath)
 
-    def storeClientCursor(self, clientCursor):
-        log_debug('Storing remote cursor')
-        self._DB.set(self.DB_CURSOR, repr(clientCursor))
-
     def getClientCursor(self):
-        clientCursor = self._DB.get(self.DB_CURSOR)
-        if clientCursor != '':
-            clientCursor = eval(clientCursor)
-            log_debug('Using stored remote cursor')
-        else:
-            clientCursor = None
-        return clientCursor
+        if self._clientCursor == None:
+            #try to get the cursor from storage
+            cursor, data = self.getSyncData()
+            if cursor != None:
+                log_debug('Using stored remote cursor')
+                self._clientCursor = cursor
+        return self._clientCursor
 
-    def storeSyncData(self):
-        data = repr(self.root.getItemsInfo())
-        log_debug('Storing items info')
-        self._DB.set(self.DB_DATA, data)
+    def storeSyncData(self, cursor=None):
+        data = None
+        if self.root:
+            data = self.root.getItemsInfo()
+        if cursor != None:
+            self._clientCursor = cursor
+        log_debug('Storing sync data')
+        try:
+            with open(self._storageFile, 'w') as f:
+                pickle.dump([self._clientCursor, data], f, -1)
+        except EnvironmentError as e:
+            log_error("Storing storageFile EXCEPTION : %s" %(repr(e)) )
 
     def getSyncData(self):
-        remoteData = self._DB.get(self.DB_DATA)
-        if remoteData != '':
-            remoteData = eval(remoteData)
-        else:
-            remoteData = None
-        return remoteData
+        data = None
+        cursor = None
+        try:
+            with open(self._storageFile, 'r') as f:
+                cursor, data = pickle.load(f)
+        except EnvironmentError as e:
+            log_debug("Opening storageFile EXCEPTION : %s" %(repr(e)) )
+        return cursor, data
 
     def clearSyncData(self):
-        self._DB.delete('%') #delete all
+        try:
+            os.remove(self._storageFile)
+        except OSError as e:
+            log_debug("Removing storageFile EXCEPTION : %s" %(repr(e)) )
 
 class SynchronizeThread(threading.Thread):
     PROGRESS_TIMEOUT = 20.0
@@ -328,11 +336,8 @@ class SynchronizeThread(threading.Thread):
                     log_debug('New item info received for %s'%(path) )
                 if path.find(self._dropboxSyncer.root.path) == 0:
                     self._dropboxSyncer.root.updateRemoteInfo(path, meta)
-            if len(items) > 0:
-                #store the new data
-                self._dropboxSyncer.storeSyncData()
-            #store new cursor
-            self._dropboxSyncer.storeClientCursor(clientCursor)
+            #store new cursor + data
+            self._dropboxSyncer.storeSyncData(clientCursor)
 
     def _synchronize(self):
         #Get the items to sync
@@ -360,8 +365,8 @@ class SynchronizeThread(threading.Thread):
     def updateProgress(self, handled, total):
         now = time.time()
         if (self._lastProgressUpdate + self.PROGRESS_TIMEOUT) < now:
-            log_debug('Synchronizing number of items: %s/%s' % (total, handled) )
-            xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30114), str(total)+'/'+str(handled), 7000))
+            log('Synchronizing number of items: %s/%s' % (handled, total) )
+            xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30114), str(handled)+'/'+str(total), 7000))
             self._lastProgressUpdate = now
             #Also store the new data (frequently)
             self._dropboxSyncer.storeSyncData()
