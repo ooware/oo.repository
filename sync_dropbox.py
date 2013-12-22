@@ -157,7 +157,7 @@ class DropboxSynchronizer:
                         shutil.move(srcname, tempPath)
                 self._syncPath = tempPath
                 if self.root:
-                    self.root.updateLocalPath(self._syncPath)
+                    self.root.updateLocalRootPath(self._syncPath)
                 log('SyncPath updated')
                 xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30103), tempPath, 7000))
             else:
@@ -249,12 +249,13 @@ class DropboxSynchronizer:
                 for path, meta in remoteData.iteritems():
                     if path.find(self.root.path) == 0:
                         self.root.setItemInfo(path, meta)
+                self.root.updateLocalRootPath(self._syncPath)
             else:
                 log_error('Remote cursor present, but no remote data!')
     
     def createSyncRoot(self):
         #Root path is _remoteSyncPath but then with lower case!
-        self.root = SyncFolder(self._remoteSyncPath.lower(), self._client, self._syncPath, self._remoteSyncPath)
+        self.root = SyncFolder(self._remoteSyncPath.lower(), self._client)
 
     def getClientCursor(self):
         if self._clientCursor == None:
@@ -338,6 +339,7 @@ class SynchronizeThread(threading.Thread):
                     log_debug('New item info received for %s'%(path) )
                 if path.find(self._dropboxSyncer.root.path) == 0:
                     self._dropboxSyncer.root.updateRemoteInfo(path, meta)
+                self._dropboxSyncer.root.updateLocalRootPath(self._dropboxSyncer._syncPath)
             #store new cursor + data
             self._dropboxSyncer.storeSyncData(clientCursor)
 
@@ -386,13 +388,11 @@ class SyncObject(object):
     OBJECT_ADD_CHILD = 4
     OBJECT_REMOVED = 5
     
-    def __init__(self, path, client, syncPath, syncRoot):
+    def __init__(self, path, client):
         #note: path is case-insensitive, meta['path'] is case-sensitive
         self.path = path #case-insensitive path
         self.isDir = False
-        self._Path = None #case-sensitive path
-        self._syncPath = syncPath
-        self._syncRoot = syncRoot
+        self._name = None #case-sensitive item name
         self._client = client
         self._localPath = None
         self._remotePresent = True
@@ -415,16 +415,18 @@ class SyncObject(object):
                 self._newRemoteTimeStamp = self._remoteTimeStamp
             if 'client_mtime' in meta:
                 self._remoteClientModifiedTime = meta['client_mtime']
-            if 'Path' in meta:
-                self._Path = string_path(meta['Path'])
-                self.updateLocalPath(self._syncPath) # update with case-sensitive path!
+            if 'name' in meta:
+                self._name = string_path(meta['name'])
+            elif 'Path' in meta:
+                #for backwards compatibility (v0.6.2)
+                self._name = os.path.basename((string_path(meta['Path'])))
         else:
             self._remotePresent = False
         
     def getItemInfo(self):
         meta = {}
         meta['path'] = self.path
-        meta['Path'] = self._Path
+        meta['name'] = self._name
         meta['is_dir'] = self.isDir
         meta['present'] = self._remotePresent
         meta['local_mtime'] = self._localTimeStamp
@@ -435,8 +437,7 @@ class SyncObject(object):
     def updateRemoteInfo(self, meta):
         log_debug('Update remote metaData: %s'%self.path)
         if meta:
-            self._Path = string_path(meta['path']) # get the case-sensitive path!
-            self.updateLocalPath(self._syncPath) # update with case-sensitive path!
+            self._name = os.path.basename((string_path(meta['path']))) # get the case-sensitive name!
             #convert to local time 'Thu, 28 Jun 2012 17:55:59 +0000',
             time_struct = time.strptime(meta['modified'], '%a, %d %b %Y %H:%M:%S +0000')
             self._newRemoteTimeStamp = utc2local( time.mktime(time_struct) )
@@ -463,25 +464,25 @@ class SyncObject(object):
         self._localTimeStamp = st[ST_MTIME]
         self._remoteTimeStamp = self._newRemoteTimeStamp
         
-    def updateLocalPath(self, syncPath):
+    def updateLocalPath(self, parentSyncPath):
         #Note: self.path should be the case-sensitive path by now!
-        #localpath consists of syncPath + (self._Path - syncRoot)
-        self._syncPath = syncPath
-        if self._Path:
+        if self._name:
             #decode the _localPath to 'utf-8'
             # in windows os.stat() only works with unicode...
-            self._localPath = getLocalSyncPath(self._syncPath, self._syncRoot, self._Path).decode("utf-8")
+            self._localPath = os.path.normpath(parentSyncPath + os.sep + self._name).decode("utf-8")
 
 class SyncFile(SyncObject):
     
-    def __init__( self, path, client, syncPath, syncRoot):
+    def __init__( self, path, client):
         log_debug('Create SyncFile: %s'%path)
-        super(SyncFile, self).__init__(path, client, syncPath, syncRoot)
+        super(SyncFile, self).__init__(path, client)
 
     def inSync(self):
         localPresent = False
         if self._localPath:
             localPresent = xbmcvfs.exists(self._localPath)
+        else:
+            log_error("Has no localPath! %s"%self.path)
         localTimeStamp = 0
         if localPresent:
             st = os.stat(self._localPath)
@@ -531,7 +532,7 @@ class SyncFile(SyncObject):
         elif fileStatus == self.OBJECT_IN_SYNC or fileStatus == self.OBJECT_REMOVED:
             pass
         else:
-            log_error('Unknown file status(%s) for: %s!'%(fileStatus, self._Path))
+            log_error('Unknown file status(%s) for: %s!'%(fileStatus, self.path))
     
     def setItemInfo(self, path, meta):
         if path == self.path:
@@ -550,9 +551,9 @@ class SyncFile(SyncObject):
 
 class SyncFolder(SyncObject):
 
-    def __init__( self, path, client, syncPath, syncRoot):
+    def __init__( self, path, client):
         log_debug('Create SyncFolder: %s'%path)
-        super(SyncFolder, self).__init__(path, client, syncPath, syncRoot)
+        super(SyncFolder, self).__init__(path, client)
         self.isDir = True
         self._children = {}
 
@@ -605,9 +606,9 @@ class SyncFolder(SyncObject):
         if not(childPath in self._children):
             #create the child
             if isDir:
-                child = SyncFolder(childPath, self._client, self._syncPath, self._syncRoot)
+                child = SyncFolder(childPath, self._client)
             else:
-                child = SyncFile(childPath, self._client, self._syncPath, self._syncRoot)
+                child = SyncFile(childPath, self._client)
             #add the new created child to the childern's list
             self._children[childPath] = child
         return self._children[childPath]
@@ -616,6 +617,8 @@ class SyncFolder(SyncObject):
         localPresent = False
         if self._localPath:
             localPresent = xbmcvfs.exists(self._localPath)
+        else:
+            log_error("Has no localPath! %s"%self.path)
         #File present
         if not localPresent and self._remotePresent:
             return self.OBJECT_2_DOWNLOAD
@@ -685,8 +688,14 @@ class SyncFolder(SyncObject):
         for child in self._children.itervalues():
             child.setClient(client)
 
-    def updateLocalPath(self, syncPath):
-        super(SyncFolder, self).updateLocalPath(syncPath)
+    def updateLocalPath(self, parentSyncPath):
+        super(SyncFolder, self).updateLocalPath(parentSyncPath)
+        for path, child in self._children.iteritems():
+            child.updateLocalPath(parentSyncPath + os.sep + self._name)
+
+    def updateLocalRootPath(self, syncPath):
+        #don't add the self._name to the syncpath for root!
+        self._localPath = os.path.normpath(syncPath).decode("utf-8")
         for path, child in self._children.iteritems():
             child.updateLocalPath(syncPath)
 
