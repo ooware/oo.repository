@@ -148,16 +148,17 @@ class DropboxSynchronizer:
         #Sync path changed?
         if self._syncPath != tempPath:
             if len(os.listdir(tempPath)) == 0:
-                #move the old sync path to the new one
-                log('Moving sync location from %s to %s'%(self._syncPath, tempPath))
-                names = os.listdir(self._syncPath)
-                for name in names:
-                    srcname = os.path.join(self._syncPath, name)
-                    shutil.move(srcname, tempPath)
+                if xbmcvfs.exists(self._syncPath):
+                    #move the old sync path to the new one
+                    log('Moving sync location from %s to %s'%(self._syncPath, tempPath))
+                    names = os.listdir(self._syncPath)
+                    for name in names:
+                        srcname = os.path.join(self._syncPath, name)
+                        shutil.move(srcname, tempPath)
                 self._syncPath = tempPath
                 if self.root:
                     self.root.updateLocalPath(self._syncPath)
-                log('Move finished')
+                log('SyncPath updated')
                 xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30103), tempPath, 7000))
             else:
                 log_error('New sync location is not empty: %s'%(tempPath))
@@ -175,7 +176,7 @@ class DropboxSynchronizer:
             if self.root:
                 #restart the synchronization 
                 #remove all the files in current syncPath
-                if len(os.listdir(self._syncPath)) > 0:
+                if xbmcvfs.exists(self._syncPath) and len(os.listdir(self._syncPath)) > 0:
                     shutil.rmtree(self._syncPath)
                 #reset the complete data on client side
                 self.clearSyncData()
@@ -288,6 +289,7 @@ class DropboxSynchronizer:
         return cursor, data
 
     def clearSyncData(self):
+        self._clientCursor = None
         try:
             os.remove(self._storageFile)
         except OSError as e:
