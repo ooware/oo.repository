@@ -1,3 +1,8 @@
+[B]0.6.2:[/B]
+- Storing sync data in the userdata of the addon (sync data was previously 
+  removed after a reboot on raspbmc)
+- Added notifications to see the synchronization progress 
+
 [B]0.6.1:[/B]
 - Added one way (from dropbox to local system) synchronization option
 
