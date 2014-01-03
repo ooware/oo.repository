@@ -82,8 +82,12 @@ class DropboxViewer(object):
         folderItems = 0
         for f in contents:
             if f['is_dir']:
-                fpath = string_path(f['path'])
-                name = os.path.basename(fpath)
+                name = os.path.basename( string_path(f['path']) )
+                # the metadata 'path' is sometimes case incorrect! So use the _current_path (case-sensitive) path.
+                if self._current_path == DROPBOX_SEP:
+                    fpath = self._current_path + name 
+                else:
+                    fpath = self._current_path + DROPBOX_SEP + name
                 self.addFolder(name, fpath)
                 folderItems += 1
         #Change the totalItems, so that the progressbar is more realistic
@@ -91,8 +95,12 @@ class DropboxViewer(object):
         #Now add the maximum(define) number of files
         for fileMeta in contents:
             if not fileMeta['is_dir']:
-                fpath = string_path(fileMeta['path'])
-                name = os.path.basename(fpath)
+                name = os.path.basename( string_path(fileMeta['path']) )
+                # the metadata 'path' is sometimes case incorrect! So use the _current_path (case-sensitive) path.
+                if self._current_path == DROPBOX_SEP:
+                    fpath = self._current_path + name
+                else:
+                    fpath = self._current_path + DROPBOX_SEP + name
                 self.addFile(name, fpath, fileMeta)
             if self._loadedMediaItems >= self._nrOfMediaItems:
                 #don't load more for now
@@ -267,13 +275,13 @@ class DropboxViewer(object):
     def getMetaData(self, path, directory=False):
         meta, changed = self._client.getMetaData(path, directory)
         if changed:
-            self._removeCachedFileFolder(meta)
+            self._removeCachedFileFolder(path, meta)
         return meta
 
-    def _removeCachedFileFolder(self, metadata):
-        cachedLocation = self._shadowPath + string_path(metadata['path'])
+    def _removeCachedFileFolder(self, path, metadata):
+        cachedLocation = self._shadowPath + path
         cachedLocation = os.path.normpath(cachedLocation)
-        tumbLocation = self._thumbPath + string_path(metadata['path'])
+        tumbLocation = self._thumbPath + path
         tumbLocation = os.path.normpath(tumbLocation)
         folderItems = []
         fileItems = []

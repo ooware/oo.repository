@@ -172,7 +172,7 @@ class XBMCDropBoxClient(object):
                 items = resp['contents']
                 resp = None
                 for item in items:
-                    if string_path(item['path']) == path:
+                    if string_path(item['path']).lower() == path.lower():
                         resp = item
                         break;
         return resp, changed
@@ -230,7 +230,7 @@ class XBMCDropBoxClient(object):
         succes = False
         resp = self.DropboxAPI.file_copy(path, toPath)
         if resp and 'path' in resp:
-            succes = ( string_path(resp['path']) == toPath)
+            succes = ( string_path(resp['path']).lower() == toPath.lower())
         return succes
 
     @command()
@@ -238,7 +238,7 @@ class XBMCDropBoxClient(object):
         succes = False
         resp = self.DropboxAPI.file_move(path, toPath)
         if resp and 'path' in resp:
-            succes = ( string_path(resp['path']) == toPath)
+            succes = ( string_path(resp['path']).lower() == toPath.lower())
         return succes
 
     @command()
@@ -246,7 +246,7 @@ class XBMCDropBoxClient(object):
         succes = False
         resp = self.DropboxAPI.file_create_folder(path)
         if resp and 'path' in resp:
-            succes = ( string_path(resp['path']) == path)
+            succes = ( string_path(resp['path']).lower() == path.lower())
         return succes
 
     @command()
@@ -271,7 +271,7 @@ class XBMCDropBoxClient(object):
                 path = toPath + DROPBOX_SEP + os.path.basename(fileName) 
                 resp = uploader.finish(path)
                 if resp and 'path' in resp:
-                    succes = ( string_path(resp['path']) == path)
+                    succes = ( string_path(resp['path']).lower() == path.lower())
         else:
             log_error('File size of Upload file <= 0!')
         return succes
