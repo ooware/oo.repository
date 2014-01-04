@@ -339,6 +339,7 @@ class SynchronizeThread(threading.Thread):
                     log_debug('New item info received for %s'%(path) )
                 if path.find(self._dropboxSyncer.root.path) == 0:
                     self._dropboxSyncer.root.updateRemoteInfo(path, meta)
+            if len(items) > 0:
                 self._dropboxSyncer.root.updateLocalRootPath(self._dropboxSyncer._syncPath)
             #store new cursor + data
             self._dropboxSyncer.storeSyncData(clientCursor)
