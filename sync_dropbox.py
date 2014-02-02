@@ -286,7 +286,7 @@ class DropboxSynchronizer:
             with open(self._storageFile, 'r') as f:
                 cursor, data = pickle.load(f)
         except EnvironmentError as e:
-            log_debug("Opening storageFile EXCEPTION : %s" %(repr(e)) )
+            log_error("Opening storageFile EXCEPTION : %s" %(repr(e)) )
         return cursor, data
 
     def clearSyncData(self):
@@ -294,7 +294,7 @@ class DropboxSynchronizer:
         try:
             os.remove(self._storageFile)
         except OSError as e:
-            log_debug("Removing storageFile EXCEPTION : %s" %(repr(e)) )
+            log_error("Removing storageFile EXCEPTION : %s" %(repr(e)) )
 
 class SynchronizeThread(threading.Thread):
     PROGRESS_TIMEOUT = 20.0
@@ -482,7 +482,7 @@ class SyncFile(SyncObject):
         localPresent = False
         if self._localPath:
             localPresent = xbmcvfs.exists(self._localPath)
-        else:
+        elif self._remotePresent:
             log_error("Has no localPath! %s"%self.path)
         localTimeStamp = 0
         if localPresent:
@@ -618,7 +618,7 @@ class SyncFolder(SyncObject):
         localPresent = False
         if self._localPath:
             localPresent = xbmcvfs.exists(self._localPath)
-        else:
+        elif self._remotePresent:
             log_error("Has no localPath! %s"%self.path)
         #File present
         if not localPresent and self._remotePresent:
