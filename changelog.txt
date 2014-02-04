@@ -11,6 +11,14 @@
 [B]0.6.1:[/B]
 - Added one way (from dropbox to local system) synchronization option
 
+[B]0.5.4:[/B]
+- Added File/Folder download context menu item
+
+[B]0.5.3:[/B]
+- Fix showing unicoded-string directory
+- Fix creating new folder on file-item
+- Set Background cache dialog timeout to 7 secs
+
 [B]0.5.2:[/B]
 - Added option to stream music and video i.s.o. caching them. Note: picture 
   cannot be streamed, they are still cached
