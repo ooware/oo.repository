@@ -14,9 +14,15 @@
 		<language>en</language>
 		<summary lang="en">View files from your Dropbox account</summary>
 		<summary lang="nl">Bekijk bestanden van je Dropbox account</summary>
-		<description lang="en">View files from your Dropbox account. This addon can access to all files and folders in your Dropbox account. Dbmc is not affiliated with or otherwise sponsored by Dropbox, Inc.
+		<summary lang="it">Vedi i file del tuo account Dropbox</summary>
+		<description lang="en">
+			View files from your Dropbox account. This addon can access to all files and folders in your Dropbox account. Dbmc is not affiliated with or otherwise sponsored by Dropbox, Inc.
 		</description>
-		<description lang="nl">Bekijk bestanden van je Dropbox account. Deze addon heeft toegang tot alle bestanden en mappen in uw Dropbox account. Dbmc is niet aangesloten bij of anderszins gesponsord door Dropbox, Inc.
+		<description lang="nl">
+			Bekijk bestanden van je Dropbox account. Deze addon heeft toegang tot alle bestanden en mappen in uw Dropbox account. Dbmc is niet aangesloten bij of anderszins gesponsord door Dropbox, Inc.
+		</description>
+		<description lang="it">
+			Vedi i file del tuo account Dropbox. Questo addons può accedere a tutti i file e cartelle nel proprio account Dropbox. Dbmc non è in alcun modo affiliato o in qualche modo sponsorizzato da Dropbox, Inc.
 		</description>
 		<platform>all</platform>
 		<license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
