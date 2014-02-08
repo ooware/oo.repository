@@ -1,3 +1,6 @@
+[B]0.6.4:[/B]
+- Add DBMC to official xbmc-addons repository
+
 [B]0.6.3:[/B]
 - Improve addon behavior with sync service
 - Fix some synchronization bugs
