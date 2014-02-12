@@ -103,13 +103,16 @@ class XBMCDropBoxClient(object):
         msg = 'No error'
         #get Settings
         token = ADDON.getSetting('access_token').decode("utf-8")
+        if not token:
+            msg = 'No token (access code)'
         #get Dropbox API (handle)
-        if self.DropboxAPI == None:
+        if self.DropboxAPI == None and token:
             #log_debug("Getting dropbox client with token: %s"%token)
             try:
                 self.DropboxAPI = client.DropboxClient(token)
             except rest.ErrorResponse, e:
                 msg = e.user_error_msg or str(e)
+                self.DropboxAPI = None
         return (self.DropboxAPI != None), msg
 
     def disconnect(self):

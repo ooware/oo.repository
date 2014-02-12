@@ -52,6 +52,7 @@ class NotifySyncServer(threading.Thread):
 
     def closeServer(self):
         self._stop = True
+        s = None
         #fake a notify to stop the thread
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

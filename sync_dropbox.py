@@ -66,18 +66,14 @@ class DropboxSynchronizer:
                 if not self._notified:
                     self._notified = NotifySyncServer()
                     self._notified.start()
-                if self._getClient():
-                    now = time.time()
-                    #get remote sync requests
-                    syncRequests = self._notified.getNotification()
-                    syncNow = False
-                    if self._newSyncTime < now:
-                        syncNow = True
-                        #update new sync time
-                        self._updateSyncTime()
-                    elif len(syncRequests) > 0:
-                        syncNow = True
-                    if syncNow:
+                now = time.time()
+                #get remote sync requests
+                syncRequests = self._notified.getNotification()
+                if len(syncRequests) > 0 or self._newSyncTime < now:
+                    if self._getClient(reconnect=True):
+                        if self._newSyncTime < now:
+                            #update new sync time
+                            self._updateSyncTime()
                         log_debug('Start sync...')
                         #use a separate thread to do the syncing, so that the DropboxSynchronizer
                         # can still handle other stuff (like changing settings) during syncing
@@ -94,11 +90,13 @@ class DropboxSynchronizer:
                         else:
                             log('DropboxSynchronizer: Sync aborted...')
                     else:
-                        xbmc.sleep(1000) #1 secs
+                        #No Client, try again after 5 secs
+                        xbmc.sleep(5000)
                 else:
-                    #try again after 5 secs
-                    xbmc.sleep(5000)
+                    #No sync needed yet
+                    xbmc.sleep(1000) #1 secs
             else:
+                #not enabled
                 xbmc.sleep(1000) #1 secs
         if self._notified:
             self._notified.closeServer()
