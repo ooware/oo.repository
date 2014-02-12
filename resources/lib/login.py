@@ -77,7 +77,7 @@ def doNormalTokenDialog(authorize_url):
                     #'name':'login-form',
                     'action':'1/oauth2/authorize'
                   }]
-    autoClose = {   'url':'https://www.dropbox.com/1/oauth2/authorize$',
+    autoClose = {   'url':'https://www.dropbox.com/1/oauth2/authorize.',
                     'html':'(?s).+class="auth-code".+',
                     'heading':LANGUAGE_STRING(30004),
                     'message':LANGUAGE_STRING(30009)}
