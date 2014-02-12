@@ -51,13 +51,13 @@ def doTokenDialog():
                 ADDON.setSetting('access_token', access_token)
             except rest.ErrorResponse, e:
                 dialog = xbmcgui.Dialog()
-                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31000), '%s'%str(e))
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(30200), '%s'%str(e))
         else:
             dialog = xbmcgui.Dialog()
-            dialog.ok(ADDON_NAME, LANGUAGE_STRING(31001), LANGUAGE_STRING(31002))
+            dialog.ok(ADDON_NAME, LANGUAGE_STRING(30201), LANGUAGE_STRING(30202))
     except:
         dialog = xbmcgui.Dialog()
-        dialog.ok(ADDON_NAME, LANGUAGE_STRING(31003), LANGUAGE_STRING(31004))
+        dialog.ok(ADDON_NAME, LANGUAGE_STRING(30203), LANGUAGE_STRING(30204))
     
 def doNormalTokenDialog(authorize_url):
     from webviewer import webviewer #@UnresolvedImport

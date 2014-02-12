@@ -337,7 +337,7 @@ class FileLoader(threading.Thread):
         self._module = module
         self._thumbList = Queue.Queue() #thread safe
         self._fileList = Queue.Queue() #thread safe
-        self._progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", os.getcwd())
+        self._progress = DropboxBackgroundProgress("DialogExtendedProgressBar.xml", ADDON_PATH)
         self._progress.setHeading(LANGUAGE_STRING(30035))
 
     def run(self):

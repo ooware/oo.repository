@@ -53,7 +53,7 @@ def command():
                 msg = e.user_error_msg or str(e)
                 log_error("%s failed: %s"%(f.__name__, msg) )
                 dialog = xbmcgui.Dialog()
-                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31006), '%s' % (msg))
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(30206), '%s' % (msg))
 
         wrapper.__doc__ = f.__doc__
         return wrapper
@@ -97,7 +97,7 @@ class XBMCDropBoxClient(object):
             succes, msg = self.connect()
             if not succes:
                 dialog = xbmcgui.Dialog()
-                dialog.ok(ADDON_NAME, LANGUAGE_STRING(31005), '%s' % (msg))
+                dialog.ok(ADDON_NAME, LANGUAGE_STRING(30205), '%s' % (msg))
 
     def connect(self):
         msg = 'No error'
@@ -158,7 +158,7 @@ class XBMCDropBoxClient(object):
                         self.DropboxAPI = None
                         msg = e.user_error_msg or str(e)
                         dialog = xbmcgui.Dialog()
-                        dialog.ok(ADDON_NAME, LANGUAGE_STRING(31006), '%s' % (msg))
+                        dialog.ok(ADDON_NAME, LANGUAGE_STRING(30206), '%s' % (msg))
                 else:
                     #When no exception: store new retrieved data
                     log_debug("New/updated Metadata is stored for %s"%dirname)

@@ -157,7 +157,7 @@ if ( __name__ == "__main__" ):
         elif action == 'copy':
             if 'path' in params:
                 path = urllib.unquote( params['path'] )
-                dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
+                dialog = DropboxFileBrowser("FileBrowser.xml", ADDON_PATH)
                 dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30026))
                 dialog.doModal()
                 if dialog.selectedFolder:
@@ -176,7 +176,7 @@ if ( __name__ == "__main__" ):
         elif action == 'move':
             if 'path' in params:
                 path = urllib.unquote( params['path'] )
-                dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
+                dialog = DropboxFileBrowser("FileBrowser.xml", ADDON_PATH)
                 dialog.setHeading(LANGUAGE_STRING(30025) + LANGUAGE_STRING(30028))
                 dialog.doModal()
                 if dialog.selectedFolder:
@@ -248,7 +248,7 @@ if ( __name__ == "__main__" ):
                         dialog = xbmcgui.Dialog()
                         dialog.ok(ADDON_NAME, LANGUAGE_STRING(30040), location)
         elif action == 'set_remote_sync_path':
-            dialog = DropboxFileBrowser("FileBrowser.xml", os.getcwd())
+            dialog = DropboxFileBrowser("FileBrowser.xml", ADDON_PATH)
             dialog.setHeading(LANGUAGE_STRING(30109))
             dialog.doModal()
             if dialog.selectedFolder:
