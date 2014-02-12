@@ -247,30 +247,30 @@ msgid "Dbmc: Synchronizing files..."
 msgstr "Dbmc: sto sincronizzando i file..."
 
 # error messages
-msgctxt "#31000"
+msgctxt "#30200"
 msgid "Problem getting the access code!"
 msgstr "Problema nell'ottenere il codice di accesso!"
 
-msgctxt "#31001"
+msgctxt "#30201"
 msgid "Authorization failed, no code received!"
 msgstr "Autorizzazione fallita, nessun codice ricevuto"
 
-msgctxt "#31002"
+msgctxt "#30202"
 msgid "Did you authorize (allow)?"
 msgstr "Si è autorizzato (allow)?"
 
-msgctxt "#31003"
+msgctxt "#30203"
 msgid "Please install XMBC addon: Webviewer."
 msgstr "Progo installare l'addon XBMC: Webviewer"
 
-msgctxt "#31004"
+msgctxt "#30204"
 msgid "This is required for authorizing this addon."
 msgstr "E' richiesto per autorizzare questo addon."
 
-msgctxt "#31005"
+msgctxt "#30205"
 msgid "Dropbox authorization code failure!"
 msgstr "Problema nel codice di autorizzazione di Dropbox!"
 
-msgctxt "#31006"
+msgctxt "#30206"
 msgid "Dropbox error occured!"
 msgstr "Errore in Dropbox!"

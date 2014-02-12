@@ -234,30 +234,30 @@ msgstr ""
 
 
 #error messages
-msgctxt "#31000"
+msgctxt "#30200"
 msgid "Problem getting the access code!"
 msgstr ""
 
-msgctxt "#31001"
+msgctxt "#30201"
 msgid "Authorization failed, no code received!"
 msgstr ""
 
-msgctxt "#31002"
+msgctxt "#30202"
 msgid "Did you authorize (allow)?"
 msgstr ""
 
-msgctxt "#31003"
+msgctxt "#30203"
 msgid "Please install XMBC addon: Webviewer."
 msgstr ""
 
-msgctxt "#31004"
+msgctxt "#30204"
 msgid "This is required for authorizing this addon."
 msgstr ""
 
-msgctxt "#31005"
+msgctxt "#30205"
 msgid "Dropbox authorization code failure!"
 msgstr ""
 
-msgctxt "#31006"
+msgctxt "#30206"
 msgid "Dropbox error occured!"
 msgstr ""
