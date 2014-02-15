@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.dbmc" name="Dbmc" version="0.6.5"
+<addon id="plugin.dbmc" name="Dbmc (Dropbox add-on)" version="0.7.0"
 	provider-name="Joost Kop">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0" />
@@ -28,15 +28,7 @@
 		<license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
 		<forum>http://forum.xbmc.org/showthread.php?tid=172902</forum>
 		<website>https://sourceforge.net/projects/xbmc-dropbox/</website>
+		<source>https://sourceforge.net/p/xbmc-dropbox/code/ci/master/tree/</source>
 		<email />
-		<source />
-	</extension>
-	<extension point="xbmc.addon.repository"
-		name="Official xbmc-dropbox.sourceforge.net Add-on Repository">
-		<info compressed="true">http://xbmc-dropbox.sourceforge.net/addons.xml
-		</info>
-		<checksum>http://xbmc-dropbox.sourceforge.net/addons.xml.md5
-		</checksum>
-		<datadir zip="true">http://xbmc-dropbox.sourceforge.net</datadir>
 	</extension>
 </addon>

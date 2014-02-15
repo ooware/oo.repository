@@ -1,4 +1,4 @@
-[B]0.6.5:[/B]
+[B]0.7.0:[/B]
 - Changes for getting addon into XBMC official repository
 - Fixed login (step 8)
 - Improved synchronization handling when no token (access code) present
