@@ -157,7 +157,7 @@ class DropboxSynchronizer:
                 if self.root:
                     self.root.updateLocalRootPath(self._syncPath)
                 log('SyncPath updated')
-                xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30103), tempPath, 7000))
+                xbmc.executebuiltin('Notification(%s,%s,%d,%s)' % (LANGUAGE_STRING(30103), tempPath, 7000, ICON))
             else:
                 log_error('New sync location is not empty: %s'%(tempPath))
                 dialog = xbmcgui.Dialog()
@@ -369,14 +369,14 @@ class SynchronizeThread(threading.Thread):
         now = time.time()
         if (self._lastProgressUpdate + self.PROGRESS_TIMEOUT) < now:
             log('Synchronizing number of items: %s/%s' % (handled, total) )
-            xbmc.executebuiltin('Notification(%s,%s,%i)' % (LANGUAGE_STRING(30114), str(handled)+'/'+str(total), 7000))
+            xbmc.executebuiltin('Notification(%s,%s,%d,%s)' % (LANGUAGE_STRING(30114), str(handled)+'/'+str(total), 7000, ICON))
             self._lastProgressUpdate = now
             #Also store the new data (frequently)
             self._dropboxSyncer.storeSyncData()
 
     def updateProgressFinished(self, handled, total):
         log('Number of items synchronized: %s' % (handled) )
-        xbmc.executebuiltin('Notification(%s,%s%s,%i)' % (LANGUAGE_STRING(30106), LANGUAGE_STRING(30107), handled, 7000))
+        xbmc.executebuiltin('Notification(%s,%s%s,%d,%s)' % (LANGUAGE_STRING(30106), LANGUAGE_STRING(30107), handled, 10000, ICON))
             
 
 class SyncObject(object):
