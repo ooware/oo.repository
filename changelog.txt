@@ -1,7 +1,8 @@
-[B]0.7.1beta:[/B]
+[B]0.7.1:[/B]
 - Fixed synchronization crash when a syncing a file fails
 - Fixed not able to upload files 
 - Add (Dropbox addon) to the name (Make it come up in 'dropbox' searches)
+- Add Dbmc icon to the sync notifications
 
 [B]0.7.0:[/B]
 - Changes for getting addon into XBMC official repository
