@@ -50,8 +50,8 @@ msgid "View relevant files only"
 msgstr "Vedi solo file importanti"
 
 msgctxt "#30009"
-msgid "Please close the Web Viewer."
-msgstr "Chiudere il Web Viewer."
+msgid "30009"
+msgstr "30009"
 
 msgctxt "#30010"
 msgid "Show me more..."

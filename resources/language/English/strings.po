@@ -41,7 +41,7 @@ msgid "View relevant files only"
 msgstr ""
 
 msgctxt "#30009"
-msgid "Please close the Web Viewer."
+msgid "30009"
 msgstr ""
 
 msgctxt "#30010"

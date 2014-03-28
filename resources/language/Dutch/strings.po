@@ -41,8 +41,8 @@ msgid "View relevant files only"
 msgstr "Toon alleen relevante bestanden"
 
 msgctxt "#30009"
-msgid "Please close the Web Viewer."
-msgstr "Sluit de Web Viewer, aub."
+msgid "30009"
+msgstr "30009"
 
 msgctxt "#30010"
 msgid "Show me more..."

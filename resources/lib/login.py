@@ -21,7 +21,6 @@
 
 import xbmcaddon
 import xbmcgui
-import re
 
 import uuid
 import urllib, urllib2
