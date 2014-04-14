@@ -1,4 +1,4 @@
-[B]0.7.2beta:[/B]
+[B]0.7.2:[/B]
 - Changed login (Authorization) procedure. The old one failed everytime Dropbox changed thier site.
 
 [B]0.7.1:[/B]
