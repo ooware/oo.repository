@@ -19,7 +19,7 @@ msgstr "Generale"
 
 msgctxt "#30001"
 msgid "Follow the instructions and enter PIN: "
-msgstr "Follow the instructions and enter PIN: "
+msgstr "Segui le istruzioni e immetti il PIN: "
 
 msgctxt "#30002"
 msgid "Dropbox authorization required."
@@ -27,7 +27,7 @@ msgstr "E' richiesto un codice di autorizzazione di Dropbox."
 
 msgctxt "#30003"
 msgid "Go to: http://xbmc-dropbox.sourceforge.net"
-msgstr "Go to: http://xbmc-dropbox.sourceforge.net"
+msgstr "Vai a: http://xbmc-dropbox.sourceforge.net"
 
 msgctxt "#30004"
 msgid "Authorization finished."
@@ -257,7 +257,7 @@ msgstr "Autorizzazione fallita!"
 
 msgctxt "#30202"
 msgid "Did you copy the complete code?"
-msgstr "Did you copy the complete code?"
+msgstr "Hai copiato il codice completo?"
 
 msgctxt "#30203"
 msgid "30203"
