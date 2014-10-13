@@ -49,8 +49,11 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
 
     def __init__(self, *args, **kwargs):
         super(DropboxFileBrowser, self).__init__(*args, **kwargs)
-        self.client = XBMCDropBoxClient()
-
+        
+        
+    def setDBClient(self, client):
+        self.client = client
+        
     def setHeading(self, heading):
         self._heading = heading
         self._thumbView = False

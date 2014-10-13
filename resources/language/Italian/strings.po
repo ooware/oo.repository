@@ -181,6 +181,14 @@ msgctxt "#30041"
 msgid "Downloading file:"
 msgstr "Sto scaricando il/i file:"
 
+msgctxt "#30042"
+msgid "Add an account..."
+msgstr ""
+
+msgctxt "#30043"
+msgid "Finish adding account..."
+msgstr ""
+
 msgctxt "#30100"
 msgid "Synchronization"
 msgstr "Sincronizzazione"
@@ -260,7 +268,7 @@ msgid "Did you copy the complete code?"
 msgstr "Hai copiato il codice completo?"
 
 msgctxt "#30203"
-msgid "30203"
+msgid "Action cannot be executed"
 msgstr "30203"
 
 msgctxt "#30204"

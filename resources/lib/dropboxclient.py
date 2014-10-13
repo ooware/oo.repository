@@ -90,7 +90,8 @@ class XBMCDropBoxClient(object):
 #                                 cls, *args, **kwargs)
 #         return cls._instance
 
-    def __init__( self, autoConnect = True ):
+    def __init__( self, autoConnect = True , access_token = None):
+        self._access_token = access_token
         #get storage server
         self._cache = StorageServer.StorageServer(ADDON_NAME, 168) # (Your plugin name, Cache time in hours)
         if autoConnect:
@@ -102,14 +103,13 @@ class XBMCDropBoxClient(object):
     def connect(self):
         msg = 'No error'
         #get Settings
-        token = ADDON.getSetting('access_token').decode("utf-8")
-        if not token:
+        if not self._access_token:
             msg = 'No token (access code)'
         #get Dropbox API (handle)
-        if self.DropboxAPI == None and token:
-            #log_debug("Getting dropbox client with token: %s"%token)
+        if self.DropboxAPI == None and self._access_token:
+            #log_debug("Getting dropbox client with token: %s"%self._access_token)
             try:
-                self.DropboxAPI = client.DropboxClient(token)
+                self.DropboxAPI = client.DropboxClient(self._access_token)
             except rest.ErrorResponse, e:
                 msg = e.user_error_msg or str(e)
                 self.DropboxAPI = None
@@ -342,6 +342,11 @@ class XBMCDropBoxClient(object):
         reset = response['reset']
         has_more = response['has_more']
         return items, cursor, reset, has_more
+
+    def getAccountInfo(self):
+        resp = self.DropboxAPI.account_info()
+        return resp
+
 
 class Uploader(client.DropboxClient.ChunkedUploader):
     """

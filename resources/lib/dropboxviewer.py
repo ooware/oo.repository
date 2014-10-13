@@ -28,6 +28,7 @@ import threading, Queue
 
 from resources.lib.utils import *
 from resources.lib.dropboxclient import *
+from resources.lib.accountsettings import AccountSettings
 
 MAX_MEDIA_ITEMS_TO_LOAD_ONCE = 200
 
@@ -43,21 +44,22 @@ class DropboxViewer(object):
     _session = ''
     _useStreamingURLs = False
         
-    def __init__( self, params ):
-        self._client = XBMCDropBoxClient()
+    def __init__( self, params, account_settings ):
+        self._account_settings = account_settings
+        self._client = XBMCDropBoxClient(access_token=self._account_settings.access_token)
         #get Settings
         self._filterFiles = ('true' == ADDON.getSetting('filefilter').lower())
         self._useStreamingURLs = ('true' == ADDON.getSetting('streammedia').lower())
         datapath = ADDON.getSetting('cachepath').decode("utf-8")
-        self._enabledSync = ('true' == ADDON.getSetting('synchronisation').lower())
-        self._localSyncPath = ADDON.getSetting('syncpath')
-        self._remoteSyncPath = ADDON.getSetting('remotepath')
+        self._enabledSync = self._account_settings.synchronisation
+        self._localSyncPath = self._account_settings.syncpath
+        self._remoteSyncPath = self._account_settings.remotepath
         #Use user defined location?
         if datapath == '' or os.path.normpath(datapath) == '':
             #get the default path 
             datapath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-        self._shadowPath = datapath + '/shadow/'
-        self._thumbPath = datapath + '/thumb/'
+        self._shadowPath = datapath + '/' + self._account_settings.account_name + '/shadow/'
+        self._thumbPath = datapath + '/' + self._account_settings.account_name + '/thumb/'
         #form default url
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
         self._module = params.get('module', '')
@@ -181,6 +183,7 @@ class DropboxViewer(object):
                     #this doesn't work for pictures...
                     listItem.setProperty("IsPlayable", "true")
                     url = sys.argv[0] + '?action=play' + '&path=' + urllib.quote(path)
+                    url += '&account=' + urllib.quote(self._account_settings.account_name)
                 else:
                     url = self._loader.getFile(path)
                     #url = self.getMediaUrl(path)
@@ -228,6 +231,7 @@ class DropboxViewer(object):
             url += '&module=' + module
         else:
             url += '&module=' + self._module
+        url += '&account=' + urllib.quote(self._account_settings.account_name)
         url += '&path=' + urllib.quote(path)
         if media_items != 0:
             url += '&media_items=' + str(media_items)
@@ -236,6 +240,7 @@ class DropboxViewer(object):
     def getContextUrl(self, path, action, extra = None):
         url = 'XBMC.RunScript(plugin.dbmc, '
         url += 'action=%s' %( action )
+        url += '&account=' + urllib.quote(self._account_settings.account_name)
         if action == 'upload':
             url += '&to_path=%s' %( urllib.quote(path) )
         else:

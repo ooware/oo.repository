@@ -172,6 +172,14 @@ msgctxt "#30041"
 msgid "Downloading file:"
 msgstr "Download bestand:"
 
+msgctxt "#30042"
+msgid "Add an account..."
+msgstr "Voeg een account toe..."
+
+msgctxt "#30043"
+msgid "Finish adding account..."
+msgstr "Afmaken toevoegen account..."
+
 msgctxt "#30100"
 msgid "Synchronization"
 msgstr "Synchronisatie"
@@ -247,8 +255,8 @@ msgid "Did you copy the complete code?"
 msgstr "Heeft u de code volledig gekopieerd?"
 
 msgctxt "#30203"
-msgid "30203"
-msgstr "30203"
+msgid "Action cannot be executed"
+msgstr "Actie kan niet worden uitgevoerd"
 
 msgctxt "#30204"
 msgid "30204"

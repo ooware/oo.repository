@@ -23,34 +23,27 @@ import urllib
 
 from resources.lib.utils import *
 from resources.lib.dropboxviewer import *
+from resources.lib.accountsettings import AccountSettings
 import resources.lib.login as login
 
-class FolderBrowser(DropboxViewer):
-        
-    def __init__( self, params, account_settings ):
-        super(FolderBrowser, self).__init__(params, account_settings)
-
-    def buildList(self):
-        resp = self.getMetaData(self._current_path, directory=True)
-        if resp != None and 'contents' in resp:
-            contents = resp['contents']
-        else:
-            contents = []
-        super(FolderBrowser, self).buildList(contents)
-    
-    def show(self):
-        super(FolderBrowser, self).show(cacheToDisc=False)
-
-    def getUrl(self, path, media_items=0, module=None):
-        url = super(FolderBrowser, self).getUrl(path, media_items, module)
-        return url
-    
+  
 def run(params): # This is the entrypoint
-    account_name = urllib.unquote( params.get('account', '') )
-    account_settings = login.get_account(account_name) 
-    if account_settings:
-        browser = FolderBrowser(params, account_settings)
-        browser.buildList()
-        browser.show()
+    access_token = login.getAccessToken()
+    if access_token:
+        #save the new account
+        account_name = 'Account1'
+        client = XBMCDropBoxClient(access_token=access_token)
+        account_info = client.getAccountInfo()
+        if 'display_name' in account_info:
+            account_name = account_info['display_name']
+        new_account = AccountSettings(account_name)
+        new_account.access_token = access_token
+        new_account.save()
+        #notify account is added
+        dialog = xbmcgui.Dialog()
+        dialog.ok(ADDON_NAME, LANGUAGE_STRING(30004))
+        xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=True)
+        path = sys.argv[0] + sys.argv[2]
+        xbmc.executebuiltin('container.update(%s)'%path)
     else:
         xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
