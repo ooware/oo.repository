@@ -71,20 +71,6 @@ class AccountSettings(object):
         except Exception as exc:
             log_error('Failed saving the settings: %s' % (str(exc)) )
     
-    def rename(self, new_name):
-        log_debug('Rename account from %s to %s' % (self.account_name, new_name) )
-        dataPath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-        new_dir = dataPath + '/accounts/' + new_name
-        try:
-            #rename folder
-            os.rename(self._account_dir, new_dir)
-        except Exception as exc:
-            log_error('Failed to rename folder: %s' % ( str(exc) ) )
-        else:
-            self.account_name = new_name
-            #Also save it, otherwise the wrong (class)account_name will be loaded next time.
-            self.save() 
-        
     def remove(self):
         log_debug('Remove account folder: %s' % (self._account_dir) )
         shutil.rmtree(self._account_dir)

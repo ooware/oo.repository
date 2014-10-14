@@ -45,6 +45,7 @@
 
 [B]0.5.1:[/B]
 - Removed fanart image. Contained dropbox logo which is not allowed
+- Changed Dbmc icon (created by Sjoerd Verschure, many thanks!)
 
 [B]0.5.0:[/B]
 - Changed plugin name from plugin.dropbox to plugin.dbmc
