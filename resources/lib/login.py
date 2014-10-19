@@ -61,9 +61,13 @@ def unlock(account_settings):
                 dialog.ok(ADDON_NAME, LANGUAGE_STRING(30014) )
         if unlocked:
             #update the unlock time
-            win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
             win.setProperty(win_prop_name, '%s'%time.time() )
     return unlocked
+
+def clear_unlock(account_settings):
+    win_prop_name = urllib.quote(account_settings.account_name + 'Unlocked')
+    win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
+    win.clearProperty(win_prop_name)
 
 def get_account(account_name):
     if account_name == '':

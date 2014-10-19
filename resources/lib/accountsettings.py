@@ -39,7 +39,7 @@ class AccountSettings(object):
         self.passcodetimeout = 30
         self.session_id = ''
         self.synchronisation = False
-        self.syncfreq = 5.0
+        self.syncfreq = 5
         self.syncpath = ''
         self.remotepath = ''
         dataPath = xbmc.translatePath( ADDON.getAddonInfo('profile') )

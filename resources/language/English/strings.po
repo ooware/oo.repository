@@ -49,11 +49,11 @@ msgid "Show me more..."
 msgstr ""
 
 msgctxt "#30011"
-msgid "Use passcode lock"
+msgid "Use passcode lock for account"
 msgstr ""
 
 msgctxt "#30012"
-msgid "Change your passcode"
+msgid "Change passcode..."
 msgstr ""
 
 msgctxt "#30013"
@@ -189,7 +189,7 @@ msgid "Do you want to remove this account from Dbmc?"
 msgstr ""
 
 msgctxt "#30100"
-msgid "Synchronization"
+msgid "Change synchronization..."
 msgstr ""
 
 msgctxt "#30101"
@@ -248,6 +248,10 @@ msgctxt "#30114"
 msgid "Dbmc: Synchronizing files..."
 msgstr ""
 
+msgctxt "#30115"
+msgid "Synchronization settings can't be changed here anymore!"
+msgstr ""
+
 
 #error messages
 msgctxt "#30200"
@@ -276,4 +280,12 @@ msgstr ""
 
 msgctxt "#30206"
 msgid "Dropbox error occured!"
+msgstr ""
+
+msgctxt "#30207"
+msgid "Please enter a valid passcode timeout (1 to 120 minutes)"
+msgstr ""
+
+msgctxt "#30208"
+msgid "Please enter a valid synchronization interval (5 to 1440 minutes)"
 msgstr ""

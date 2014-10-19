@@ -28,6 +28,7 @@ import os
 from resources.lib.utils import *
 from resources.lib.dropboxclient import XBMCDropBoxClient
 from resources.lib.accountsettings import AccountSettings
+from resources.lib.accountsettingsviewer import AccountSettingsViewer
 import resources.lib.login as login
 
 class AccountBrowser(object):
@@ -61,7 +62,7 @@ class AccountBrowser(object):
             new_account.passcodetimeout = int(ADDON.getSetting('passcodetimeout'))
             #new_account.session_id = tmp_dict.session_id
             new_account.synchronisation = ('true' == ADDON.getSetting('synchronisation').lower())
-            new_account.syncfreq = float( ADDON.getSetting('syncfreq') )
+            new_account.syncfreq = int( ADDON.getSetting('syncfreq') )
             new_account.syncpath = ADDON.getSetting('syncpath')
             new_account.remotepath = ADDON.getSetting('remotepath')
             new_account.save()
@@ -107,6 +108,8 @@ class AccountBrowser(object):
         #Add a context menu item
         contextMenuItems = []
         contextMenuItems.append( (LANGUAGE_STRING(30044), self.getContextUrl('remove', name) ) )
+        contextMenuItems.append( (LANGUAGE_STRING(30012), self.getContextUrl('change_passcode', name) ) )
+        contextMenuItems.append( (LANGUAGE_STRING(30100), self.getContextUrl('change_synchronization', name) ) )
         listItem.addContextMenuItems(contextMenuItems, replaceItems=True)
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listItem, isFolder=True)
 
@@ -129,6 +132,106 @@ class AccountBrowser(object):
         url += '&account=' + urllib.quote(account_name)
         url += ')'
         return url
+
+def change_passcode(account_settings):
+    log_debug('Changing passcode for account: %s' % (account_settings.account_name))
+    enable_passcode = False
+    #enable/disable passcode?
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno(ADDON_NAME, LANGUAGE_STRING(30011), account_settings.account_name + '?' ) == True:
+         enable_passcode = True
+    log_debug('Passcode enabled: %s' % (enable_passcode))
+    #Change the code
+    if enable_passcode:
+        keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30034))
+        keyboard.setHiddenInput(True)
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            account_settings.passcode = keyboard.getText()
+            log_debug('Passcode set')
+            login.clear_unlock(account_settings)
+            #set the timeout time
+            valid_timeout = False
+            dialog = xbmcgui.Dialog()
+            while not valid_timeout:
+                #0 = ShowAndGetNumber
+                timeout_str = dialog.numeric(0, LANGUAGE_STRING(30015), str(account_settings.passcodetimeout) )
+                try:
+                    #check for a vaild timeout
+                    timeout = int(timeout_str)
+                except ValueError:
+                    timeout = -1
+                if 1 <= timeout <= 120:
+                    account_settings.passcodetimeout = timeout
+                    log_debug('Passcode timeout set: %s' % (timeout))
+                    valid_timeout = True
+                else:
+                    log_debug('Wrong timeout value')
+                    #Wrong timeout
+                    dialog = xbmcgui.Dialog()
+                    dialog.ok(ADDON_NAME, LANGUAGE_STRING(30207))
+            account_settings.save()
+    else:
+        account_settings.passcode = ''
+        account_settings.save()
+        login.clear_unlock(account_settings)
+
+def change_synchronization(account_settings):
+    log_debug('Changing synchronization for account: %s' % (account_settings.account_name))
+    account_settings.synchronisation = False
+    sync_settings_valid = False
+    #Enable synchronization?
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno(ADDON_NAME, LANGUAGE_STRING(30101), account_settings.account_name + '?' ) == True:
+         account_settings.synchronisation = True
+    log_debug('Synchronization enabled: %s' % (account_settings.synchronisation) )
+    if account_settings.synchronisation:
+        #select the local folder
+        dialog = xbmcgui.Dialog()
+        # 3= ShowAndGetWriteableDirectory, 
+        selected_folder = dialog.browse(3, LANGUAGE_STRING(30102), 'files', mask='', treatAsFolder=True, defaultt=account_settings.syncpath)
+        log_debug('Selected local folder: %s' % (selected_folder) )
+        if selected_folder != '':
+            account_settings.syncpath = selected_folder
+            from resources.lib.dropboxfilebrowser import DropboxFileBrowser
+            #select the remote folder
+            dialog = DropboxFileBrowser("FileBrowser.xml", ADDON_PATH)
+            client = XBMCDropBoxClient(access_token=account_settings.access_token)
+            dialog.setDBClient(client)
+            dialog.setHeading(LANGUAGE_STRING(30109), account_settings.remotepath)
+            dialog.doModal()
+            log_debug('Selected remote folder: %s' % (dialog.selectedFolder) )
+            if dialog.selectedFolder:
+                account_settings.remotepath = dialog.selectedFolder
+                #set synchronization frequency
+                dialog = xbmcgui.Dialog()
+                valid_freq = False
+                while not valid_freq:
+                    #0 = ShowAndGetNumber
+                    freq_str = dialog.numeric(0, LANGUAGE_STRING(30105), str(account_settings.syncfreq) )
+                    try:
+                        #check for a vaild freq
+                        freq = int(freq_str)
+                    except ValueError:
+                        freq = -1
+                    if 5 <= freq <= 1440:
+                        account_settings.syncfreq = freq
+                        log_debug('Synchronization frequency set: %s' % (freq))
+                        valid_freq = True
+                    else:
+                        log_debug('Wrong frequency value')
+                        #Wrong timeout
+                        dialog = xbmcgui.Dialog()
+                        dialog.ok(ADDON_NAME, LANGUAGE_STRING(30208))
+                #done
+                sync_settings_valid = True
+    else:
+        sync_settings_valid = True
+    if sync_settings_valid:
+        account_settings.save()
+        #Notify the DropboxSynchronizer
+        #todo
+
 
 def run(params): # This is the entrypoint
     action = params.get('action', '')
@@ -163,9 +266,23 @@ def run(params): # This is the entrypoint
                 except Exception as exc:
                     log_error("Failed to remove the account: %s" % (str(exc)) )
         else:
-            log_error("Failed to remove the account: no account name provided!")
+            log_error("Failed to remove the account!")
             dialog = xbmcgui.Dialog()
             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30203))
+        #return to where we were
+        xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+    elif action == 'change_passcode':
+        account_name = urllib.unquote( params.get('account', '') )
+        account_settings = login.get_account(account_name)
+        if account_settings:
+            change_passcode(account_settings)
+        #return to where we were
+        xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+    elif action == 'change_synchronization':
+        account_name = urllib.unquote( params.get('account', '') )
+        account_settings = login.get_account(account_name)
+        if account_settings:
+            change_synchronization(account_settings)
         #return to where we were
         xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
     else:

@@ -80,17 +80,7 @@ if ( __name__ == "__main__" ):
             #All actions below require an XBMCDropBoxClient
             client = XBMCDropBoxClient(access_token=account_settings.access_token)
             action = params.get('action', '')
-            if action == 'clear_token':
-                ADDON.setSetting('access_token', '')
-            elif action == 'change_passcode':
-                import resources.lib.login as login
-                if login.unlock(account_settings):
-                    keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30034))
-                    keyboard.setHiddenInput(True)
-                    keyboard.doModal()
-                    if keyboard.isConfirmed():
-                        ADDON.setSetting('passcode', keyboard.getText())
-            elif action == 'delete':
+            if action == 'delete':
                 if 'path' in params:
                     path = urllib.unquote( params['path'] )
                     dialog = xbmcgui.Dialog()
@@ -193,19 +183,11 @@ if ( __name__ == "__main__" ):
                             log('Downloading finished')
                             dialog = xbmcgui.Dialog()
                             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30040), location)
-            elif action == 'set_remote_sync_path':
-                dialog = DropboxFileBrowser("FileBrowser.xml", ADDON_PATH)
-                dialog.setDBClient(client)
-                dialog.setHeading(LANGUAGE_STRING(30109))
-                dialog.doModal()
-                if dialog.selectedFolder:
-                    ADDON.setSetting('remotepath', dialog.selectedFolder)
-                del dialog
-                #open the Settings dialog again
-                ADDON.openSettings()
             elif action == 'sync_now':
                 path = urllib.unquote( params['path'] )
                 NotifySyncClient().notify(path)
+            else:
+                log_error('Unknown action received: %s' % (action))
         else:
             log_error("Run as script: no account name provided!")
             dialog = xbmcgui.Dialog()
