@@ -28,7 +28,7 @@ import os
 from resources.lib.utils import *
 from resources.lib.dropboxclient import XBMCDropBoxClient
 from resources.lib.accountsettings import AccountSettings
-from resources.lib.accountsettingsviewer import AccountSettingsViewer
+from resources.lib.sync.notifysync import NotifySyncClient
 import resources.lib.login as login
 
 class AccountBrowser(object):
@@ -230,7 +230,7 @@ def change_synchronization(account_settings):
     if sync_settings_valid:
         account_settings.save()
         #Notify the DropboxSynchronizer
-        #todo
+        NotifySyncClient().account_settings_changed(account_settings)
 
 
 def run(params): # This is the entrypoint
@@ -248,7 +248,9 @@ def run(params): # This is the entrypoint
             new_account = AccountSettings(account_name)
             new_account.access_token = access_token
             new_account.save()
-            #notify account is added
+            #Notify the DropboxSynchronizer
+            NotifySyncClient().account_added_removed()
+            #notify the user the account is added
             dialog = xbmcgui.Dialog()
             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30004), account_name)
         #return to where we were
@@ -265,6 +267,9 @@ def run(params): # This is the entrypoint
                     account_settings.remove()
                 except Exception as exc:
                     log_error("Failed to remove the account: %s" % (str(exc)) )
+                else:
+                    #Notify the DropboxSynchronizer
+                    NotifySyncClient().account_added_removed()
         else:
             log_error("Failed to remove the account!")
             dialog = xbmcgui.Dialog()

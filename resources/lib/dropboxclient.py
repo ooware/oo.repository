@@ -127,9 +127,9 @@ class XBMCDropBoxClient(object):
 
     def getMetaData(self, path, directory=False):
         '''
-        Metadata is cached the metadata of the directory.
+        The metadata of the directory is cached.
         The metadata of a file is retrieved from the directory metadata.
-        for storing caching the metadata, the StorageServer 
+        For caching the metadata, the StorageServer 
         (script.common.plugin.cache addon) is used.
         '''
         hashstr = None
@@ -138,8 +138,12 @@ class XBMCDropBoxClient(object):
         if not directory:
             #strip the filename
             dirname = os.path.dirname(path)
+        #Make the cache_name unique to the account (using the access_token).
+        # To prevents that different accounts, which have the same directories, don't
+        # use the same cache 
+        cache_name = self._access_token + dirname
         #check if a hash is available
-        stored = self._cache.get(dirname.decode("utf-8"))
+        stored = self._cache.get(cache_name.decode("utf-8"))
         if stored != '':
             stored = eval(stored)
             if 'hash' in stored:
@@ -165,7 +169,7 @@ class XBMCDropBoxClient(object):
                 else:
                     #When no exception: store new retrieved data
                     log_debug("New/updated Metadata is stored for %s"%dirname)
-                    self._cache.set(dirname.decode("utf-8"), repr(resp))
+                    self._cache.set(cache_name.decode("utf-8"), repr(resp))
                     changed = True
             else:
                 #get the file metadata using the stored data

@@ -43,13 +43,13 @@ class AccountSettings(object):
         self.syncpath = ''
         self.remotepath = ''
         dataPath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-        self._account_dir = dataPath + '/accounts/' + self.account_name
+        self.account_dir = dataPath + '/accounts/' + self.account_name
         #read from location if present
-        if xbmcvfs.exists( self._account_dir ):
+        if xbmcvfs.exists( self.account_dir ):
             self.load()
         
     def load(self):
-        settings_file = self._account_dir + '/settings'
+        settings_file = self.account_dir + '/settings'
         try:
             with open(settings_file, 'r') as file_obj:
                 tmp_dict = pickle.load(file_obj)
@@ -61,10 +61,10 @@ class AccountSettings(object):
     def save(self):
         log_debug('Save account settings: %s' % (self.account_name) )
         #check if the account directory is present, create otherwise
-        if not xbmcvfs.exists( self._account_dir ):
-            xbmcvfs.mkdirs( self._account_dir )
+        if not xbmcvfs.exists( self.account_dir ):
+            xbmcvfs.mkdirs( self.account_dir )
         #Save...
-        settings_file = self._account_dir + '/settings'
+        settings_file = self.account_dir + '/settings'
         try:
             with open(settings_file, 'w') as file_obj:
                 pickle.dump(self.__dict__, file_obj)
@@ -72,6 +72,9 @@ class AccountSettings(object):
             log_error('Failed saving the settings: %s' % (str(exc)) )
     
     def remove(self):
-        log_debug('Remove account folder: %s' % (self._account_dir) )
-        shutil.rmtree(self._account_dir)
+        log_debug('Remove account folder: %s' % (self.account_dir) )
+        shutil.rmtree( self.account_dir )
+        #remove cache folder
+        shutil.rmtree( get_cache_path(self.account_name) )
+        #remove synced data is done in the DropboxSynchronizer!
 

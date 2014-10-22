@@ -50,16 +50,12 @@ class DropboxViewer(object):
         #get Settings
         self._filterFiles = ('true' == ADDON.getSetting('filefilter').lower())
         self._useStreamingURLs = ('true' == ADDON.getSetting('streammedia').lower())
-        datapath = ADDON.getSetting('cachepath').decode("utf-8")
         self._enabledSync = self._account_settings.synchronisation
         self._localSyncPath = self._account_settings.syncpath
         self._remoteSyncPath = self._account_settings.remotepath
-        #Use user defined location?
-        if datapath == '' or os.path.normpath(datapath) == '':
-            #get the default path 
-            datapath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-        self._shadowPath = datapath + '/' + self._account_settings.account_name + '/shadow/'
-        self._thumbPath = datapath + '/' + self._account_settings.account_name + '/thumb/'
+        cache_path = get_cache_path( self._account_settings.account_name )
+        self._shadowPath = cache_path + '/shadow/'
+        self._thumbPath = cache_path + '/thumb/'
         #form default url
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
         self._module = params.get('module', '')

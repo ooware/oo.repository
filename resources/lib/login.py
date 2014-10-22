@@ -118,7 +118,8 @@ def getAccessToken():
             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30201), str(e), LANGUAGE_STRING(30202))
         finally:
             #always remove the session (failed or not)
-            result = oauth.removeAccessCode(sessionId, access_token)
+            tokenRecieved = (access_token != None)
+            result = oauth.removeAccessCode(sessionId, tokenRecieved)
             if result != SUCCES:
                 log_error('Failed removing the access code: %s'%result)
             #also clear the sessionId

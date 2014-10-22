@@ -28,7 +28,7 @@ import time
 from resources.lib.utils import *
 from resources.lib.dropboxclient import XBMCDropBoxClient, Downloader
 from resources.lib.dropboxfilebrowser import DropboxFileBrowser
-from resources.lib.notifysync import NotifySyncClient
+from resources.lib.sync.notifysync import NotifySyncClient
 import resources.lib.login as login
 
 if ( __name__ == "__main__" ):
@@ -88,7 +88,7 @@ if ( __name__ == "__main__" ):
                         success = client.delete(path)
                         if success:
                             log('File removed: %s' % path)
-                            NotifySyncClient().notify(path)
+                            NotifySyncClient().sync_path(account_settings, path)
                         else:
                             log_error('File removed Failed: %s' % path)
                         xbmc.executebuiltin('container.Refresh()')
@@ -107,7 +107,7 @@ if ( __name__ == "__main__" ):
                         success = client.copy(path, toPath)
                         if success:
                             log('File copied: %s to %s' % (path, toPath) ) 
-                            NotifySyncClient().notify(toPath)
+                            NotifySyncClient().sync_path(account_settings, toPath)
                         else:
                             log_error('File copy Failed: %s to %s' % (path, toPath) )
                     del dialog
@@ -127,7 +127,7 @@ if ( __name__ == "__main__" ):
                         if success:
                             log('File moved: from %s to %s' % (path, toPath) ) 
                             xbmc.executebuiltin('container.Refresh()')
-                            NotifySyncClient().notify(toPath)
+                            NotifySyncClient().sync_path(account_settings, toPath)
                         else:
                             log_error('File move Failed: from %s to %s' % (path, toPath) )
                     del dialog
@@ -145,7 +145,7 @@ if ( __name__ == "__main__" ):
                         if success:
                             log('New folder created: %s' % newFolder)
                             xbmc.executebuiltin('container.Refresh()')
-                            NotifySyncClient().notify(newFolder)
+                            NotifySyncClient().sync_path(account_settings, newFolder)
                         else:
                             log_error('Creating new folder Failed: %s' % newFolder)
             elif action == 'upload':
@@ -158,7 +158,7 @@ if ( __name__ == "__main__" ):
                         if success:
                             log('File uploaded: %s to %s' % (fileName, toPath) )
                             xbmc.executebuiltin('container.Refresh()')
-                            NotifySyncClient().notify(toPath)
+                            NotifySyncClient().sync_path(account_settings, toPath)
                         else:
                             log_error('File uploading Failed: %s to %s' % (fileName, toPath))
             elif action == 'download':
@@ -185,7 +185,7 @@ if ( __name__ == "__main__" ):
                             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30040), location)
             elif action == 'sync_now':
                 path = urllib.unquote( params['path'] )
-                NotifySyncClient().notify(path)
+                NotifySyncClient().sync_path(account_settings, path)
             else:
                 log_error('Unknown action received: %s' % (action))
         else:
