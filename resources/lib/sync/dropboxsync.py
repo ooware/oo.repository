@@ -52,36 +52,35 @@ class DropboxSynchronizer:
         self._notified = NotifySyncServer()
         self._notified.start()
         while (not xbmc.abortRequested):
-            #get all notifications
-            notification = True
-            while notification:
-                account_name, notification = self._notified.getNotification()
-                if notification:
-                    account = None
-                    if account_name:
-                        #find the account
-                        for item in self._accounts:
-                            if account_name == item.account_name:
-                                account = item
-                    if notification == NOTIFY_SYNC_PATH:
-                        if account:
-                            account.notify_sync_request(None)
-                        else:
-                            log_error('DropboxSynchronizer: NOTIFY_SYNC_PATH recieved without account!')
-                    elif notification == NOTIFY_CHANGED_ACCOUNT:
-                        if account:
-                            account.notify_changed_settings()
-                        else:
-                            log_error('DropboxSynchronizer: NOTIFY_CHANGED_ACCOUNT recieved without account!')
-                    elif notification == NOTIFY_ADDED_REMOVED_ACCOUNT:
-                        self.update_accounts()
+            # First get all notifications
+            account_name, notification = self._notified.getNotification()
+            if notification:
+                account = None
+                if account_name:
+                    #find the account
+                    for item in self._accounts:
+                        if account_name == item.account_name:
+                            account = item
+                if notification == NOTIFY_SYNC_PATH:
+                    if account:
+                        account.notify_sync_request(None)
                     else:
-                        log_error('DropboxSynchronizer: Unknown notification recieved!')
-            #Check if sync is needed...
-            for item in self._accounts:
-                item.check_sync()
-            #Sleep for a while. Prevent from checking stuff continuesly 
-            xbmc.sleep(1000) #1 secs
+                        log_error('DropboxSynchronizer: NOTIFY_SYNC_PATH recieved without account!')
+                elif notification == NOTIFY_CHANGED_ACCOUNT:
+                    if account:
+                        account.notify_changed_settings()
+                    else:
+                        log_error('DropboxSynchronizer: NOTIFY_CHANGED_ACCOUNT recieved without account!')
+                elif notification == NOTIFY_ADDED_REMOVED_ACCOUNT:
+                    self.update_accounts()
+                else:
+                    log_error('DropboxSynchronizer: Unknown notification recieved!')
+            else:
+                #Check if sync is needed...
+                for item in self._accounts:
+                    item.check_sync()
+                #Sleep for a while. Prevent from checking stuff continuesly 
+                xbmc.sleep(1000) #1 secs
         # Service stopped
         #stop any syncing
         for item in self._accounts:

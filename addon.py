@@ -127,6 +127,7 @@ if ( __name__ == "__main__" ):
                         if success:
                             log('File moved: from %s to %s' % (path, toPath) ) 
                             xbmc.executebuiltin('container.Refresh()')
+                            NotifySyncClient().sync_path(account_settings, path)
                             NotifySyncClient().sync_path(account_settings, toPath)
                         else:
                             log_error('File move Failed: from %s to %s' % (path, toPath) )

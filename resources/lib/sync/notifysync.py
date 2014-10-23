@@ -142,12 +142,14 @@ class NotifySyncClient(object):
             log_error('NotifySyncClient no port defined')
     
     def sync_path(self, account, path):
-        if account.synchronisation:
+        # check if synchronization n enabled and check if the path is somewhere
+        # in the remote path
+        if account.synchronisation and (account.remotepath in path):
             #ignore the path for now! Otherwise need to change receiving number of
             # SOCKET_BUFFER_SIZE according to the path string size!
             self.send_notification(account.account_name, NOTIFY_SYNC_PATH)
         else:
-            log_debug('NotifySyncClient Sync not enabled')
+            log_debug('NotifySyncClient Sync not enabled or path not part of remote sync path')
 
     def account_settings_changed(self, account):
         self.send_notification(account.account_name, NOTIFY_CHANGED_ACCOUNT)
