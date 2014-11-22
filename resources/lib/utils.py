@@ -51,7 +51,7 @@ def get_cache_path(account_name):
     if datapath == '' or os.path.normpath(datapath) == '':
         #get the default path 
         datapath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-    return xbmc.validatePath(datapath + '/' + account_name)
+    return os.path.normpath(datapath + '/' + account_name)
 
 def replaceFileExtension(path, extension):
     extension = '.' + extension

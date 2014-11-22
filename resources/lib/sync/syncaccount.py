@@ -120,7 +120,7 @@ class SyncAccount(object):
 
     def _get_settings( self ):
         account = AccountSettings(self.account_name)
-        self._storageFile = xbmc.validatePath(account.account_dir + '/sync_data.pik')
+        self._storageFile = os.path.normpath(account.account_dir + '/sync_data.pik')
         gotSemaphore = True
         enable = account.synchronisation
         tempPath = account.syncpath
