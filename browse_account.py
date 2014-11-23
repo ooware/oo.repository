@@ -38,7 +38,7 @@ class AccountBrowser(object):
     - Converting old addon settings to new account settings
     - add/remove/rename accounts
     ''' 
-        
+
     def __init__( self, params ):
         self._content_type = params.get('content_type', 'other')
         #check if the accounts directory is present, create otherwise
@@ -59,10 +59,14 @@ class AccountBrowser(object):
             new_account = AccountSettings(account_name)
             new_account.access_token = ADDON.getSetting('access_token').decode("utf-8")
             new_account.passcode = ADDON.getSetting('passcode')
-            new_account.passcodetimeout = int(ADDON.getSetting('passcodetimeout'))
+            passcodetimeout = ADDON.getSetting('passcodetimeout')
+            if passcodetimeout != '':
+                new_account.passcodetimeout = int( passcodetimeout )
             #new_account.session_id = tmp_dict.session_id
             new_account.synchronisation = ('true' == ADDON.getSetting('synchronisation').lower())
-            new_account.syncfreq = int( ADDON.getSetting('syncfreq') )
+            syncfreq = ADDON.getSetting('syncfreq')
+            if syncfreq != '':
+                new_account.syncfreq = int( syncfreq )
             new_account.syncpath = ADDON.getSetting('syncpath')
             new_account.remotepath = ADDON.getSetting('remotepath')
             new_account.save()
@@ -73,6 +77,20 @@ class AccountBrowser(object):
             ADDON.setSetting('synchronisation', 'false')
             ADDON.setSetting('syncpath', '')
             ADDON.setSetting('remotepath', '')
+            #cleanup old cache and shadow dirs
+            cache_path = ADDON.getSetting('cachepath').decode("utf-8")
+            #Use user defined location?
+            if cache_path == '' or os.path.normpath(cache_path) == '':
+                #get the default path 
+                cache_path = xbmc.translatePath( ADDON.getAddonInfo('profile') )
+            shadowPath = os.path.normpath(cache_path + '/shadow/')
+            thumbPath = os.path.normpath(cache_path + '/thumb/')
+            if xbmcvfs.exists(shadowPath):
+                shutil.rmtree(shadowPath)
+            if xbmcvfs.exists(thumbPath):
+                shutil.rmtree(thumbPath)
+            #Notify the DropboxSynchronizer of the new account
+            NotifySyncClient().account_added_removed()
 
 
     def buildList(self):
@@ -88,7 +106,7 @@ class AccountBrowser(object):
         else:
             #finish adding account
             self.add_action(LANGUAGE_STRING(30043), 'add')
-    
+
     def show(self):
         xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -253,8 +271,8 @@ def run(params): # This is the entrypoint
             #notify the user the account is added
             dialog = xbmcgui.Dialog()
             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30004), account_name)
-        #return to where we were
-        xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+        #return to where we were and refresh
+        xbmc.executebuiltin('container.Refresh()')
     elif action == 'remove':
         #remove the selected account
         account_name = urllib.unquote( params.get('account', '') )
@@ -274,8 +292,8 @@ def run(params): # This is the entrypoint
             log_error("Failed to remove the account!")
             dialog = xbmcgui.Dialog()
             dialog.ok(ADDON_NAME, LANGUAGE_STRING(30203))
-        #return to where we were
-        xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
+        #return to where we were and refresh
+        xbmc.executebuiltin('container.Refresh()')
     elif action == 'change_passcode':
         account_name = urllib.unquote( params.get('account', '') )
         account_settings = login.get_account(account_name)
@@ -294,5 +312,3 @@ def run(params): # This is the entrypoint
         browser = AccountBrowser(params)
         browser.buildList()
         browser.show()
-                            
-
