@@ -1,3 +1,7 @@
+[B]0.7.5:[/B]
+- Fix bugs in converting old to new account
+- Fix refreshing the account view when account added/removed
+
 [B]0.7.4:[/B]
 - This is a test version for multiple account support
 - Added multiple account support (for both browsing and synchronizing)
