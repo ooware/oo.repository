@@ -31,7 +31,7 @@ msgstr "Vai a: http://xbmc-dropbox.sourceforge.net"
 
 msgctxt "#30004"
 msgid "Authorization finished. Account added:"
-msgstr ""
+msgstr "Autorizzazione completata. Account aggiunto:"
 
 msgctxt "#30005"
 msgid "Clear Dropbox authorization code"
@@ -59,7 +59,7 @@ msgstr "Mostra di più..."
 
 msgctxt "#30011"
 msgid "Use passcode lock for account"
-msgstr ""
+msgstr "Usare il blocco passcode per l'account"
 
 msgctxt "#30012"
 msgid "Change passcode..."
@@ -183,19 +183,19 @@ msgstr "Sto scaricando il/i file:"
 
 msgctxt "#30042"
 msgid "Add an account..."
-msgstr ""
+msgstr "Aggiungere un account..."
 
 msgctxt "#30043"
 msgid "Finish adding account..."
-msgstr ""
+msgstr "Completamento aggiunta account..."
 
 msgctxt "#30044"
 msgid "Remove account"
-msgstr ""
+msgstr "Rimozione account"
 
 msgctxt "#30045"
 msgid "Do you want to remove the following account from Dbmc?"
-msgstr ""
+msgstr "Vuoi rimuovere il seguente account da Dbmc?"
 
 msgctxt "#30100"
 msgid "Change synchronization..."
@@ -211,8 +211,7 @@ msgstr "Selezione la cartella locale"
 
 msgctxt "#30103"
 msgid "Dbmc: Moved files/folders to new synchronization location:"
-msgstr ""
-"Dbmc: Spostati file/cartella nella nuova posizione di sincronizzazione:"
+msgstr "Dbmc: Spostati file/cartella nella nuova posizione di sincronizzazione:"
 
 msgctxt "#30104"
 msgid "New synchronization location is not empty!"
@@ -243,12 +242,8 @@ msgid "Can't change settings while synchronizing!"
 msgstr "Impossibile cambiare le impostazioni durante la sincronizzazione!"
 
 msgctxt "#30111"
-msgid ""
-"Can't enable synchronization:\n"
-"First set synchronization locations!"
-msgstr ""
-"Impossibile abilitare la sincronizzazione:\n"
-"Prima impostare le posizioni di sincronizzazione!"
+msgid "Can't enable synchronization:\nFirst set synchronization locations!"
+msgstr "Impossibile abilitare la sincronizzazione:\nPrima impostare le posizioni di sincronizzazione!"
 
 msgctxt "#30112"
 msgid "Synchronize now"
@@ -264,7 +259,7 @@ msgstr "Dbmc: sto sincronizzando i file..."
 
 msgctxt "#30115"
 msgid "Synchronization settings can't be changed here anymore!"
-msgstr ""
+msgstr "Le impostazioni di sincronizzazione non possono più essere cambiate qui!"
 
 
 # error messages
@@ -298,8 +293,8 @@ msgstr "Errore in Dropbox!"
 
 msgctxt "#30207"
 msgid "Please enter a valid passcode timeout (1 to 120 minutes)"
-msgstr ""
+msgstr "Inserire un timeout per il passcode valido (da 1 a 120 minuti)"
 
 msgctxt "#30208"
 msgid "Please enter a valid synchronization interval (5 to 1440 minutes)"
-msgstr ""
+msgstr "Inserire un intervallo di sincronizzazione valido (da 5 a 1440 minuti)"
