@@ -263,7 +263,7 @@ def run(params): # This is the entrypoint
             client = XBMCDropBoxClient(access_token=access_token)
             account_info = client.getAccountInfo()
             if 'display_name' in account_info:
-                account_name = account_info['display_name']
+                account_name = string_path(account_info['display_name'])
             new_account = AccountSettings(account_name)
             new_account.access_token = access_token
             new_account.save()

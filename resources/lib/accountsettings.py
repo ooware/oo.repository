@@ -54,12 +54,24 @@ class AccountSettings(object):
         log_debug('Loading account settings: %s' % (self.account_name) )
         settings_file = os.path.normpath(self.account_dir + '/settings')
         try:
-            with open(settings_file, 'r') as file_obj:
+            with open(settings_file, 'rb') as file_obj:
                 tmp_dict = pickle.load(file_obj)
         except Exception as exc:
             log_error('Failed to load the settings: %s' % (str(exc)) )
         else:
             self.__dict__.update(tmp_dict)
+        #correct the account_name and account_dir (previously stored as unicode...)
+        # can be removed after some releases
+        changed = False
+        if isinstance (self.account_name,unicode):
+            changed = True
+            self.account_name = self.account_name.encode("utf-8")
+        if isinstance (self.account_dir,unicode):
+            changed = True
+            self.account_dir = self.account_dir.encode("utf-8")
+        if changed:
+            #save it again with the correct settings
+            self.save() 
         
     def save(self):
         log_debug('Save account settings: %s' % (self.account_name) )
@@ -69,7 +81,7 @@ class AccountSettings(object):
         #Save...
         settings_file = os.path.normpath(self.account_dir + '/settings')
         try:
-            with open(settings_file, 'w') as file_obj:
+            with open(settings_file, 'wb') as file_obj:
                 pickle.dump(self.__dict__, file_obj)
         except Exception as exc:
             log_error('Failed saving the settings: %s' % (str(exc)) )
@@ -81,3 +93,22 @@ class AccountSettings(object):
         shutil.rmtree( get_cache_path(self.account_name) )
         #remove synced data is done in the DropboxSynchronizer!
 
+    @property
+    def syncpath(self):
+        return self.__syncpath
+    @syncpath.setter
+    def syncpath(self, syncpath):
+        #make sure the syncpath is not unicode
+        if isinstance (syncpath,unicode):
+            syncpath = syncpath.encode("utf-8")
+        self.__syncpath = syncpath
+
+    @property
+    def remotepath(self):
+        return self.__remotepath
+    @remotepath.setter
+    def remotepath(self, remotepath):
+        #make sure the syncpath is not unicode
+        if isinstance (remotepath,unicode):
+            remotepath = remotepath.encode("utf-8")
+        self.__remotepath = remotepath

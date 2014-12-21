@@ -61,7 +61,7 @@ def command():
 
 def string_path(path):
     '''
-    Dropbox API uses "utf-8" conding.
+    Dropbox API uses "utf-8" coding.
     This functions converts the path to string (if unicode)
     '''
     if isinstance (path, unicode):
