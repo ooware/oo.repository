@@ -43,7 +43,7 @@ class AccountBrowser(object):
         self._content_type = params.get('content_type', 'other')
         #check if the accounts directory is present, create otherwise
         dataPath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-        self._accounts_dir = dataPath + '/accounts'
+        self._accounts_dir = dataPath + '/accounts/'
         if not xbmcvfs.exists( self._accounts_dir ):
             xbmcvfs.mkdirs( self._accounts_dir )
         #Check if we need to get previous account settings from old addon settings

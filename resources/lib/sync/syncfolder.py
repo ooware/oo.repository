@@ -182,6 +182,8 @@ class SyncFolder(SyncObject):
 
     def updateLocalPath(self, parentSyncPath):
         super(SyncFolder, self).updateLocalPath(parentSyncPath)
+        #for folders add the os seperator (xbmcvfs.exists() needs it)
+        self._localPath += os.sep
         for path, child in self._children.iteritems():
             child.updateLocalPath(parentSyncPath + os.sep + self._name)
 

@@ -43,16 +43,18 @@ class AccountSettings(object):
         self.syncpath = ''
         self.remotepath = ''
         dataPath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-        self.account_dir = os.path.normpath(dataPath + '/accounts/' + self.account_name)
+        self.account_dir = os.path.normpath(dataPath + '/accounts/' + self.account_name) + os.sep #add os seperator because it is a dir
         #read from location if present
         if xbmcvfs.exists( self.account_dir ):
             self.load()
             #Don't use the stored account_dir 
-            self.account_dir = os.path.normpath(dataPath + '/accounts/' + self.account_name)
+            self.account_dir = os.path.normpath(dataPath + '/accounts/' + self.account_name) + os.sep #add os seperator because it is a dir
+        else:
+            log_debug('Account (%s) doesn\'t exist yet' % (self.account_name) )
         
     def load(self):
         log_debug('Loading account settings: %s' % (self.account_name) )
-        settings_file = os.path.normpath(self.account_dir + '/settings')
+        settings_file = os.path.normpath(self.account_dir + 'settings')
         try:
             with open(settings_file, 'rb') as file_obj:
                 tmp_dict = pickle.load(file_obj)
@@ -79,7 +81,7 @@ class AccountSettings(object):
         if not xbmcvfs.exists( self.account_dir ):
             xbmcvfs.mkdirs( self.account_dir )
         #Save...
-        settings_file = os.path.normpath(self.account_dir + '/settings')
+        settings_file = os.path.normpath(self.account_dir + 'settings')
         try:
             with open(settings_file, 'wb') as file_obj:
                 pickle.dump(self.__dict__, file_obj)

@@ -285,7 +285,7 @@ class XBMCDropBoxClient(object):
         
     def saveThumbnail(self, path, location):
         succes = False
-        dirName = os.path.dirname(location)
+        dirName = os.path.dirname(location) + os.sep #add os seperator because it is a dir
         # create the data dir if needed
         if not xbmcvfs.exists( dirName ):
             xbmcvfs.mkdirs( dirName )
@@ -308,7 +308,7 @@ class XBMCDropBoxClient(object):
 
     def saveFile(self, path, location):
         succes = False
-        dirName = os.path.dirname(location)
+        dirName = os.path.dirname(location) + os.sep #add os seperator because it is a dir 
         # create the data dir if needed
         if not xbmcvfs.exists( dirName ):
             xbmcvfs.mkdirs( dirName )
@@ -420,6 +420,7 @@ class Downloader(threading.Thread):
                 location = self.location + basePath
                 location = os.path.normpath(location)
                 if item2Retrieve['is_dir']:
+                    location += os.sep #add os seperator because it is a dir
                     #create dir if not present yet
                     if not xbmcvfs.exists( location ):
                         xbmcvfs.mkdirs( location )

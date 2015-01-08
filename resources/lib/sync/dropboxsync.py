@@ -98,7 +98,7 @@ class DropboxSynchronizer:
         '''
         new_accounts = []
         dataPath = xbmc.translatePath( ADDON.getAddonInfo('profile') )
-        accounts_dir = dataPath + '/accounts'
+        accounts_dir = dataPath + '/accounts/'
         if xbmcvfs.exists( accounts_dir ):
             #get the present accounts
             new_accounts = os.listdir(accounts_dir)
