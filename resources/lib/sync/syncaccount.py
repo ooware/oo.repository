@@ -299,7 +299,7 @@ class SyncAccount(object):
             with open(self._storageFile, 'r') as f:
                 cursor, data = pickle.load(f)
         except EnvironmentError as e:
-            log_error("Opening storageFile EXCEPTION : %s" %(repr(e)) )
+            log("Opening storageFile EXCEPTION : %s" %(repr(e)) )
         return cursor, data
 
     def clearSyncData(self):
@@ -307,5 +307,5 @@ class SyncAccount(object):
         try:
             os.remove(self._storageFile)
         except OSError as e:
-            log_error("Removing storageFile EXCEPTION : %s" %(repr(e)) )
+            log("Removing storageFile EXCEPTION : %s" %(repr(e)) )
 
