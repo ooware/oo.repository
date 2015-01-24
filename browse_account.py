@@ -26,7 +26,7 @@ import shutil
 import os
 
 from resources.lib.utils import *
-from resources.lib.dropboxclient import XBMCDropBoxClient
+from resources.lib.dropboxclient import *
 from resources.lib.accountsettings import AccountSettings
 from resources.lib.sync.notifysync import NotifySyncClient
 import resources.lib.login as login
@@ -55,7 +55,7 @@ class AccountBrowser(object):
             client = XBMCDropBoxClient(access_token=access_token)
             account_info = client.getAccountInfo()
             if 'display_name' in account_info:
-                account_name = account_info['display_name']
+                account_name = string_path(account_info['display_name'])
             new_account = AccountSettings(account_name)
             new_account.access_token = ADDON.getSetting('access_token').decode("utf-8")
             new_account.passcode = ADDON.getSetting('passcode')
