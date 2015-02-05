@@ -1,5 +1,5 @@
-[B]0.7.8:[/B]
-- Fixes for Kodi Helix (test version)
+[B]0.8.0:[/B]
+- Fixes for Kodi Helix
 
 [B]0.7.7:[/B]
 - Fix unicode problem (files/directories with special characters were not handled properly)
