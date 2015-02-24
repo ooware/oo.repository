@@ -134,7 +134,6 @@ if ( __name__ == "__main__" ):
                     del dialog
             elif action == 'create_folder':
                 if 'path' in params:
-                    xbmcplugin.endOfDirectory(int(sys.argv[1]), succeeded=False)
                     path = urllib.unquote( params['path'] ).decode("utf-8")
                     keyboard = xbmc.Keyboard('', LANGUAGE_STRING(30030))
                     keyboard.doModal()
