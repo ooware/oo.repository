@@ -40,7 +40,7 @@ class AccountBrowser(object):
     ''' 
 
     def __init__( self, params ):
-        self._content_type = params.get('content_type', 'other')
+        self._content_type = params.get('content_type', 'executable')
         #check if the accounts directory is present, create otherwise
         # keep dataPath "utf-8" encoded
         dataPath = xbmc.translatePath( ADDON.getAddonInfo('profile') ).decode("utf-8")

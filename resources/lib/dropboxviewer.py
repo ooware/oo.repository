@@ -59,7 +59,7 @@ class DropboxViewer(object):
         #form default url
         self._nrOfMediaItems = int( params.get('media_items', '%s'%MAX_MEDIA_ITEMS_TO_LOAD_ONCE) )
         self._module = params.get('module', '')
-        self._contentType = params.get('content_type', 'other')
+        self._contentType = params.get('content_type', 'executable')
         self._current_path = urllib.unquote( params.get('path', DROPBOX_SEP) ).decode("utf-8")
         #Add sorting options
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_TITLE)
@@ -151,6 +151,15 @@ class DropboxViewer(object):
         if self._contentType == 'executable' or not self._filterFiles:
             mediatype = 'other'
             iconImage = 'DefaultFile.png'
+            if 'image' in meta['mime_type']:
+                mediatype = 'pictures'
+                iconImage = 'DefaultImage.png'
+            elif 'video' in meta['mime_type']:
+                mediatype = 'video'
+                iconImage = 'DefaultVideo.png'
+            elif 'audio' in meta['mime_type']:
+                mediatype = 'music'
+                iconImage = 'DefaultAudio.png'
         if (self._contentType == 'image'):
             if 'image' in meta['mime_type']:
                 mediatype = 'pictures'
