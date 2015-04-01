@@ -74,7 +74,6 @@ class SynchronizeThread(threading.Thread):
                 if path.find(self._sync_account.root.path) == 0:
                     self._sync_account.root.updateRemoteInfo(path, meta)
             if len(items) > 0:
-                print repr(self._sync_account._syncPath)
                 self._sync_account.root.updateLocalRootPath(self._sync_account._syncPath)
             #store new cursor + data
             self._sync_account.storeSyncData(clientCursor)

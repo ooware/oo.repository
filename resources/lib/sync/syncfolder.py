@@ -182,10 +182,14 @@ class SyncFolder(SyncObject):
 
     def updateLocalPath(self, parentSyncPath):
         super(SyncFolder, self).updateLocalPath(parentSyncPath)
-        #for folders add the os seperator (xbmcvfs.exists() needs it)
-        self._localPath += os.sep
-        for path, child in self._children.iteritems():
-            child.updateLocalPath(parentSyncPath + os.sep + self._name)
+        #_localpath can be None when the _name also is None
+        #This can happen when the folder was deleted on dropbox 
+        # before it was ever on this system and dropbox doesn't update the meta data...
+        if self._localPath: 
+            #for folders add the os seperator (xbmcvfs.exists() needs it) 
+            self._localPath += os.sep
+            for path, child in self._children.iteritems():
+                child.updateLocalPath(parentSyncPath + os.sep + self._name)
 
     def updateLocalRootPath(self, syncPath):
         #don't add the self._name to the syncpath for root!
