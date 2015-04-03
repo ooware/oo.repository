@@ -1,4 +1,7 @@
-[B]0.8.1:[/B]
+[B]0.9.1:[/B]
+- Fix synchronization issue with delete folders
+
+[B]0.9.0:[/B]
 - Fixes unicode problems (in Dropbox user names)
 - Fix crash when trying to upload a file
 - Fix crashing the 'dropbox file browser' on some (incomplete) skins
