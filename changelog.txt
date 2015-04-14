@@ -1,3 +1,7 @@
+[B]0.9.2:[/B]
+- Improve synchronization
+- Fix unicode issue with uploading and downloading files
+
 [B]0.9.1:[/B]
 - Fix synchronization issue with delete folders
 
