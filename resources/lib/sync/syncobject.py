@@ -115,5 +115,5 @@ class SyncObject(object):
     def updateLocalPath(self, parentSyncPath):
         #Note: self.path should be the case-sensitive path by now!
         if self._name:
-            self._localPath = os.path.normpath(parentSyncPath + os.sep + self._name)
+            self._localPath = os.path.normpath(parentSyncPath + self._name)
 
