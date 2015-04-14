@@ -151,7 +151,7 @@ if ( __name__ == "__main__" ):
                 if 'to_path' in params:
                     toPath = urllib.unquote( params['to_path'] ).decode("utf-8")
                     dialog = xbmcgui.Dialog()
-                    fileName = dialog.browse(1, LANGUAGE_STRING(30032), 'files')
+                    fileName = dialog.browse(1, LANGUAGE_STRING(30032), 'files').decode("utf-8")
                     if fileName:
                         success = client.upload(fileName, toPath, dialog=True)
                         if success:
@@ -165,7 +165,7 @@ if ( __name__ == "__main__" ):
                     path = urllib.unquote( params['path'] ).decode("utf-8")
                     isDir = ('true' == params['isDir'].lower())
                     dialog = xbmcgui.Dialog()
-                    location = dialog.browse(3, LANGUAGE_STRING(30025) + LANGUAGE_STRING(30038), 'files')
+                    location = dialog.browse(3, LANGUAGE_STRING(30025) + LANGUAGE_STRING(30038), 'files').decode("utf-8")
                     if location:
                         success = True
                         downloader = Downloader(client, path, location, isDir)
