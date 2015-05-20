@@ -1,3 +1,6 @@
+[B]0.9.3:[/B]
+- Fix caching photo's problem on OSMC (OSCM skin not complete)
+
 [B]0.9.2:[/B]
 - Improve synchronization
 - Fix unicode issue with uploading and downloading files
