@@ -66,8 +66,15 @@ class DropboxBackgroundProgress(xbmcgui.WindowXMLDialog):
             line1 = "(%s/%s)"%(itemsHandled, itemsTotal)
             if text:
                 line1 += text
-            self.getControl(self.LINE1_LABEL).setLabel(line1)
-            self.getControl(self.PROGRESS_BAR).setPercent(percent)
+            #Some skins don't have the following items in the FileBrowser!
+            try:
+                self.getControl(self.LINE1_LABEL).setLabel(line1)
+            except Exception as e:
+                log_debug("DropboxFileBrowser Exception: %s" %(repr(e)) )
+            try:
+                self.getControl(self.PROGRESS_BAR).setPercent(percent)
+            except Exception as e:
+                log_debug("DropboxFileBrowser Exception: %s" %(repr(e)) )
 
     def onClick(self, controlId):
         self._visible = False
