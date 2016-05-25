@@ -4,7 +4,7 @@ A simple JSON REST request abstraction layer that is used by the
 """
 
 import io
-import pkg_resources
+#import pkg_resources
 import socket
 import ssl
 import sys
@@ -23,7 +23,10 @@ except ImportError:
 
 SDK_VERSION = "2.2.0"
 
-TRUSTED_CERT_FILE = pkg_resources.resource_filename(__name__, 'trusted-certs.crt')
+import os
+import six
+#TRUSTED_CERT_FILE = pkg_resources.resource_filename(__name__, 'trusted-certs.crt')
+TRUSTED_CERT_FILE = os.path.join(os.path.dirname(six.__file__), 'trusted-certs.crt')
 
 
 class RESTResponse(io.IOBase):
