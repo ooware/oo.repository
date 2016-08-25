@@ -2,7 +2,7 @@
 <addon id="plugin.dbmc" name="Dbmc (Dropbox add-on)" version="0.9.5"
 	provider-name="Joost Kop">
 	<requires>
-		<import addon="xbmc.python" version="2.1.0" />
+		<import addon="xbmc.python" version="2.19.0" />
 		<import addon="script.common.plugin.cache" version="0.9.1" />
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="addon.py">
