@@ -10,6 +10,8 @@ import ssl
 import sys
 import urllib
 
+from resources.lib.utils import log, log_debug, NL_
+
 try:
     import json
 except ImportError:
@@ -188,6 +190,21 @@ class RESTClientObject(object):
     def request(self, method, url, post_params=None, body=None, headers=None, raw_response=False):
         """Performs a REST request. See :meth:`RESTClient.request()` for detailed description."""
 
+        log('>>>> [' + str(method) + '] ' + str(url))
+        log_debug(
+            NL_('') +
+            NL_('#-1-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#') +
+            NL_('#-1-# dropbox.rest.RESTClientObject.request() --  `' + str(url) + '`') +
+            NL_('#-1-#') +
+            NL_('#-1-#       method = ' + str(method)) +
+            NL_('#-1-#          url = ' + str(url)) +
+            NL_('#-1-#  post_params = ' + str(post_params)) +
+            NL_('#-1-#         body = ' + str(body)) +
+            NL_('#-1-#      headers = ' + str(headers)) +
+            NL_('#-1-# raw_response = ' + str(raw_response)) +
+            NL_('#-1-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#')
+        )
+
         post_params = post_params or {}
         headers = headers or {}
         headers['User-Agent'] = 'OfficialDropboxPythonSDK/' + SDK_VERSION
@@ -209,6 +226,17 @@ class RESTClientObject(object):
                 raise ValueError("headers should not contain newlines (%s: %s)" %
                                  (key, value))
 
+        log_debug(
+            NL_('') +
+            NL_('#-2-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#') +
+            NL_('#-2-# Sending request to Dropbox endpoint `' + str(url) + '`') +
+            NL_('#-2-#') +
+            NL_('#-2-#  method = ' + str(method)) +
+            NL_('#-2-#  body = ' + ('[[binary data]]' if 'Content-Type' in headers and headers['Content-Type'] == 'application/octet-stream' else str(body))) +
+            NL_('#-2-# headers = ' + str(headers)) +
+            NL_('#-2-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#')
+        )
+
         try:
             # Grab a connection from the pool to make the request.
             # We return it to the pool when caller close() the response
@@ -221,15 +249,42 @@ class RESTClientObject(object):
                 preload_content=False
             )
             r = RESTResponse(r) # wrap up the urllib3 response before proceeding
+
+            log('<<<< [' + str(method) + '] ' + str(url) + ', returned with status=' + str(r.status))
+            log_debug(
+                NL_('') +
+                NL_('#-3-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#') +
+                NL_('#-3-# Back from from `' + str(method) + '` to `' + str(url) + '`') +
+                NL_('#-3-#') +
+                NL_('#-3-#         status = ' + str(r.status)) +
+                NL_('#-3-#        version = ' + str(r.version)) +
+                NL_('#-3-#         reason = ' + str(r.reason)) +
+                NL_('#-3-#         strict = ' + str(r.strict)) +
+                NL_('#-3-#      is_closed = ' + str(r.is_closed)) +
+                NL_('#-3-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#')
+            )
+
         except socket.error as e:
             raise RESTSocketError(url, e)
         except urllib3.exceptions.SSLError as e:
             raise RESTSocketError(url, "SSL certificate error: %s" % e)
 
         if r.status not in (200, 206):
+            log('...bad return status: ' + str(r.status))
             raise ErrorResponse(r, r.read())
 
-        return self.process_response(r, raw_response)
+        processed_response = self.process_response(r, raw_response)
+
+        log_debug(
+            NL_('') +
+            NL_('#-4-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#') +
+            NL_('#-4-# processed response for `' + str(method) + '` to `' + str(url) + '` --> ') +
+            NL_('#-4-#') +
+            NL_('#-4-# ' + repr(processed_response)) +
+            NL_('#-4-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#')
+        )
+
+        return processed_response
 
     def process_response(self, r, raw_response):
         if raw_response:
@@ -378,27 +433,63 @@ class ErrorResponse(Exception):
         self.reason = http_resp.reason
         self.body = body
         self.headers = http_resp.getheaders()
+        self.headerContentType = http_resp.getheader('Content-Type', '')
+        self.headerRetryAfter = http_resp.getheader('Retry-After', '')
         http_resp.close() # won't need this connection anymore
 
         try:
-            self.body = json_loadb(self.body)
-            self.error_msg = self.body.get('error')
-            self.user_error_msg = self.body.get('user_error')
+            self.jsonBody = json_loadb(self.body)
         except ValueError:
-            self.error_msg = None
-            self.user_error_msg = None
+            self.jsonBody = {}
+
+        self.serverUserMessage   = self.jsonBody.get('user_message')
+        self.serverError         = self.jsonBody.get('error')
+        self.serverErrorSummary  = self.jsonBody.get('error_summary')
+        self.rateLimitReason     = self.jsonBody.get('reason')
+        self.rateLimitRetryAfter = self.jsonBody.get('retry_after')
+
+        # LEGACY
+        self.user_error_msg = self.serverUserMessage
 
     def __str__(self):
-        if self.user_error_msg and self.user_error_msg != self.error_msg:
-            # one is translated and the other is English
-            msg = "%r (%r)" % (self.user_error_msg, self.error_msg)
-        elif self.error_msg:
-            msg = repr(self.error_msg)
-        elif not self.body:
-            msg = repr(self.reason)
-        else:
-            msg = "Error parsing response body or headers: " +\
-                  "Body - %.100r Headers - %r" % (self.body, self.headers)
+
+        msg = 'No details were provided for error.'
+        if self.status == 400:
+            msg = '[Bad input parameter] %.1000r' % (self.body)
+        elif self.status == 401:
+            # Bad or expired token
+
+            authErrorMessages = {
+                'invalid_access_token': 'The access token is invalid.  Either it is expired or it has been revoked.',
+                'invalid_select_user': 'The user specified in \'Dropbox-API-Select-User\' is no longer on the team.',
+                'invalid_select_admin': 'The user specified in \'Dropbox-API-Select-Admin\' is not a Dropbox Business team admin.',
+                'user_suspended': 'The user has been suspended.'
+            }
+
+            authError = self.serverError.get('.tag')
+            msg = authErrorMessages.get(authError)
+            if not msg:
+                if authError:
+                    msg = 'Bad or expired token (' + authError + ')'
+                else:
+                    msg = 'Bad or expired token. (no further information available)'
+        elif self.status == 409:
+            if 'json' in self.headerContentType.lower():
+                if self.serverUserMessage:
+                    msg = self.serverUserMessage
+                else:
+                    msg = "%.1000r" % (self.body)
+            else:
+                msg = "%.1000r" % (self.body)
+        elif self.status == 429:
+            if 'json' in self.headerContentType.lower():
+                msg = self.rateLimitReason + ' ... Retry after ' + str(self.rateLimitRetryAfter) + ' seconds'
+            else:
+                msg = self.body + ' ... Retry after ' + str(self.headerRetryAfter) + ' seconds'
+        elif self.status in range(500, 599):
+            msg = 'An error occurred on the Dropbox servers. Check status.dropbox.com for announcements about Dropbox service issues.'
+        elif self.body:
+                msg = "%.1000r" % (self.body)
 
         return "[%d] %s" % (self.status, msg)
 

@@ -87,3 +87,6 @@ def local2utc(local):
         if time.altzone and time.localtime().tm_isdst == 1: # using only if defined 
             offset = time.altzone 
     return local + offset
+
+def NL_(s):
+    return str(s) + '\r\n'

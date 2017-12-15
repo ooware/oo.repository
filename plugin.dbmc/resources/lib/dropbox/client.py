@@ -41,6 +41,16 @@ def format_path(path):
         return '/' + path.strip('/')
 
 
+def v2_ready():
+    """a decorator to document methods that have been moved to Dropbox API v2"""
+    def decorate(f):
+        def wrapper(self, *args, **keywords):
+            return f(self, *args, **keywords)
+        wrapper.__doc__ = f.__doc__
+        return wrapper
+    return decorate
+
+
 class DropboxClient(object):
     """
     This class lets you make Dropbox API calls.  You'll need to obtain an
@@ -135,6 +145,7 @@ class DropboxClient(object):
 
         return url, params, headers
 
+    @v2_ready()
     def account_info(self):
         """Retrieve information about the user's account.
 
@@ -144,9 +155,9 @@ class DropboxClient(object):
               For a detailed description of what this call returns, visit:
               https://www.dropbox.com/developers/core/docs#account-info
         """
-        url, params, headers = self.request("/account/info", method='GET')
+        url, params, headers = self.request("/users/get_current_account", method='POST')
 
-        return self.rest_client.GET(url, headers)
+        return self.rest_client.POST(url, params, headers)
 
     def disable_access_token(self):
         """
@@ -1250,6 +1261,7 @@ class DropboxOAuth2FlowBase(object):
 
         return self.build_url(BaseSession.WEB_HOST, '/oauth2/authorize', params)
 
+    @v2_ready()
     def _finish(self, code, redirect_uri):
         url = self.build_url(BaseSession.API_HOST, '/oauth2/token')
         params = {'grant_type': 'authorization_code',
@@ -1264,9 +1276,12 @@ class DropboxOAuth2FlowBase(object):
 
         response = self.rest_client.POST(url, params=params)
         access_token = response["access_token"]
-        user_id = response["uid"]
+        user_id = response["account_id"]
+        if not user_id:
+            user_id =  response["team_id"]
         return access_token, user_id
 
+    @v2_ready()
     def build_path(self, target, params=None):
         """Build the path component for an API URL.
 
@@ -1287,6 +1302,10 @@ class DropboxOAuth2FlowBase(object):
             target = target.encode("utf8")
 
         target_path = urllib.quote(target)
+        # Starting with Dropbox API v2, the oauth2 endpoints do not have
+        # the `/2` version prefix, but all other endpoints do.
+        if not target_path.startswith('/oauth2'):
+            target_path = '/' + str(BaseSession.API_VERSION) + target_path
 
         params = params or {}
         params = params.copy()
@@ -1296,9 +1315,9 @@ class DropboxOAuth2FlowBase(object):
 
         if params:
             query_string = params_to_urlencoded(params)
-            return "/%s%s?%s" % (BaseSession.API_VERSION, target_path, query_string)
+            return "%s?%s" % (target_path, query_string)
         else:
-            return "/%s%s" % (BaseSession.API_VERSION, target_path)
+            return "%s" % (target_path)
 
     def build_url(self, host, target, params=None):
         """Build an API URL.

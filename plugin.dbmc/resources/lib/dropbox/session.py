@@ -32,7 +32,7 @@ class OAuthToken(object):
         self.secret = secret
 
 class BaseSession(object):
-    API_VERSION = 1
+    API_VERSION = 2
 
     API_HOST = "api.dropbox.com"
     WEB_HOST = "www.dropbox.com"
@@ -93,6 +93,10 @@ class BaseSession(object):
             target = target.encode("utf8")
 
         target_path = urllib.quote(target)
+        # Starting with Dropbox API v2, the oauth2 endpoints do not have
+        # the `/2` version prefix, but all other endpoints do.
+        if not target_path.startswith('/oauth2'):
+            target_path = '/' + str(BaseSession.API_VERSION) + target_path
 
         params = params or {}
         params = params.copy()
@@ -101,9 +105,9 @@ class BaseSession(object):
             params['locale'] = self.locale
 
         if params:
-            return "/%s%s?%s" % (self.API_VERSION, target_path, urllib.urlencode(params))
+            return "%s?%s" % (target_path, urllib.urlencode(params))
         else:
-            return "/%s%s" % (self.API_VERSION, target_path)
+            return "%s" % (target_path)
 
     def build_url(self, host, target, params=None):
         """Build an API URL.
