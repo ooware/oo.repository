@@ -857,8 +857,6 @@ class DropboxClient(object):
         url, params, headers = self.request(endpoint, params, method='POST')
         return self.rest_client.POST(url, params, headers)
 
-        return self.rest_client.GET(url, headers)
-
     def thumbnail(self, from_path, size='m', format='JPEG'):
         """Download a thumbnail for an image.
 
@@ -1040,6 +1038,7 @@ class DropboxClient(object):
 
         return self.rest_client.POST(url, params, headers)
 
+    @v2_ready()
     def media(self, path):
         """Get a temporary unauthenticated URL for a media file.
 
@@ -1068,11 +1067,11 @@ class DropboxClient(object):
             - 400: Bad request (may be due to many things; check e.error for details).
             - 404: Unable to find the file at the given path.
         """
-        path = "/media/%s%s" % (self.session.root, format_path(path))
-
-        url, params, headers = self.request(path, method='GET')
-
-        return self.rest_client.GET(url, headers)
+        endpoint = "/files/get_temporary_link"
+        path = format_path(path)
+        params = { "path": path }
+        url, params, headers = self.request(endpoint, params, method='POST')
+        return self.rest_client.POST(url, params, headers)
 
     def share(self, path, short_url=True):
         """Create a shareable link to a file or folder.
