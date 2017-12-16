@@ -55,8 +55,8 @@ class AccountBrowser(object):
             access_token = ADDON.getSetting('access_token').decode("utf-8")
             client = XBMCDropBoxClient(access_token=access_token)
             account_info = client.getAccountInfo()
-            if 'display_name' in account_info:
-                account_name = path_from(account_info['display_name'])
+            if 'name' in account_info and 'display_name' in account_info['name']:
+                account_name = path_from(account_info['name']['display_name'])
             new_account = AccountSettings(account_name)
             new_account.access_token = ADDON.getSetting('access_token').decode("utf-8")
             new_account.passcode = ADDON.getSetting('passcode')
@@ -265,8 +265,8 @@ def run(params): # This is the entrypoint
             account_name = 'Account1'
             client = XBMCDropBoxClient(access_token=access_token)
             account_info = client.getAccountInfo()
-            if 'display_name' in account_info:
-                account_name = path_from(account_info['display_name'])
+            if 'name' in account_info and 'display_name' in account_info['name']:
+                account_name = path_from(account_info['name']['display_name'])
             new_account = AccountSettings(account_name)
             new_account.access_token = access_token
             new_account.save()
