@@ -79,8 +79,8 @@ class DropboxViewer(object):
         #first add all the folders
         folderItems = 0
         for f in contents:
-            if f['is_dir']:
-                name = os.path.basename( path_from(f['path']) )
+            if f['.tag'] == 'folder':
+                name = os.path.basename( path_from(f['path_display']) )
                 # the metadata 'path' is sometimes case incorrect! So use the _current_path (case-sensitive) path.
                 if self._current_path == DROPBOX_SEP:
                     fpath = self._current_path + name 
@@ -92,8 +92,8 @@ class DropboxViewer(object):
         self._totalItems = folderItems + self._nrOfMediaItems
         #Now add the maximum(define) number of files
         for fileMeta in contents:
-            if not fileMeta['is_dir']:
-                name = os.path.basename( path_from(fileMeta['path']) )
+            if not fileMeta['.tag'] == 'folder':
+                name = os.path.basename( path_from(fileMeta['path_display']) )
                 # the metadata 'path' is sometimes case incorrect! So use the _current_path (case-sensitive) path.
                 if self._current_path == DROPBOX_SEP:
                     fpath = self._current_path + name
@@ -148,30 +148,26 @@ class DropboxViewer(object):
         #print "meta: ", meta
         mediatype = ''
         iconImage = 'DefaultFile.png'
-        if self._contentType == 'executable' or not self._filterFiles:
+
+        ext = name.rsplit('.', 1)[-1].lower()
+        isImageFile = ext in xbmc.getSupportedMedia('picture')
+        isVideoFile = ext in xbmc.getSupportedMedia('video')
+        isAudioFile = ext in xbmc.getSupportedMedia('music')
+
+        showAllFiles = self._contentType == 'executable' or not self._filterFiles
+        if isImageFile and (self._contentType == 'image' or showAllFiles):
+            mediatype = 'pictures'
+            iconImage = 'DefaultImage.png'
+        elif isVideoFile and (self._contentType == 'video' or showAllFiles):
+            mediatype = 'video'
+            iconImage = 'DefaultVideo.png'
+        elif isAudioFile and (self._contentType == 'audio' or showAllFiles):
+            mediatype = 'music'
+            iconImage = 'DefaultAudio.png'
+        elif showAllFiles:
             mediatype = 'other'
             iconImage = 'DefaultFile.png'
-            if 'image' in meta['mime_type']:
-                mediatype = 'pictures'
-                iconImage = 'DefaultImage.png'
-            elif 'video' in meta['mime_type']:
-                mediatype = 'video'
-                iconImage = 'DefaultVideo.png'
-            elif 'audio' in meta['mime_type']:
-                mediatype = 'music'
-                iconImage = 'DefaultAudio.png'
-        if (self._contentType == 'image'):
-            if 'image' in meta['mime_type']:
-                mediatype = 'pictures'
-                iconImage = 'DefaultImage.png'
-        elif (self._contentType == 'video' or self._contentType == 'image'):
-            if 'video' in meta['mime_type']:
-                mediatype = 'video'
-                iconImage = 'DefaultVideo.png'
-        elif (self._contentType == 'audio'):
-            if 'audio' in meta['mime_type']:
-                mediatype = 'music'
-                iconImage = 'DefaultAudio.png'
+
         if mediatype != '':
             listItem = xbmcgui.ListItem(name, iconImage=iconImage)
             self.metadata2ItemInfo(listItem, meta, mediatype)
@@ -256,30 +252,9 @@ class DropboxViewer(object):
         return url
         
     def metadata2ItemInfo(self, item, metadata, mediatype):
-        # example metadata from Dropbox 
-        #'rev': 'a7d0389464b',
-        #'thumb_exists': False,
-        #'path': '/Music/Backspacer/11 - The End.mp3',
-        #'is_dir': False,
-        #'client_mtime': 'Sat, 27 Feb 2010 11:55:43 +0000'
-        #'icon': 'page_white_sound',
-        #'bytes': 4260601,
-        #'modified': 'Thu, 28 Jun 2012 17:55:59 +0000',
-        #'size': '4.1 MB',
-        #'root': 'dropbox',
-        #'mime_type': 'audio/mpeg',
-        #'revision': 2685
         info = {}
-        #added value for picture is only the size. the other data is retrieved from the photo itself...
-        if mediatype == 'other':
-            mediatype = 'pictures' #fake to get more info on the item...
-        if mediatype == 'pictures':
-            info['size'] = str(metadata['bytes'])
-            info['title'] = path_from(metadata['path'])
-        # For video and music, nothing interesting...
-        # elif mediatype == 'video':
-        # elif mediatype == 'music':
-
+        if 'size' in metadata: info['size'] = str(metadata['size'])
+        if 'name' in metadata: info['title'] = metadata['name']
         if len(info) > 0: item.setInfo(mediatype, info)
         
     def getMetaData(self, path, directory=False):
@@ -404,7 +379,14 @@ class FileLoader(threading.Thread):
             return False
         
     def getThumbnail(self, path, metadata):
-        if metadata['thumb_exists']:
+        # if metadata['thumb_exists']:
+        #  ----
+        # Dropbox API v2 metadata doesn't provide 'thumb_exists' flag. The upgrade docs say:
+        # check if the the file has one of the following file extensions: jpg, jpeg, png, tiff, tif, gif
+        # or bmp, and if it's less than 20MB in size; if so, use /2/files/get_thumbnail.
+        #  ----
+        ext = path.rsplit('.', 1)[-1]
+        if ext in ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'gif', 'bmp'] and metadata['size'] < 20*1000*1000:
             self._thumbList.put(path)
             self._itemsTotal += 1
             return self._getThumbLocation(path)

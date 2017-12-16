@@ -787,8 +787,9 @@ class DropboxClient(object):
 
         return self.rest_client.POST(url, params, headers)
 
+    @v2_ready()
     def metadata(self, path, list=True, file_limit=25000, hash=None,
-                 rev=None, include_deleted=False, include_media_info=False):
+                 rev=None, include_deleted=False, include_media_info=True):
         """Retrieve metadata for a file or folder.
 
         A typical use would be::
@@ -796,49 +797,7 @@ class DropboxClient(object):
             folder_metadata = client.metadata('/')
             print "metadata:", folder_metadata
 
-        which would return the metadata of the root folder. This
-        will look something like::
-
-            {
-                'bytes': 0,
-                'contents': [
-                    {
-                       'bytes': 0,
-                       'icon': 'folder',
-                       'is_dir': True,
-                       'modified': 'Thu, 25 Aug 2011 00:03:15 +0000',
-                       'path': '/Sample Folder',
-                       'rev': '803beb471',
-                       'revision': 8,
-                       'root': 'dropbox',
-                       'size': '0 bytes',
-                       'thumb_exists': False
-                    },
-                    {
-                       'bytes': 77,
-                       'icon': 'page_white_text',
-                       'is_dir': False,
-                       'mime_type': 'text/plain',
-                       'modified': 'Wed, 20 Jul 2011 22:04:50 +0000',
-                       'path': '/magnum-opus.txt',
-                       'rev': '362e2029684fe',
-                       'revision': 221922,
-                       'root': 'dropbox',
-                       'size': '77 bytes',
-                       'thumb_exists': False
-                    }
-                ],
-                'hash': 'efdac89c4da886a9cece1927e6c22977',
-                'icon': 'folder',
-                'is_dir': True,
-                'path': '/',
-                'root': 'app_folder',
-                'size': '0 bytes',
-                'thumb_exists': False
-            }
-
-        In this example, the root folder contains two things: ``Sample Folder``,
-        which is a folder, and ``/magnum-opus.txt``, which is a text file 77 bytes long
+        which would return the metadata of the root folder and its contents.
 
         Parameters
             path
@@ -882,22 +841,21 @@ class DropboxClient(object):
               - 404: No file was found at given path.
               - 406: Too many file entries to return.
         """
-        path = "/metadata/%s%s" % (self.session.root, format_path(path))
+        assert rev is None, "Can't specify a file or folder by revision when fetching metadata with Dropbox API v2."
+        assert hash is None, "Hash matching is not supported when fetching metadata with Dropbox API v2."
+        assert list is True, "Must always 'list' when fetching metadata with Dropbox API v2."
 
-        params = {'file_limit': file_limit,
-                  'list': 'true',
+        endpoint = "/files/list_folder"
+        path = format_path(path)
+        params = {
+                  # 'limit': file_limit,
+                  'path': path,
                   'include_deleted': include_deleted,
                   'include_media_info': include_media_info,
                   }
 
-        if not list:
-            params['list'] = 'false'
-        if hash is not None:
-            params['hash'] = hash
-        if rev:
-            params['rev'] = rev
-
-        url, params, headers = self.request(path, params, method='GET')
+        url, params, headers = self.request(endpoint, params, method='POST')
+        return self.rest_client.POST(url, params, headers)
 
         return self.rest_client.GET(url, headers)
 
@@ -1274,7 +1232,7 @@ class DropboxOAuth2FlowBase(object):
         if redirect_uri is not None:
             params['redirect_uri'] = redirect_uri
 
-        response = self.rest_client.POST(url, params=params)
+        response = self.rest_client.POST(url, params=params, useJSONParams=False)
         access_token = response["access_token"]
         user_id = response["account_id"]
         if not user_id:

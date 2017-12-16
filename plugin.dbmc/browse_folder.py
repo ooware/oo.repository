@@ -32,8 +32,8 @@ class FolderBrowser(DropboxViewer):
 
     def buildList(self):
         resp = self.getMetaData(self._current_path, directory=True)
-        if resp != None and 'contents' in resp:
-            contents = resp['contents']
+        if resp != None and 'entries' in resp:
+            contents = resp['entries']
         else:
             contents = []
         super(FolderBrowser, self).buildList(contents)

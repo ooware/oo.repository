@@ -131,8 +131,8 @@ class XBMCDropBoxClient(object):
     def getFolderContents(self, path):
         contents = []
         resp, changed = self.getMetaData(path, directory=True)
-        if 'contents' in resp:
-            contents = resp['contents']
+        if 'entries' in resp:
+            contents = resp['entries']
         return contents
 
     def getMetaData(self, path, directory=False):
@@ -186,10 +186,10 @@ class XBMCDropBoxClient(object):
                 resp = stored
             if resp and not directory:
                 #get the file metadata
-                items = resp['contents']
+                items = resp['entries']
                 resp = None
                 for item in items:
-                    if path_from(item['path']).lower() == path.lower():
+                    if path_from(item['path_display']).lower() == path.lower():
                         resp = item
                         break;
         return resp, changed
@@ -225,7 +225,7 @@ class XBMCDropBoxClient(object):
             log_debug("MediaUrl storing url.")
             self._cache.set(u"mediaUrl:"+path, repr(resp))
         if resp:
-            return resp['url']
+            return resp['link']
         else:
             return '' 
     
@@ -452,5 +452,5 @@ class Downloader(threading.Thread):
         items = self._client.getFolderContents(path)
         for item in items:
             self._fileList.put(item)
-            if item['is_dir']:
-                self.getFileItems( path_from(item['path']) )
+            if item['.tag'] == 'folder':
+                self.getFileItems( path_from(item['path_display']) )

@@ -187,7 +187,7 @@ class RESTClientObject(object):
             ssl_version=ssl.PROTOCOL_TLSv1,
         )
 
-    def request(self, method, url, post_params=None, body=None, headers=None, raw_response=False):
+    def request(self, method, url, post_params=None, body=None, headers=None, raw_response=False, useJSONParams=True):
         """Performs a REST request. See :meth:`RESTClient.request()` for detailed description."""
 
         log('>>>> [' + str(method) + '] ' + str(url))
@@ -212,8 +212,12 @@ class RESTClientObject(object):
         if post_params:
             if body:
                 raise ValueError("body parameter cannot be used with post_params parameter")
-            body = params_to_urlencoded(post_params)
-            headers["Content-type"] = "application/x-www-form-urlencoded"
+            if useJSONParams:
+                body = json.dumps(post_params)
+                headers["Content-type"] = "application/json"
+            else:
+                body = params_to_urlencoded(post_params)
+                headers["Content-type"] = "application/x-www-form-urlencoded"
 
         # Handle StringIO instances, because urllib3 doesn't.
         if hasattr(body, 'getvalue'):
@@ -303,13 +307,13 @@ class RESTClientObject(object):
         assert type(raw_response) == bool
         return self.request("GET", url, headers=headers, raw_response=raw_response)
 
-    def POST(self, url, params=None, headers=None, raw_response=False):
+    def POST(self, url, params=None, headers=None, raw_response=False, useJSONParams=True):
         assert type(raw_response) == bool
         if params is None:
             params = {}
 
         return self.request("POST", url,
-                            post_params=params, headers=headers, raw_response=raw_response)
+                            post_params=params, headers=headers, raw_response=raw_response, useJSONParams=useJSONParams)
 
     def PUT(self, url, body, headers=None, raw_response=False):
         assert type(raw_response) == bool
