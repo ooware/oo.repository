@@ -19,6 +19,7 @@
 # *
 # */
 
+import xbmc
 import xbmcplugin
 import xbmcgui
 
@@ -272,11 +273,11 @@ class DropboxViewer(object):
         fileItems = []
         if xbmcvfs.exists(cachedLocation.encode("utf-8")) or xbmcvfs.exists(tumbLocation.encode("utf-8")):
             #folderItems = (os.path.basename(item['path']) for item in metadata['contents'] if item['is_dir']) if folder not in folderitems of generator expression does not work...
-            for item in metadata['contents']:
-                if item['is_dir']:
-                    folderItems.append(os.path.basename(path_from(item['path'])))
+            for item in metadata['entries']:
+                if item['.tag'] == 'folder':
+                    folderItems.append(os.path.basename(path_from(item['path_display'])))
                 else:
-                    fileItems.append(os.path.basename(path_from(item['path'])))
+                    fileItems.append(os.path.basename(path_from(item['path_display'])))
         #remove shadow files/folders
         if xbmcvfs.exists(cachedLocation.encode("utf-8")):
             for f in os.listdir(cachedLocation):
@@ -343,7 +344,7 @@ class FileLoader(threading.Thread):
                 location = self._getThumbLocation(thumb2Retrieve)
                 #Check if thumb already exists
                 # TODO: use database checking for this!
-                if not xbmcvfs.exists(location.encode("utf-8")):
+                if not xbmcvfs.exists(location.encode("utf-8")) or os.path.getsize(location.encode("utf-8")) == 0:
                     #Doesn't exist so download it.
                     self._getThumbnail(thumb2Retrieve)
                 else:
@@ -353,7 +354,7 @@ class FileLoader(threading.Thread):
                 location = self._getShadowLocation(file2Retrieve)
                 #Check if thumb already exists
                 #TODO: use database checking for this!
-                if not xbmcvfs.exists(location.encode("utf-8")):
+                if not xbmcvfs.exists(location.encode("utf-8")) or os.path.getsize(location.encode("utf-8")) == 0:
                     #Doesn't exist so download it.
                     self._getFile(file2Retrieve)
                 else:

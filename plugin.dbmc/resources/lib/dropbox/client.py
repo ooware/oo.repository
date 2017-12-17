@@ -387,7 +387,8 @@ class DropboxClient(object):
 
         return self.rest_client.PUT(url, file_obj, headers)
 
-    def get_file(self, from_path, rev=None, start=None, length=None):
+    @v2_ready()
+    def get_file(self, from_path, rev=None):
         """Download a file.
 
         Example::
@@ -404,11 +405,6 @@ class DropboxClient(object):
               The path to the file to be downloaded.
             rev
               Optional previous rev value of the file to be downloaded.
-            start
-              Optional byte value from which to start downloading.
-            length
-              Optional length in bytes for partially downloading the file. If ``length`` is
-              specified but ``start`` is not, then the last ``length`` bytes will be downloaded.
         Returns
               A :class:`dropbox.rest.RESTResponse` that is the HTTP response for
               the API request.  It is a file-like object that can be read from.  You
@@ -421,22 +417,17 @@ class DropboxClient(object):
               - 404: No file was found at the given path, or the file that was there was deleted.
               - 200: Request was okay but response was malformed in some way.
         """
-        path = "/files/%s%s" % (self.session.root, format_path(from_path))
-
-        params = {}
+        path = format_path(from_path)
         if rev is not None:
-            params['rev'] = rev
+            path = 'rev: ' + str(rev)
 
-        url, params, headers = self.request(path, params, method='GET', content_server=True)
-        if start is not None:
-            if length:
-              headers['Range'] = 'bytes=%s-%s' % (start, start + length - 1)
-            else:
-              headers['Range'] = 'bytes=%s-' % start
-        elif length is not None:
-            headers['Range'] = 'bytes=-%s' % length
-        return self.rest_client.request("GET", url, headers=headers, raw_response=True)
+        endpoint = '/files/download'
+        params = {}
+        url, params, headers = self.request(endpoint, params, method='POST', content_server=True)
+        headers['Dropbox-API-Arg'] = json.dumps({ "path": str(path) })
+        return self.rest_client.POST(url, params, headers, raw_response=True)
 
+    @v2_ready()
     def get_file_and_metadata(self, from_path, rev=None):
         """Download a file alongwith its metadata.
 
@@ -857,7 +848,8 @@ class DropboxClient(object):
         url, params, headers = self.request(endpoint, params, method='POST')
         return self.rest_client.POST(url, params, headers)
 
-    def thumbnail(self, from_path, size='m', format='JPEG'):
+    @v2_ready()
+    def thumbnail(self, from_path, size='w640h480', format='JPEG'):
         """Download a thumbnail for an image.
 
         Parameters
@@ -886,15 +878,26 @@ class DropboxClient(object):
                 or files of that type cannot be thumbnailed.
               - 415: Image is invalid and cannot be thumbnailed.
         """
-        assert format in ['JPEG', 'PNG'], \
+        assert format.upper() in ['JPEG', 'PNG'], \
                "expected a thumbnail format of 'JPEG' or 'PNG', got %s" % format
 
-        path = "/thumbnails/%s%s" % (self.session.root, format_path(from_path))
+        endpoint = "/files/get_thumbnail"
+        path = format_path(from_path)
+        params = {}
 
-        url, params, headers = self.request(path, {'size': size, 'format': format},
-                                            method='GET', content_server=True)
-        return self.rest_client.request("GET", url, headers=headers, raw_response=True)
+        url, params, headers = self.request(endpoint, params, method='POST', content_server=True)
 
+        headers['Dropbox-API-Arg'] = json.dumps(
+            {
+                  "path": str(path),
+                "format": str(format).lower(),
+                  "size": str(size),
+            }
+        )
+
+        return self.rest_client.POST(url, params, headers, raw_response=True)
+
+    @v2_ready()
     def thumbnail_and_metadata(self, from_path, size='m', format='JPEG'):
         """Download a thumbnail for an image alongwith its metadata.
 

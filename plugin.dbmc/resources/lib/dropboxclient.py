@@ -303,7 +303,7 @@ class XBMCDropBoxClient(object):
             cacheFile = open(location, 'wb') # 'b' option required for windows!
             #download the file
             #jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital art.
-            tumbFile = self.DropboxAPI.thumbnail( path_to(path), size='large', format='JPEG')
+            tumbFile = self.DropboxAPI.thumbnail( path_to(path), size='w1024h768', format='JPEG')
             shutil.copyfileobj(tumbFile, cacheFile)
             cacheFile.close()
             log_debug("Downloaded file to: %s"%location)
