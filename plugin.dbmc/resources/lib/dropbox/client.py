@@ -717,6 +717,7 @@ class DropboxClient(object):
 
         return self.rest_client.POST(url, params, headers)
 
+    @v2_ready()
     def file_delete(self, path):
         """Delete a file or folder.
 
@@ -736,10 +737,10 @@ class DropboxClient(object):
               - 400: Bad request (may be due to many things; check e.error for details).
               - 404: No file was found at the given path.
         """
-        params = {'root': self.session.root, 'path': format_path(path)}
-
-        url, params, headers = self.request("/fileops/delete", params)
-
+        params = {
+                  'path': format_path(path)
+                  }
+        url, params, headers = self.request("/files/delete_v2", params)
         return self.rest_client.POST(url, params, headers)
 
     def file_move(self, from_path, to_path):

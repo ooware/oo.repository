@@ -236,11 +236,8 @@ class XBMCDropBoxClient(object):
     
     @command()
     def delete(self, path):
-        succes = False
-        resp = self.DropboxAPI.file_delete( path_to(path) )
-        if resp and 'is_deleted' in resp:
-            succes = resp['is_deleted']
-        return succes
+        resp = self.DropboxAPI.file_delete( path_to(path))
+        return True
 
     @command()
     def copy(self, path, toPath):
