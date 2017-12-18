@@ -655,6 +655,7 @@ class DropboxClient(object):
 
         return self.rest_client.POST(url, params, headers)
 
+    @v2_ready()
     def file_copy(self, from_path, to_path):
         """Copy a file or folder to a new location.
 
@@ -683,13 +684,12 @@ class DropboxClient(object):
               - 404: No file was found at given from_path.
               - 503: User over storage quota.
         """
-        params = {'root': self.session.root,
+        params = {
                   'from_path': format_path(from_path),
                   'to_path': format_path(to_path),
                   }
 
-        url, params, headers = self.request("/fileops/copy", params)
-
+        url, params, headers = self.request("/files/copy_v2", params)
         return self.rest_client.POST(url, params, headers)
 
     @v2_ready()

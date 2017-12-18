@@ -243,8 +243,8 @@ class XBMCDropBoxClient(object):
     def copy(self, path, toPath):
         succes = False
         resp = self.DropboxAPI.file_copy(path_to(path), path_to(toPath))
-        if resp and 'path' in resp:
-            succes = ( path_from(resp['path']).lower() == toPath.lower())
+        if resp and 'metadata' in resp and 'path_display' in resp['metadata']:
+            succes = ( path_from(resp['metadata']['path_display']).lower() == toPath.lower())
         return succes
 
     @command()
