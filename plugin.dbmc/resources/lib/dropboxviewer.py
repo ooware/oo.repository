@@ -154,9 +154,16 @@ class DropboxViewer(object):
         isImageFile = ext in xbmc.getSupportedMedia('picture')
         isVideoFile = ext in xbmc.getSupportedMedia('video')
         isAudioFile = ext in xbmc.getSupportedMedia('music')
-
+        isExactlyOneMediaType = (
+            (isImageFile ^ isVideoFile ^ isAudioFile)
+                and
+            not (isImageFile and isVideoFile and isAudioFile)
+        )
         showAllFiles = self._contentType == 'executable' or not self._filterFiles
-        if isImageFile and (self._contentType == 'image' or showAllFiles):
+        if (not isExactlyOneMediaType) and showAllFiles:
+            mediatype = 'other'
+            iconImage = 'DefaultFile.png'
+        elif isImageFile and (self._contentType == 'image' or showAllFiles):
             mediatype = 'pictures'
             iconImage = 'DefaultImage.png'
         elif isVideoFile and (self._contentType == 'video' or showAllFiles):
@@ -165,9 +172,6 @@ class DropboxViewer(object):
         elif isAudioFile and (self._contentType == 'audio' or showAllFiles):
             mediatype = 'music'
             iconImage = 'DefaultAudio.png'
-        elif showAllFiles:
-            mediatype = 'other'
-            iconImage = 'DefaultFile.png'
 
         if mediatype != '':
             listItem = xbmcgui.ListItem(name, iconImage=iconImage)
