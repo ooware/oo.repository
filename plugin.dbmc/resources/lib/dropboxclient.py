@@ -414,19 +414,19 @@ class Downloader(threading.Thread):
             #Download the list of files/dirs
             item2Retrieve = self._fileList.get()
             if item2Retrieve:
-                self._progress.update( (self._itemsHandled *100) / self._itemsTotal, LANGUAGE_STRING(30041), path_from(item2Retrieve['path']) )
-                basePath = path_from(item2Retrieve['path'])
+                self._progress.update( (self._itemsHandled *100) / self._itemsTotal, LANGUAGE_STRING(30041), path_from(item2Retrieve['path_display']) )
+                basePath = path_from(item2Retrieve['path_display'])
                 basePath = basePath.replace(self.remoteBasePath, '', 1) # remove the remote base path
                 location = self.location + basePath
                 location = os.path.normpath(location)
-                if item2Retrieve['is_dir']:
+                if item2Retrieve['.tag'] == 'folder':
                     location += os.sep #add os seperator because it is a dir
                     #create dir if not present yet
                     if not xbmcvfs.exists( location.encode("utf-8") ):
                         xbmcvfs.mkdirs( location.encode("utf-8") )
                 else:
-                    if not self._client.saveFile(item2Retrieve['path'], location):
-                        log_error("Downloader failed for: %s"%( path_from(item2Retrieve['path']) ) )
+                    if not self._client.saveFile(item2Retrieve['path_display'], location):
+                        log_error("Downloader failed for: %s"%( path_from(item2Retrieve['path_display']) ) )
                 self._itemsHandled += 1
             time.sleep(0.100)
         if self._progress.iscanceled():
