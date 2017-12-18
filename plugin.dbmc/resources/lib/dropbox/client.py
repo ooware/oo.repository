@@ -5,6 +5,7 @@ import re
 import os
 import sys
 import urllib
+from resources.lib.utils import log, NL_
 
 PY3 = sys.version_info[0] == 3
 
@@ -940,6 +941,7 @@ class DropboxClient(object):
 
         return thumbnail_res, metadata
 
+    @v2_ready()
     def search(self, path, query, file_limit=1000, include_deleted=False):
         """Search folder for filenames matching query.
 
@@ -965,16 +967,15 @@ class DropboxClient(object):
 
               - 400: Bad request (may be due to many things; check e.error for details).
         """
-        path = "/search/%s%s" % (self.session.root, format_path(path))
-
+        assert include_deleted is False, "Can't `include deleted` when searching with Dropbox API v2."
+        endpoint = "/files/search"
+        path = format_path(path)
         params = {
+            'path': path,
             'query': query,
-            'file_limit': file_limit,
-            'include_deleted': include_deleted,
+            'max_results': file_limit,
             }
-
-        url, params, headers = self.request(path, params)
-
+        url, params, headers = self.request(endpoint, params)
         return self.rest_client.POST(url, params, headers)
 
     def revisions(self, path, rev_limit=1000):

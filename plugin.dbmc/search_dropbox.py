@@ -37,8 +37,15 @@ class DropboxSearch(DropboxViewer):
     def buildList(self):
         #get the list
         searchResult = self._client.search(self._searchText, self._current_path)
+        metadataList = []
+        if searchResult != None and 'matches' in searchResult:
+            contents = searchResult['matches']
+        else:
+            contents = []
+        for c in contents:
+            metadataList.append(c['metadata'])
         #Build the list
-        super(DropboxSearch, self).buildList(searchResult)
+        super(DropboxSearch, self).buildList(metadataList)
         
     def show(self):
         if self._loader:
