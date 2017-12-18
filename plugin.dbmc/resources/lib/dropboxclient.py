@@ -282,10 +282,10 @@ class XBMCDropBoxClient(object):
             dialog.close()
             if uploader.offset == uploader.target_length:
                 #user didn't cancel
-                path = toPath + DROPBOX_SEP + os.path.basename(fileName) 
+                path = toPath + (DROPBOX_SEP if toPath[-1:] != DROPBOX_SEP else '') + os.path.basename(fileName)
                 resp = uploader.finish(path)
-                if resp and 'path' in resp:
-                    succes = ( path_from(resp['path']).lower() == path.lower())
+                if resp and 'path_display' in resp:
+                    succes = ( path_from(resp['path_display']).lower() == path.lower())
         else:
             log_error('File size of Upload file <= 0!')
         return succes
@@ -378,15 +378,8 @@ class Uploader(client.DropboxClient.ChunkedUploader):
         if self.last_block == None:
             self.last_block = self.file_obj.read(next_chunk_size)
 
-        try:
-            (self.offset, self.upload_id) = self.client.upload_chunk(StringIO(self.last_block), next_chunk_size, self.offset, self.upload_id)
-            self.last_block = None
-        except rest.ErrorResponse, e:
-            reply = e.body
-            if "offset" in reply and reply['offset'] != 0:
-                if reply['offset'] > self.offset:
-                    self.last_block = None
-                    self.offset = reply['offset']
+        (self.offset, self.session_id) = self.client.upload_chunk(StringIO(self.last_block), next_chunk_size, self.offset, self.session_id)
+        self.last_block = None
 
 class Downloader(threading.Thread):
     _itemsHandled = 0

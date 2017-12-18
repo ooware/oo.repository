@@ -96,6 +96,8 @@ class DropboxClient(object):
             raise ValueError("'oauth2_access_token' must either be a string or a DropboxSession")
         self.rest_client = rest_client
 
+
+    @v2_ready()
     def request(self, target, params=None, method='POST',
                 content_server=False, notification_server=False):
         """
@@ -122,7 +124,7 @@ class DropboxClient(object):
               A tuple of ``(url, params, headers)`` that should be used to make the request.
               OAuth will be added as needed within these fields.
         """
-        assert method in ['GET','POST', 'PUT'], "Only 'GET', 'POST', and 'PUT' are allowed."
+        assert method in ['GET','POST'], "Only 'GET' and 'POST' are allowed."
         assert not (content_server and notification_server), \
             "Cannot construct request simultaneously for content and notification servers."
 
@@ -139,7 +141,7 @@ class DropboxClient(object):
         base = self.session.build_url(host, target)
         headers, params = self.session.build_access_headers(method, base, params)
 
-        if method in ('GET', 'PUT'):
+        if method in ('GET'):
             url = self.session.build_url(host, target, params)
         else:
             url = self.session.build_url(host, target)
@@ -195,6 +197,7 @@ class DropboxClient(object):
         r = self.rest_client.POST(url, params, headers)
         return r['access_token']
 
+    @v2_ready()
     def get_chunked_uploader(self, file_obj, length):
         """Creates a :class:`ChunkedUploader` to upload the given file-like object.
 
@@ -224,7 +227,8 @@ class DropboxClient(object):
         """
         return ChunkedUploader(self, file_obj, length)
 
-    def upload_chunk(self, file_obj, length=None, offset=0, upload_id=None):
+    @v2_ready()
+    def upload_chunk(self, file_obj, length=None, offset=0, session_id=None):
         """Uploads a single chunk of data from a string or file-like object. The majority of users
         should use the :class:`ChunkedUploader` object, which provides a simpler interface to the
         chunked_upload API endpoint.
@@ -236,14 +240,14 @@ class DropboxClient(object):
               This argument is ignored but still present for backward compatibility reasons.
             offset
               The byte offset to which this source data corresponds in the original file.
-            upload_id
+            session_id
               The upload identifier for which this chunk should be uploaded,
               returned by a previous call, or None to start a new upload.
 
         Returns
             A dictionary containing the keys:
 
-            upload_id
+            session_id
               A string used to identify the upload for subsequent calls to :meth:`upload_chunk()`
               and :meth:`commit_chunked_upload()`.
             offset
@@ -253,28 +257,40 @@ class DropboxClient(object):
         """
 
         params = dict()
+        if not session_id:
+            # we're starting a new session; this is the first chunk
+            url, ignored_params, headers = self.request("/files/upload_session/start", params,
+                                                        method='POST',
+                                                        content_server=True)
+            headers['Dropbox-API-Arg'] = '{ "close": false }'
+            reply = self.rest_client.POST(url, file_obj, headers)
+            return file_obj.len, reply['session_id']
+        else:
+            # continuing chunk
+            url, ignored_params, headers = self.request("/files/upload_session/append_v2", params,
+                                                        method='POST',
+                                                        content_server=True)
+            headers['Dropbox-API-Arg'] = json.dumps(
+                {
+                    "close": False,
+                    "cursor": {
+                    "session_id": str(session_id),
+                        "offset": int(offset)
+                    }
+                }
+            )
+            reply = self.rest_client.POST(url, file_obj, headers)
+            return offset+file_obj.len, session_id
 
-        if upload_id:
-            params['upload_id'] = upload_id
-            params['offset'] = offset
-
-        url, ignored_params, headers = self.request("/chunked_upload", params,
-                                                    method='PUT', content_server=True)
-
-        try:
-            reply = self.rest_client.PUT(url, file_obj, headers)
-            return reply['offset'], reply['upload_id']
-        except ErrorResponse as e:
-            raise e
-
-    def commit_chunked_upload(self, full_path, upload_id, overwrite=False, parent_rev=None):
+    @v2_ready()
+    def commit_chunked_upload(self, full_path, session_id, overwrite=False, parent_rev=None, offset=-12345):
         """Commit the previously uploaded chunks for the given path.
 
         Parameters
             full_path
               The full path to which the chunks are uploaded, *including the file name*.
               If the destination folder does not yet exist, it will be created.
-            upload_id
+            session_id
               The chunked upload identifier, previously returned from upload_chunk.
             overwrite
               Whether to overwrite an existing file at the given path. (Default ``False``.)
@@ -301,16 +317,36 @@ class DropboxClient(object):
             https://www.dropbox.com/developers/core/docs#commit-chunked-upload
         """
 
-        params = {
-            'upload_id': upload_id,
-            'overwrite': overwrite,
-            }
+        params = {}
+        url, params, headers = self.request("/files/upload_session/finish", params, content_server=True)
 
+        # derive the `mode` element - one of "update", "overwrite", "add"
         if parent_rev is not None:
-            params['parent_rev'] = parent_rev
+            mode = json.dumps(
+                {
+                    ".tag": 'update',
+                    "update": str(parent_rev)
+                }
+            )
+        elif overwrite:
+            mode = 'overwrite'
+        else:
+            mode = 'add'
 
-        url, params, headers = self.request("/commit_chunked_upload/%s" % full_path,
-                                            params, content_server=True)
+        headers['Dropbox-API-Arg'] = json.dumps(
+            {
+                "cursor": {
+                    "session_id": str(session_id),
+                        "offset": int(offset)
+                },
+                "commit": {
+                          "path": str(format_path(full_path)),
+                          "mode": str(mode),
+                    "autorename": bool(False),
+                          "mute": bool(False)
+                }
+            }
+        )
 
         return self.rest_client.POST(url, params, headers)
 
@@ -1126,12 +1162,13 @@ class ChunkedUploader(object):
     def __init__(self, client, file_obj, length):
         self.client = client
         self.offset = 0
-        self.upload_id = None
+        self.session_id = None
 
         self.last_block = None
         self.file_obj = file_obj
         self.target_length = length
 
+    @v2_ready()
     def upload_chunked(self, chunk_size = 4 * 1024 * 1024):
         """Uploads data from this ChunkedUploader's file_obj in chunks, until
         an error occurs. Throws an exception when an error occurs, and can
@@ -1147,22 +1184,11 @@ class ChunkedUploader(object):
             if self.last_block == None:
                 self.last_block = self.file_obj.read(next_chunk_size)
 
-            try:
-                (self.offset, self.upload_id) = self.client.upload_chunk(
-                    StringIO(self.last_block), next_chunk_size, self.offset, self.upload_id)
-                self.last_block = None
-            except ErrorResponse as e:
-                # Handle the case where the server tells us our offset is wrong.
-                must_reraise = True
-                if e.status == 400:
-                    reply = e.body
-                    if "offset" in reply and reply['offset'] != 0 and reply['offset'] > self.offset:
-                        self.last_block = None
-                        self.offset = reply['offset']
-                        must_reraise = False
-                if must_reraise:
-                    raise
+            (self.offset, self.session_id) = self.client.upload_chunk(
+                StringIO(self.last_block), next_chunk_size, self.offset, self.session_id)
+            self.last_block = None
 
+    @v2_ready()
     def finish(self, path, overwrite=False, parent_rev=None):
         """Commits the bytes uploaded by this ChunkedUploader to a file
         in the users dropbox.
@@ -1188,20 +1214,7 @@ class ChunkedUploader(object):
               The file will always be overwritten if you send the most recent parent_rev,
               and it will never be overwritten if you send a less recent one.
         """
-
-        path = "/commit_chunked_upload/%s%s" % (self.client.session.root, format_path(path))
-
-        params = dict(
-            overwrite = bool(overwrite),
-            upload_id = self.upload_id
-        )
-
-        if parent_rev is not None:
-            params['parent_rev'] = parent_rev
-
-        url, params, headers = self.client.request(path, params, content_server=True)
-
-        return self.client.rest_client.POST(url, params, headers)
+        return self.client.commit_chunked_upload(path, self.session_id, overwrite, parent_rev, self.offset)
 
 
 # Allow access of ChunkedUploader via DropboxClient for backwards compatibility.

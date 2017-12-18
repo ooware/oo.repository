@@ -212,17 +212,20 @@ class RESTClientObject(object):
         if post_params:
             if body:
                 raise ValueError("body parameter cannot be used with post_params parameter")
-            if useJSONParams:
+            if hasattr(post_params, 'getvalue'):
+                # Handle StringIO instances, because urllib3 doesn't.
+                body = str(post_params.getvalue())
+                headers['Content-Type'] = 'application/octet-stream'
+                headers["Content-Length"] = len(body)
+            elif useJSONParams:
                 body = json.dumps(post_params)
                 headers["Content-type"] = "application/json"
             else:
                 body = params_to_urlencoded(post_params)
                 headers["Content-type"] = "application/x-www-form-urlencoded"
-
-        # Handle StringIO instances, because urllib3 doesn't.
-        if hasattr(body, 'getvalue'):
-            body = str(body.getvalue())
-            headers["Content-Length"] = len(body)
+        else:
+                headers['Content-Type'] = 'application/octet-stream'
+                headers["Content-Length"] = 0 if not body else len(body)
 
         # Reject any headers containing newlines; the error from the server isn't pretty.
         for key, value in headers.items():
