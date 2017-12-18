@@ -259,8 +259,8 @@ class XBMCDropBoxClient(object):
     def createFolder(self, path):
         succes = False
         resp = self.DropboxAPI.file_create_folder( path_to(path) )
-        if resp and 'path' in resp:
-            succes = ( path_from(resp['path']).lower() == path.lower())
+        if resp and 'metadata' in resp and 'path_display' in resp['metadata']:
+            succes = ( path_from(resp['metadata']['path_display']).lower() == path.lower())
         return succes
 
     @command()

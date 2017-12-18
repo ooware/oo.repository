@@ -692,6 +692,7 @@ class DropboxClient(object):
 
         return self.rest_client.POST(url, params, headers)
 
+    @v2_ready()
     def file_create_folder(self, path):
         """Create a folder.
 
@@ -711,10 +712,11 @@ class DropboxClient(object):
               - 400: Bad request (may be due to many things; check e.error for details).
               - 403: A folder at that path already exists.
         """
-        params = {'root': self.session.root, 'path': format_path(path)}
-
-        url, params, headers = self.request("/fileops/create_folder", params)
-
+        params = {
+                  'autorename': False,
+                  'path': format_path(path)
+                  }
+        url, params, headers = self.request("/files/create_folder_v2", params)
         return self.rest_client.POST(url, params, headers)
 
     @v2_ready()
