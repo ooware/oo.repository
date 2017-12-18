@@ -96,8 +96,8 @@ class DropboxFileBrowser(xbmcgui.WindowXMLDialog):
             listItem = xbmcgui.ListItem(label='..', label2=backPath, iconImage="DefaultFolderBack.png", thumbnailImage='DefaultFolderBack.png')
             listItems.append(listItem)
         for item in items:
-            if item['is_dir'] == True:
-                listItem = xbmcgui.ListItem(label=os.path.basename(path_from(item['path'])), label2=path_from(item['path']), iconImage="DefaultFolder.png", thumbnailImage='DefaultFolder.png')
+            if item['.tag'] == 'folder':
+                listItem = xbmcgui.ListItem(label=os.path.basename(path_from(item['path_display'])), label2=path_from(item['path_display']), iconImage="DefaultFolder.png", thumbnailImage='DefaultFolder.png')
                 listItems.append(listItem)
         listView.addItems(listItems)
         if self._thumbView:
